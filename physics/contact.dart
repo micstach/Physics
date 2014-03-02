@@ -11,9 +11,13 @@ class Contact
   Particle _b ;
   
   double _dt ;
+  bool _resting = false ;
+  
+  bool get IsResting => _resting ;
   
   Contact(this._a, this._b, this._dt) 
   {
+    _resting = false ;
   }
   
   double get Dt => _dt ;
@@ -44,7 +48,7 @@ class Contact
 
     var rv_dot_cn = rv | cn ;
     
-    const double THRESHOLD = 0.0001 ;
+    const double THRESHOLD = 0.01 ;
     
     if (rv_dot_cn < -THRESHOLD)
     {
@@ -67,10 +71,13 @@ class Contact
         }
       }
     }
-//    else if (rv_dot_cn < 0.0)
-//    {
-//      return new Contact(a, b, 0.0) ;
-//    }
+    else if (rv_dot_cn <= 0.0)
+    {
+      var contact = new Contact(a, b, 0.0) ;
+      contact._resting = true ;
+      
+      return contact ;
+    }
 
     return null ;
   }

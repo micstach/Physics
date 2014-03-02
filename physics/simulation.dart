@@ -13,6 +13,8 @@ class Simulation
 
   List<Force> forces = new List<Force>() ;
   
+  CollisionMap _collisionMap = null ;
+  
   final Vec2 gravityForce = new Vec2(0.0, -9.81) ;
 
   Simulation() 
@@ -43,7 +45,7 @@ class Simulation
     
     CollisionMap map = _detectCollisions(particles) ;
     
-    _resolveCollisions(map) ;
+    _resolveCollisions(particles, map) ;
   }
   
   
@@ -91,24 +93,20 @@ class Simulation
   {
     for (var p in particles)
     {
-      CollisionPair collisionParams = collisionMap.Get(particle, p) ;
+      CollisionPair pair = collisionMap.Get(particle, p) ;
       
-      Contact contact = Contact.Find(particle, p) ;
-
-      if (contact != null)
+      if (pair != null)
       {
-        collisionParams.AccumulateDt(contact.Dt) ;
+        Contact contact = Contact.Find(particle, p) ;
+  
+        pair.SetContact(contact) ;
       }
     }
   }
 
   CollisionMap _detectCollisions(List particles)
   {
-    // (!) dla kazdej pary trzeba wyznaczyc closest dt, roznica miedzy tym testem
-    // jest taka ze tam sprawdzam niefixed z reszta
-    // a tu moze byc kolejnosc inna
-    
-    CollisionMap collisionMap = new CollisionMap(particles.length) ;
+    _collisionMap = new CollisionMap(particles.length) ;
     
     for (int i=0; i<particles.length; i++)
     {
@@ -121,79 +119,82 @@ class Simulation
         collidable.add(particles[k]) ;
       }
       
-      _detectParticleCollisions(a, collidable, collisionMap) ;
+      _detectParticleCollisions(a, collidable, _collisionMap) ;
     }
     
-    return collisionMap;
+    return _collisionMap;
   }
 
-  void _resolveCollisions(CollisionMap collisionMap)
+  void _resolveCollisions(List<Particle> particles, CollisionMap collisionMap)
   {
-    Map<Particle, CollisionPair> minPairs = new Map<Particle, CollisionPair>() ;
-
-    // details.text = "" ; 
-
-    CollisionPair minPair = null ;
-    
-    for (CollisionPair pair in collisionMap.Pairs)
+    for (Particle p in particles)
     {
-      if (0.0 <= pair.Dt && pair.Dt < 1.0)
+      CollisionPair min = null ;
+      List<CollisionPair> pairs = collisionMap.GetPairs(p) ;
+      
+      for (CollisionPair pair in pairs)
       {
-        // colliding.add(pair.A) ;
-        // colliding.add(pair.B) ;
-        
-        // details.text += (pair.Dt.toString() + ";") ;
-
-        if (minPair == null)
-          minPair = pair ;
-        else
-          if (minPair.Dt > pair.Dt)
-            minPair = pair ;
-        
-//      for (Particle p in [pair.A, pair.B])
-//      {
-//        if (minPairs.containsKey(p))
-//        {
-//          if (pair.Dt < minPairs[p].Dt)
-//          {
-//            minPairs[p] = pair ;
-//          }
-//        }
-//        else
-//        {
-//          minPairs[p] = pair ;
-//        }
-//      }
-      }
-    }
-    
-    Set<CollisionPair> mins = new Set<CollisionPair>() ;
-    for (CollisionPair pair in minPairs.values)
-      mins.add(pair) ;
-
-        if (minPair != null)
+        if (pair.Details != null && pair.Details.IsResting == false)
         {
-          // if (0.0 > pair.Dt || pair.Dt >= 1.0) continue ;
-          var pair = minPair ;
-          
-          Particle a = pair.A ;
-          Particle b = pair.B ;
-
-          const bool solution = false ;
-          
-          if (solution)
+          if (min == null)
           {
-            a.Position = a.Position + a.Velocity * (-1.0 + pair.Dt) ; 
-            b.Position = b.Position + b.Velocity * (-1.0 + pair.Dt) ;
-            a.Velocity.Zero();
-            b.Velocity.Zero();
-            a.Mass = double.INFINITY ;
-            b.Mass = double.INFINITY ;
+            if (0.0 <= pair.Details.Dt && pair.Details.Dt < 1.0)
+            {
+              min = pair ;
+            }
           }
           else
           {
-            a.Position = a.Position + a.Velocity * (-1.0 + pair.Dt) ; 
-            b.Position = b.Position + b.Velocity * (-1.0 + pair.Dt) ;
+            if (pair.Details.Dt < min.Details.Dt)
+            {
+              min = pair ;
+            }
+            else
+            {
+              
+            }
+          }
+        }
+      }
+      
+      if (min != null)
+      {
+        for (CollisionPair pair in pairs)
+        {
+          if (pair.Details != null && 
+              pair.Details.IsResting == false && 
+              min != pair)
+          {
+            pair.Discard() ;
+          }
+        }
+      }
+    }
+    
+    for (CollisionPair pair in collisionMap.Pairs)
+    {
+      if (pair.Details != null)
+      {
+        Particle a = pair.A ;
+        Particle b = pair.B ;
+  
+        const bool solution = false ;
+        
+        if (!pair.Details.IsResting)
+        {
+          if (solution)
+          {
+              a.Position = a.Position + a.Velocity * (-1.0 + pair.Details.Dt) ; 
+              b.Position = b.Position + b.Velocity * (-1.0 + pair.Details.Dt) ;
+              a.Velocity.Zero();
+              b.Velocity.Zero();
+              a.Mass = double.INFINITY ;
+              b.Mass = double.INFINITY ;
+          }
+          else
+          {
+            a.Position = a.Position + a.Velocity * (-1.0 + pair.Details.Dt) ; 
+            b.Position = b.Position + b.Velocity * (-1.0 + pair.Details.Dt) ;
             
             Vec2 rv = b.Velocity - a.Velocity ;
             Vec2 cn = (b.Position - a.Position).Normalize() ;
@@ -206,13 +207,16 @@ class Simulation
               b.AddForce(cn * (-j)) ;
             }
           }
-//    
-          //colliding.add(pair.A) ;
-          //colliding.add(pair.B) ;
-          
-          //details.text += (" min = " + pair.Dt.toString()) ;
-
         }
+        else
+        {
+          a.Position = a.Position + a.Velocity * (-1.0 + pair.Details.Dt) ; 
+          b.Position = b.Position + b.Velocity * (-1.0 + pair.Details.Dt) ;
+          a.Velocity.Zero();
+          b.Velocity.Zero();
+        }
+      }
+    }
   }
   
   void Render(List<Particle> particles, var drawPoint, var drawVector)
@@ -224,4 +228,5 @@ class Simulation
     }
   }
   
+  CollisionMap get Collisions => _collisionMap ;
 }

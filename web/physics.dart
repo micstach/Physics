@@ -83,6 +83,8 @@ void appLoop(num delta) {
   
   querySelector("span#toolname").text = tool.Name ;
   
+  details.text = "Collision pairs: " + simulation.Collisions.DynamicCollisionsCount.toString() + "/" + simulation.Collisions.Pairs.length.toString() ;
+  
   window.animationFrame.then(appLoop) ;
 }
 
