@@ -4,23 +4,31 @@ import "../math/vec2.dart" ;
 import "particle.dart" ;
 import 'collisionmap.dart';
 import 'contact.dart';
+import 'force.dart' ;
+import 'gravity.dart' ;
 
 class Simulation
 {
   static const double DELTA_TIME = 0.1 ;
 
+  List<Force> forces = new List<Force>() ;
+  
   final Vec2 gravityForce = new Vec2(0.0, -9.81) ;
 
   // List<Particle> _particles = new List<Particle>() ;
   
-  Simulation() ;
-  
-  
-  
+  Simulation() 
+  {
+    forces.add(new Gravity(new Vec2(0.0, -9.81))) ;
+  }
+      
   void _simulateParticle(Particle particle)
   {
     // action
-    particle.AddForce(gravityForce * particle.Mass) ;
+    for (var force in forces)
+    {
+      force.Apply(particle) ;
+    }
     
     particle.Integrate(DELTA_TIME) ;
     
