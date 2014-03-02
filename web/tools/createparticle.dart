@@ -4,7 +4,7 @@ import 'tool.dart' ;
 
 import '../../math/vec2.dart';
 import '../../physics/particle.dart';
-import '../../physics/collisionmap.dart';
+import '../../physics/simulation.dart';
 
 import 'dart:html';
 
@@ -132,7 +132,7 @@ class CreateParticle implements Tool
   
   SetParticlePath(List path) { _path = path ;}
   
-  void Render(var drawParticle, var drawPath, var simulate, var collisionsDetect, var collisionsResolve)
+  void Render(var drawParticle, var drawPath)
   {
     if (_particle == null) return ;
     
@@ -147,14 +147,11 @@ class CreateParticle implements Tool
     _path.add(particles[particles.length-1].Position);
     
     var colliding = new Set<Particle>() ;
-
+    var simulation = new Simulation() ;
+    
     for (int i=0; i<1000; i++)
     {
-      simulate(particles); 
-      
-      var map = collisionsDetect(particles) ;
-      
-      collisionsResolve(map) ;
+      simulation.Simulate(particles) ;
       
       _path.add(particles[particles.length-1].Position);
     }

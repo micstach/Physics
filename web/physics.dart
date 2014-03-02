@@ -2,9 +2,8 @@ library physicsdemo;
 
 import '../math/vec2.dart';
 
-import '../physics/contact.dart';
 import '../physics/particle.dart';
-import '../physics/collisionmap.dart';
+import '../physics/simulation.dart';
 
 import 'tools/createparticle.dart';
 
@@ -14,7 +13,6 @@ import 'dart:math';
 const String ORANGE = "orange";
 const int SCALE_FACTOR = 4;
 const num TAU = PI * 2;
-const double DELTA_TIME = 0.1 ;
 
 final InputElement slider = querySelector("#slider");
 final Element notes = querySelector("#notes");
@@ -29,15 +27,17 @@ CanvasElement canvas = querySelector("#canvas") ;
 var particles = new List<Particle>() ;
 var colliding = new Set<Particle>() ;
 
-var gravityForce = new Vec2(0.0, -9.81) ;
-
 CreateParticle tool = null ;
+Simulation simulation = null ;
+
 
 void main() {
 
   // create particle toolset
   tool = new CreateParticle(canvas, particles, 0.1) ;
   tool.Activate() ;
+  
+  simulation = new Simulation() ;
   
   window.animationFrame.then(appLoop) ;
 }
@@ -53,7 +53,7 @@ void appLoop(num delta) {
   
   if (tool.IsActive)
   {
-    tool.Render(drawSeed, drawPath, simulateParticles, detectCollisions, resolveCollisions) ;
+    tool.Render(drawSeed, drawPath) ;
   }
   else
   {
@@ -65,7 +65,7 @@ void appLoop(num delta) {
   }
   
   // simulate
-  simulateParticles(particles);
+  simulation.Simulate(particles) ;
   
   // draw
   for (var particle in particles)
@@ -75,206 +75,6 @@ void appLoop(num delta) {
   }
   
   window.animationFrame.then(appLoop) ;
-}
-
-double Impulse(double dt, double e, double relVel, double invMassA, double invMassB) 
-{
-    return ((1.0 + e) / (dt * dt * 0.5)) * (relVel / (invMassA + invMassB)) ;
-}
-
-void worldCollisionDetection(Particle particle)
-{
-  if (particle.IsFixed) return ;
-  
-  // world box collisions detection
-  int PARTICLE_RADIUS = particle.Radius.toInt() ;
-  
-  if (particle.Position.x > canvas.clientWidth - PARTICLE_RADIUS)
-  {
-    particle.Velocity = Vec2.Reflect(particle.Velocity, new Vec2(-1.0, 0.0)).Neg();
-    particle.Position = (new Vec2((canvas.clientWidth - PARTICLE_RADIUS).toDouble(), particle.Position.y)) ;
-  }
-  
-  if (particle.Position.x < 0.0 + PARTICLE_RADIUS)
-  {
-    particle.Velocity = Vec2.Reflect(particle.Velocity, new Vec2(1.0, 0.0)).Neg();
-    particle.Position = (new Vec2((PARTICLE_RADIUS).toDouble(), particle.Position.y)) ;
-  }
-  
-  if (particle.Position.y <= 0.0 + PARTICLE_RADIUS)
-  {
-    particle.Velocity = Vec2.Reflect(particle.Velocity, new Vec2(0.0, 1.0)).Neg();
-    particle.Position = (new Vec2(particle.Position.x, 0.0 + PARTICLE_RADIUS)) ;
-  }
-  
-  if (particle.Position.y > canvas.clientHeight - PARTICLE_RADIUS)
-  {
-    particle.Velocity = Vec2.Reflect(particle.Velocity, new Vec2(0.0, -1.0)).Neg();
-    particle.Position = (new Vec2(particle.Position.x, (canvas.clientHeight - PARTICLE_RADIUS).toDouble())) ;
-  }
-}
-
-void simulateParticle(Particle particle)
-{
-  // action
-  particle.AddForce(gravityForce * particle.Mass) ;
-  
-  particle.Integrate(DELTA_TIME) ;
-  
-  // reaction
-  worldCollisionDetection(particle) ;  
-}
-
-void detectParticleCollisions(Particle particle, List particles, var collisionMap)
-{
-  for (var p in particles)
-  {
-    CollisionPair collisionParams = collisionMap.Get(particle, p) ;
-        
-    Contact contact = Contact.Find(particle, p) ;
-
-    if (contact != null)
-    {
-      collisionParams.AccumulateDt(contact.Dt) ;
-    }
-  }
-}
-
-CollisionMap detectCollisions(List particles)
-{
-  // (!) dla kazdej pary trzeba wyznaczyc closest dt, roznica miedzy tym testem
-  // jest taka ze tam sprawdzam niefixed z reszta
-  // a tu moze byc kolejnosc inna
-  
-  CollisionMap collisionMap = new CollisionMap(particles.length) ;
-  
-  for (int i=0; i<particles.length; i++)
-  {
-    var a = particles[i] ;
-    
-    List<Particle> collidable = new List<Particle>() ;
-    
-    for (int k=i+1; k<particles.length; k++)
-    {
-      collidable.add(particles[k]) ;
-    }
-    
-    detectParticleCollisions(a, collidable, collisionMap) ;
-  }
-  
-  return collisionMap;
-}
-
-//void detectCollisions(List particles)
-//{
-//  // (!) dla kazdej pary trzeba wyznaczyc closest dt, roznica miedzy tym testem
-//  // jest taka ze tam sprawdzam niefixed z reszta
-//  // a tu moze byc kolejnosc inna
-//  
-//  for (int i=0; i<particles.length; i++)
-//  {
-//    detectParticleCollisions(particles[i], particles.getRange(i+1, particles.length).toList()) ;
-//  }
-//}
-
-void simulateParticles(List particles)
-{
-  for (var particle in particles)
-  {
-    simulateParticle(particle);
-  }
-  
-  CollisionMap map = detectCollisions(particles) ;
-  
-  resolveCollisions(map) ;
-}
-
-void resolveCollisions(CollisionMap collisionMap)
-{
-  Map<Particle, CollisionPair> minPairs = new Map<Particle, CollisionPair>() ;
-
-  details.text = "" ; 
-
-  CollisionPair minPair = null ;
-  
-  for (CollisionPair pair in collisionMap.Pairs)
-  {
-    if (0.0 <= pair.Dt && pair.Dt < 1.0)
-    {
-      colliding.add(pair.A) ;
-      colliding.add(pair.B) ;
-  
-      details.text += (pair.Dt.toString() + ";") ;
-
-      if (minPair == null)
-        minPair = pair ;
-      else
-        if (minPair.Dt > pair.Dt)
-          minPair = pair ;
-      
-//      for (Particle p in [pair.A, pair.B])
-//      {
-//        if (minPairs.containsKey(p))
-//        {
-//          if (pair.Dt < minPairs[p].Dt)
-//          {
-//            minPairs[p] = pair ;
-//          }
-//        }
-//        else
-//        {
-//          minPairs[p] = pair ;
-//        }
-//      }
-    }
-  }
-  
-  Set<CollisionPair> mins = new Set<CollisionPair>() ;
-  for (CollisionPair pair in minPairs.values)
-    mins.add(pair) ;
-
-  if (minPair != null)
-  {
-    // if (0.0 > pair.Dt || pair.Dt >= 1.0) continue ;
-    var pair = minPair ;
-    
-    Particle a = pair.A ;
-    Particle b = pair.B ;
-
-    const bool solution = false ;
-    
-    if (solution)
-    {
-      a.Position = a.Position + a.Velocity * (-1.0 + pair.Dt) ; 
-      b.Position = b.Position + b.Velocity * (-1.0 + pair.Dt) ;
-      a.Velocity.Zero();
-      b.Velocity.Zero();
-      a.Mass = double.INFINITY ;
-      b.Mass = double.INFINITY ;
-    }
-    else
-    {
-      a.Position = a.Position + a.Velocity * (-1.0 + pair.Dt) ; 
-      b.Position = b.Position + b.Velocity * (-1.0 + pair.Dt) ;
-      
-      Vec2 rv = b.Velocity - a.Velocity ;
-      Vec2 cn = (b.Position - a.Position).Normalize() ;
-      
-      if ((rv | cn) < 0.0)
-      {
-        double j = Impulse(DELTA_TIME, 0.5, (rv|cn), a.MassInv, b.MassInv) ;
-        
-        a.AddForce(cn * j) ;
-        b.AddForce(cn * (-j)) ;
-      }
-    }
-//    
-    colliding.add(pair.A) ;
-    colliding.add(pair.B) ;
-    
-    details.text += (" min = " + pair.Dt.toString()) ;
-
-  }
 }
 
 /// Draw a small circle representing a seed centered at (x,y).
