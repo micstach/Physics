@@ -5,7 +5,10 @@ import '../math/vec2.dart';
 import '../physics/particle.dart';
 import '../physics/simulation.dart';
 
-import 'tools/createparticle.dart';
+
+import 'tools/tool.dart';
+import 'tools/particle.create.dart';
+import 'tools/particle.delete.dart';
 
 import 'dart:html';
 import 'dart:math';
@@ -27,12 +30,17 @@ CanvasElement canvas = querySelector("#canvas") ;
 var particles = new List<Particle>() ;
 var colliding = new Set<Particle>() ;
 
-CreateParticle tool = null ;
+Tool tool = null ;
 Simulation simulation = null ;
 
+final Element buttonCreate = querySelector('button#create') ;
+final Element buttonDelete = querySelector('button#delete') ;
 
 void main() {
 
+  buttonCreate.onClick.listen((e) => onCreateClicked(e)) ;
+  buttonDelete.onClick.listen((e) => onDeleteClicked(e)) ;
+  
   // create particle toolset
   tool = new CreateParticle(canvas, particles, 0.1) ;
   tool.Activate() ;
@@ -42,6 +50,19 @@ void main() {
   window.animationFrame.then(appLoop) ;
 }
 
+void onCreateClicked(MouseEvent e)
+{
+  tool.Deactivate() ;
+  tool = new CreateParticle(canvas, particles, 0.1) ;
+  tool.Activate() ;
+}
+
+void onDeleteClicked(MouseEvent e)
+{
+  tool.Deactivate() ;
+  tool = new DeleteParticle(canvas, particles) ;
+  tool.Activate() ;
+}
 
 /// Draw the complete figure for the current number of seeds.
 void appLoop(num delta) {
@@ -51,28 +72,16 @@ void appLoop(num delta) {
   
   colliding.clear();
   
-  if (tool.IsActive)
-  {
+  if (tool != null)
     tool.Render(drawSeed, drawPath) ;
-  }
-  else
-  {
-    colliding.clear();
-    if (tool.GetParticlePath() != null)
-    {
-      drawPath(tool.GetParticlePath(), true) ;
-    }
-  }
   
   // simulate
   simulation.Simulate(particles) ;
   
   // draw
-  for (var particle in particles)
-  {
-    drawSeed(particle);
-    drawVector(particle.Position, particle.Velocity, 1.0) ;
-  }
+  simulation.Render(particles, drawSeed, drawVector) ;
+  
+  querySelector("span#toolname").text = tool.Name ;
   
   window.animationFrame.then(appLoop) ;
 }

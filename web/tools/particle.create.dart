@@ -1,4 +1,4 @@
-library createparticle;
+library particle.create;
 
 import 'tool.dart' ;
 
@@ -23,17 +23,30 @@ class CreateParticle implements Tool
   {
   }
   
+  var _onMouseDownStream = null ;
+  var _onMouseMoveStream = null ;
+  var _onMouseUpStream = null ;
+  
   void Activate()
   {
-    _canvas.onMouseDown.listen((e) => onMouseDown(e)) ;
-    _canvas.onMouseMove.listen((e) => onMouseMove(e)) ;
-    _canvas.onMouseUp.listen((e) => onMouseUp(e)) ;
-    //_canvas.onKeyDown.listen((e) => onKeyDown(e));
-    //_canvas.onKeyUp.listen((e) => onKeyUp(e));
-    
-    _canvas.onTouchStart.listen((e) => onTouchStart(e)) ;
-    _canvas.onTouchMove.listen((e) => onTouchMove(e)) ;
-    _canvas.onTouchEnd.listen((e) => onTouchEnd(e)) ;
+    _onMouseDownStream = _canvas.onMouseDown.listen((e) => onMouseDown(e)) ;
+    _onMouseMoveStream = _canvas.onMouseMove.listen((e) => onMouseMove(e)) ;
+    _onMouseUpStream = _canvas.onMouseUp.listen((e) => onMouseUp(e)) ;
+
+    //_canvas.onTouchStart.listen((e) => onTouchStart(e)) ;
+    //_canvas.onTouchMove.listen((e) => onTouchMove(e)) ;
+    //_canvas.onTouchEnd.listen((e) => onTouchEnd(e)) ;
+  }
+
+  void Deactivate()
+  {
+    _onMouseDownStream.cancel() ;
+    _onMouseMoveStream.cancel() ;
+    _onMouseUpStream.cancel() ;
+
+    //_canvas.onTouchStart.listen((e) => onTouchStart(e)) ;
+    //_canvas.onTouchMove.listen((e) => onTouchMove(e)) ;
+    //_canvas.onTouchEnd.listen((e) => onTouchEnd(e)) ;
   }
 
   void createParticle(double x, double y, double mass)
@@ -99,6 +112,7 @@ class CreateParticle implements Tool
     Vec2 point = new Vec2(e.layer.x.toDouble(), _canvas.clientHeight - e.layer.y.toDouble()) ;
     
     changeVelocity(point, (e.ctrlKey) ? double.INFINITY : 1.0) ;
+    
   }
 
   void onMouseUp(MouseEvent e)
@@ -134,30 +148,41 @@ class CreateParticle implements Tool
   
   void Render(var drawParticle, var drawPath)
   {
-    if (_particle == null) return ;
-    
-    // copy particles
-    List<Particle> particles = new List<Particle>() ;
-    for (Particle p in _particles)
-      particles.add(new Particle.fromParticle(p)) ;
-    
-    particles.add(new Particle.fromParticle(_particle))  ;      
-
-    _path = new List() ;
-    _path.add(particles[particles.length-1].Position);
-    
-    var colliding = new Set<Particle>() ;
-    var simulation = new Simulation() ;
-    
-    for (int i=0; i<1000; i++)
+    if (IsActive)
     {
-      simulation.Simulate(particles) ;
+      if (_particle == null) return ;
       
-      _path.add(particles[particles.length-1].Position);
-    }
+      // copy particles
+      List<Particle> particles = new List<Particle>() ;
+      for (Particle p in _particles)
+        particles.add(new Particle.fromParticle(p)) ;
+          
+          particles.add(new Particle.fromParticle(_particle))  ;      
 
-    drawPath(_path, false);
-    drawParticle(_particle) ;
+          _path = new List() ;
+          _path.add(particles[particles.length-1].Position);
+          
+          var colliding = new Set<Particle>() ;
+          var simulation = new Simulation() ;
+          
+          for (int i=0; i<1000; i++)
+          {
+            simulation.Simulate(particles) ;
+            
+            _path.add(particles[particles.length-1].Position);
+          }
+
+          drawParticle(_particle) ;
+          drawPath(_path, false);
+    }
+    else
+    {
+      if (_path != null)
+        drawPath(_path, true) ;
+    }
+    
   }
+  
+  String get Name => "create particle" ;
   
 }

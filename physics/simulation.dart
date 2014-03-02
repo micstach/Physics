@@ -15,8 +15,6 @@ class Simulation
   
   final Vec2 gravityForce = new Vec2(0.0, -9.81) ;
 
-  // List<Particle> _particles = new List<Particle>() ;
-  
   Simulation() 
   {
     forces.add(new Gravity(new Vec2(0.0, -9.81))) ;
@@ -217,5 +215,13 @@ class Simulation
         }
   }
   
+  void Render(List<Particle> particles, var drawPoint, var drawVector)
+  {
+    for (var particle in particles)
+    {
+      drawPoint(particle);
+      drawVector(particle.Position, particle.Velocity, 1.0) ;
+    }
+  }
   
 }
