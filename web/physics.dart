@@ -1,8 +1,6 @@
 library physicsdemo;
 
-import '../math/quadric.dart';
 import '../math/vec2.dart';
-import '../math/box2.dart';
 
 import '../physics/contact.dart';
 import '../physics/particle.dart';
