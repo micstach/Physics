@@ -1,5 +1,6 @@
 library simulation ;
 
+import "../renderer/renderer.dart" ;
 import "../math/vec2.dart" ;
 import "particle.dart" ;
 import 'collisionmap.dart';
@@ -88,6 +89,8 @@ class Simulation
   {
     return ((1.0 + e) / (dt * dt * 0.5)) * (relVel / (invMassA + invMassB)) ; 
   }
+  
+  
 
   void _detectParticleCollisions(Particle particle, List particles, var collisionMap)
   {
@@ -106,7 +109,10 @@ class Simulation
 
   CollisionMap _detectCollisions(List particles)
   {
-    _collisionMap = new CollisionMap(particles.length) ;
+    if (_collisionMap == null)
+      _collisionMap = new CollisionMap(particles.length) ;
+    else
+      _collisionMap.Reset() ;
     
     for (int i=0; i<particles.length; i++)
     {
@@ -175,8 +181,8 @@ class Simulation
     {
       if (pair.Details != null)
       {
-        Particle a = pair.A ;
-        Particle b = pair.B ;
+        Particle a = pair.Details.A ;
+        Particle b = pair.Details.B ;
   
         const bool solution = false ;
         
@@ -210,6 +216,7 @@ class Simulation
         }
         else
         {
+          // TODO: rest contact handling
           a.Position = a.Position + a.Velocity * (-1.0 + pair.Details.Dt) ; 
           b.Position = b.Position + b.Velocity * (-1.0 + pair.Details.Dt) ;
           a.Velocity.Zero();
@@ -219,12 +226,20 @@ class Simulation
     }
   }
   
-  void Render(List<Particle> particles, var drawPoint, var drawVector)
+  void Draw(List<Particle> particles, Renderer renderer)
   {
     for (var particle in particles)
     {
-      drawPoint(particle);
-      drawVector(particle.Position, particle.Velocity, 1.0) ;
+      String color = "rgba(255, 128, 0, 0.75)" ;
+      
+      if (particle.IsFixed)
+        color = "rgba(32, 32, 32, 0.5)" ;
+      
+      renderer.drawCircle(particle.Position, particle.Radius, color);
+      
+      // renderer.drawBox(particle.Box, "rgba(64, 64, 64, 1.0)") ;
+      
+      renderer.drawVector(particle.Velocity, particle.Position, "rgba(255, 128, 0, 1.0)") ;
     }
   }
   

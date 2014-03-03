@@ -82,4 +82,7 @@ class Contact
     return null ;
   }
   
+  Particle get A => _a ;
+  Particle get B => _b ;
+  
 }

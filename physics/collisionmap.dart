@@ -6,12 +6,9 @@ import 'contact.dart';
 
 class CollisionPair
 {
-  Particle _a ;
-  Particle _b ;
-  
   Contact _contact = null ;
   
-  CollisionPair(this._a, this._b)
+  CollisionPair()
   {
     _contact = null ;
   }
@@ -25,9 +22,6 @@ class CollisionPair
   
   Contact get Details => _contact ;
   
-  Particle get A => _a ;
-  Particle get B => _b ;
-  
   void Discard()
   {
     _contact = null ;
@@ -39,12 +33,14 @@ class CollisionMap
   int _particlesCount = 0;
   Map<Particle, int> _index = null ;
   Map<int, CollisionPair> _pairs = null ;
+  Map<Particle, List<CollisionPair>> _particlePairs = null ;
   
   CollisionMap(int n)
   {
     _particlesCount = n ;
     _index = new Map<Particle, int>() ;
     _pairs = new Map<int, CollisionPair>() ;
+    _particlePairs = new Map<Particle, List<CollisionPair>>() ;
   }
   
   int get ParticlesCount => _particlesCount ;
@@ -65,13 +61,28 @@ class CollisionMap
     {
       for (CollisionPair pair in _pairs.values)
       {
-        if (pair.A == a || pair.B == a)
+        if (pair.Details != null)
         {
-          result.add(pair) ;
+          if (pair.Details.A == a || pair.Details.B == a)
+          {
+            result.add(pair) ;
+          }
         }
       }
     }
-    return result ;
+    
+    if (!_particlePairs.containsKey(a))
+      _particlePairs[a] = result ;
+    
+    return _particlePairs[a] ;
+  }
+  
+  void Reset()
+  {
+    for (CollisionPair pair in _pairs.values)
+    {
+      pair.Discard() ;
+    }
   }
 
   int _getPairIndex(Particle a, Particle b)
@@ -102,7 +113,7 @@ class CollisionMap
     int index = _getPairIndex(a, b);
     
     if (!_pairs.containsKey(index))
-      _pairs[index] = new CollisionPair(a, b) ;
+      _pairs[index] = new CollisionPair() ;
     
     return _pairs[index] ;
   }

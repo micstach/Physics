@@ -14,6 +14,12 @@ class Vec2 {
     this.y = p.y ;
   }
 
+  Vec2.fromVec2(Vec2 v) 
+  {
+    this.x = v.x;
+    this.y = v.y ;
+  }
+
   double get SqLength => x * x + y * y ;
 
   double get Length => sqrt(SqLength) ;

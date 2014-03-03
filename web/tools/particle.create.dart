@@ -1,15 +1,17 @@
 library particle.create;
 
-import 'tool.dart' ;
-
+import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart';
 import '../../physics/particle.dart';
 import '../../physics/simulation.dart';
+
+import 'tool.dart' ;
 
 import 'dart:html';
 
 class CreateParticle implements Tool
 {
+  double _alpha = 1.0 ;
   List _path = null ;
   final List _particles ;
   Particle _particle = null ;
@@ -146,39 +148,51 @@ class CreateParticle implements Tool
   
   SetParticlePath(List path) { _path = path ;}
   
-  void Render(var drawParticle, var drawPath)
+  void Draw(Renderer renderer)
   {
     if (IsActive)
     {
       if (_particle == null) return ;
       
       // copy particles
-      List<Particle> particles = new List<Particle>() ;
+      var particles = new List<Particle>() ;
+      
       for (Particle p in _particles)
+      {
         particles.add(new Particle.fromParticle(p)) ;
-          
-          particles.add(new Particle.fromParticle(_particle))  ;      
+      }   
+      particles.add(new Particle.fromParticle(_particle))  ;      
 
-          _path = new List() ;
-          _path.add(particles[particles.length-1].Position);
-          
-          var colliding = new Set<Particle>() ;
-          var simulation = new Simulation() ;
-          
-          for (int i=0; i<1000; i++)
-          {
-            simulation.Simulate(particles) ;
-            
-            _path.add(particles[particles.length-1].Position);
-          }
+      _path = new List<Vec2>() ;
+      _path.add(particles[particles.length-1].Position);
+      
+      var simulation = new Simulation() ;
+      
+      for (int i=0; i<100; i++)
+      {
+        simulation.Simulate(particles) ;
+        
+        // last particle is our NEW particle
+        _path.add(particles[particles.length-1].Position);
+      }
 
-          drawParticle(_particle) ;
-          drawPath(_path, false);
+      _alpha = 0.75 ;
+      
+      renderer.drawCircle(_particle.Position, _particle.Radius, "rgba(255, 128, 128, ${_alpha})") ;
+      renderer.drawPath(_path, false, "rgba(0, 0, 0, ${_alpha})", "rgba(192, 192, 192, ${_alpha})");
+      renderer.drawCircle(_path[_path.length-1], _particle.Radius, "rgba(128, 128, 128, ${_alpha/2.0})") ;
     }
     else
     {
       if (_path != null)
-        drawPath(_path, true) ;
+      {
+        renderer.drawCircle(_path[_path.length-1], 10.0, "rgba(128, 128, 128, ${_alpha})") ;
+        renderer.drawPath(_path, false, "rgba(0, 0, 0, ${_alpha})", "rgba(192, 192, 192, ${_alpha})");
+        
+        _alpha -= 0.001 ;
+        if (_alpha <= 0.0)
+          _alpha = 0.0 ;
+      }
     }
     
   }

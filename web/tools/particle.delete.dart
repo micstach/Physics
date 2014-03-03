@@ -1,5 +1,6 @@
 library particle.delete;
 
+import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart' ;
 import '../../physics/particle.dart' ;
 import 'tool.dart' ;
@@ -78,8 +79,9 @@ class DeleteParticle extends Tool
   
   List<Particle> get Highlighted => _highlighted ;
   
-  void Render(var drawSeed, var drawPath) 
+  void Draw(Renderer renderer) 
   {
+    return ;
   }
   
   String get Name => "delete particle" ;
