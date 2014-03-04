@@ -186,9 +186,11 @@ class CreateParticle implements Tool
     {
       if (_path != null)
       {
-        renderer.drawCircle(_path[_path.length-1], 10.0, "rgba(128, 128, 128, ${_alpha})") ;
-        renderer.drawPath(_path, false, "rgba(0, 0, 0, ${_alpha})", "rgba(192, 192, 192, ${_alpha})");
-        
+        if (_alpha > 0.0)
+        {
+          renderer.drawCircle(_path[_path.length-1], 10.0, "rgba(128, 128, 128, ${_alpha})") ;
+          renderer.drawPath(_path, false, "rgba(0, 0, 0, ${_alpha})", "rgba(192, 192, 192, ${_alpha})");
+        }
         _alpha -= 0.05 ;
         if (_alpha <= 0.0)
           _alpha = 0.0 ;
