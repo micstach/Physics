@@ -13,24 +13,15 @@ class DeleteParticle extends Tool
   List<Particle> _highlighted = null ;
   List<Particle> _particles = null ;
   
+  MouseEvent _mouseEvent = null ;
+  
   DeleteParticle(this._canvas, this._particles) 
   {
   }
   
   void _onMouseMove(MouseEvent e) 
   {
-    _highlighted.clear();
-    
-    double x = e.layer.x.toDouble();
-    double y = _canvas.clientHeight - e.layer.y.toDouble() ;
-    
-    Vec2 mouse = new Vec2(x, y) ;
-    
-    for (Particle p in _particles)
-    {
-      if ((p.Position - mouse).SqLength < 1.0)
-        _highlighted.add(p) ;
-    }
+    _mouseEvent = e ;
   }
   
   void _onClick(MouseEvent e)
@@ -81,8 +72,27 @@ class DeleteParticle extends Tool
   
   void Draw(Renderer renderer) 
   {
-    return ;
+    _highlighted.clear();
+    
+    if (_mouseEvent != null)
+    {
+      double x = _mouseEvent.layer.x.toDouble();
+      double y = _canvas.clientHeight - _mouseEvent.layer.y.toDouble() ;
+      
+      Vec2 mouse = new Vec2(x, y) ;
+      
+      for (Particle p in _particles)
+      {
+        if ((p.Position - mouse).SqLength < (p.Radius * p.Radius))
+          _highlighted.add(p) ;
+      }
+  
+      for (var p in _highlighted)
+      {
+        renderer.drawBox(p.Box, "rgba(255, 0, 0, 1.0)") ;
+      }
+    }
   }
   
-  String get Name => "delete particle" ;
+  String get Name => "click particle to delete" ;
 }

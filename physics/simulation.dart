@@ -44,9 +44,9 @@ class Simulation
       _simulateParticle(particle);
     }
     
-    CollisionMap map = _detectCollisions(particles) ;
+    CollisionMap collisions = _detectCollisions(particles) ;
     
-    _resolveCollisions(particles, map) ;
+    _resolveCollisions(particles, collisions) ;
   }
   
   
@@ -90,8 +90,6 @@ class Simulation
     return ((1.0 + e) / (dt * dt * 0.5)) * (relVel / (invMassA + invMassB)) ; 
   }
   
-  
-
   void _detectParticleCollisions(Particle particle, List particles, var collisionMap)
   {
     for (var p in particles)
@@ -205,9 +203,11 @@ class Simulation
             Vec2 rv = b.Velocity - a.Velocity ;
             Vec2 cn = (b.Position - a.Position).Normalize() ;
             
-            if ((rv | cn) < 0.0)
+            double factor = (rv | cn) ;
+            
+            if (factor < 0.0)
             {
-              double j = Impulse(DELTA_TIME, 0.5, (rv|cn), a.MassInv, b.MassInv) ;
+              double j = Impulse(DELTA_TIME, 0.5, factor, a.MassInv, b.MassInv) ;
               
               a.AddForce(cn * j) ;
               b.AddForce(cn * (-j)) ;

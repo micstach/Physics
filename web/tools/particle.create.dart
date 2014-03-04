@@ -168,7 +168,7 @@ class CreateParticle implements Tool
       
       var simulation = new Simulation() ;
       
-      for (int i=0; i<100; i++)
+      for (int i=0; i<1000; i++)
       {
         simulation.Simulate(particles) ;
         
@@ -189,7 +189,7 @@ class CreateParticle implements Tool
         renderer.drawCircle(_path[_path.length-1], 10.0, "rgba(128, 128, 128, ${_alpha})") ;
         renderer.drawPath(_path, false, "rgba(0, 0, 0, ${_alpha})", "rgba(192, 192, 192, ${_alpha})");
         
-        _alpha -= 0.001 ;
+        _alpha -= 0.05 ;
         if (_alpha <= 0.0)
           _alpha = 0.0 ;
       }
@@ -197,6 +197,6 @@ class CreateParticle implements Tool
     
   }
   
-  String get Name => "create particle" ;
+  String get Name => "click and hold mouse button to create particle and set its velocity, user CTRL + click to create fixed particle " ;
   
 }
