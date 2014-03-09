@@ -1,6 +1,6 @@
 library force.gavity ;
 
-import '../math/vec2.dart' ;
+import '../../math/vec2.dart' ;
 
 import 'force.dart' ;
 import 'particle.dart' ;

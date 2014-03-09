@@ -2,8 +2,7 @@ library particle.create;
 
 import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart';
-import '../../physics/particle.dart';
-import '../../physics/simulation.dart';
+import '../physics/particle.dart';
 
 import 'tool.dart' ;
 

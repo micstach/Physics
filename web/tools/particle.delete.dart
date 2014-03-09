@@ -2,7 +2,8 @@ library particle.delete;
 
 import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart' ;
-import '../../physics/particle.dart' ;
+
+import '../physics/particle.dart' ;
 import 'tool.dart' ;
 
 import 'dart:html';

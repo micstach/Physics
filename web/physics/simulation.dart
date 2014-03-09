@@ -1,7 +1,7 @@
 library simulation ;
 
-import "../renderer/renderer.dart" ;
-import "../math/vec2.dart" ;
+import "../../renderer/renderer.dart" ;
+import "../../math/vec2.dart" ;
 import "particle.dart" ;
 import 'collisionmap.dart';
 import 'contact.dart';
@@ -10,7 +10,10 @@ import 'gravity.dart' ;
 
 class Simulation
 {
-  double DELTA_TIME = 0.1 ;
+  int _worldWidth ;
+  int _worldHeight ;
+  
+  double _dt = 0.0 ;
 
   List<Force> forces = new List<Force>() ;
   
@@ -22,7 +25,22 @@ class Simulation
   {
     forces.add(new Gravity(new Vec2(0.0, -9.81))) ;
   }
-      
+
+  set WorldWidth(int value) => _worldWidth = value ;
+  set WorldHeight(int value) => _worldHeight = value ;
+  
+  bool get IsRunning => _dt > 0.0 ;
+  
+  void Start({double dt : 0.1}) 
+  {
+    _dt = dt ;
+  }
+  
+  void Stop()
+  {
+    _dt = 0.0 ;
+  }
+       
   void _simulateParticle(Particle particle)
   {
     // action
@@ -31,7 +49,7 @@ class Simulation
       force.Apply(particle) ;
     }
     
-    particle.Integrate(DELTA_TIME) ;
+    particle.Integrate(_dt) ;
     
     // reaction
     _worldCollisionDetection(particle) ;  
@@ -39,6 +57,8 @@ class Simulation
   
   void Simulate(List particles)
   {
+    if (!IsRunning) return ;
+
     for (var particle in particles)
     {
       _simulateParticle(particle);
@@ -49,9 +69,33 @@ class Simulation
     _resolveCollisions(particles, collisions) ;
   }
   
-  
-  int _worldWidth = 800 ;
-  int _worldHeight = 600 ;
+  bool _isWorldCollisionDetection(Particle particle)
+  {
+    if (particle.IsFixed) return false ;
+    
+    // world box collisions detection
+    int PARTICLE_RADIUS = particle.Radius.toInt() ;
+    
+    if (particle.Position.x > _worldWidth - PARTICLE_RADIUS)
+    {
+      return true ;
+    }
+
+    if (particle.Position.x < 0.0 + PARTICLE_RADIUS)
+    {
+      return true ;
+    }
+
+    if (particle.Position.y <= 0.0 + PARTICLE_RADIUS)
+    {
+      return true ;
+    }
+    
+    if (particle.Position.y > _worldHeight - PARTICLE_RADIUS)
+    {
+      return true ;
+    }
+  }
   
   void _worldCollisionDetection(Particle particle)
   {
@@ -145,7 +189,7 @@ class Simulation
         {
           if (pair.Details.IsResting)
           {
-            DELTA_TIME = 0.0 ;
+            Stop() ;
           }
           else
           {
@@ -218,7 +262,7 @@ class Simulation
             
             if (factor <= 0.0)
             {
-              double j = Impulse(DELTA_TIME, 0.5, factor, a.MassInv, b.MassInv) ;
+              double j = Impulse(_dt, 0.5, factor, a.MassInv, b.MassInv) ;
               
               a.AddForce(cn * j) ;
               b.AddForce(cn * (-j)) ;
@@ -235,13 +279,35 @@ class Simulation
 //          a.Velocity.Zero();
 //          b.Velocity.Zero();
 //        }
-        
-        if (!impulse)
+      }
+    }
+ 
+    for (int i=0; i<25;i++)
+    {
+      for (int j=0; j<particles.length; j++)
+      {
+        for (int k=j+1; k<particles.length; k++)
         {
-          if ((a.Position - b.Position).Length < (a.Radius + b.Radius))
+          Particle a = particles[j] ;
+          Particle b = particles[k] ;
+          
+          if (a.IsFixed && b.IsFixed) continue ;
+          
+          Vec2 dp = b.Position - a.Position ;
+          double len = dp.Length ;
+          
+          if (len <= (a.Radius + b.Radius))
           {
-            // separate 
-            a.Position = a.Position + new Vec2(0.0, 0.0);
+            Vec2 delta = dp * ((a.Radius + b.Radius - len) / len) * 0.5 ;
+            
+            if (!a.IsFixed)
+              a.Position -= delta ;
+            
+            if (!b.IsFixed)
+              b.Position += delta ;
+            
+            _worldCollisionDetection(a) ;
+            _worldCollisionDetection(b) ;
           }
         }
       }

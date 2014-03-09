@@ -2,8 +2,8 @@ library physicsdemo;
 
 import 'renderer/canvasrenderer.dart' ;
 
-import '../physics/particle.dart';
-import '../physics/simulation.dart';
+import 'physics/particle.dart';
+import 'physics/simulation.dart';
 
 import 'tools/tool.dart';
 import 'tools/particle.create.dart';
@@ -28,6 +28,7 @@ var colliding = new Set<Particle>() ;
 Tool tool = null ;
 Simulation simulation = null ;
 
+final Element buttonTrigger = querySelector('button#trigger') ;
 final Element buttonCreate = querySelector('button#create') ;
 final Element buttonDelete = querySelector('button#delete') ;
 
@@ -42,15 +43,36 @@ void main() {
   buttonCreate.onClick.listen((e) => onCreateClicked(e)) ;
   buttonDelete.onClick.listen((e) => onDeleteClicked(e)) ;
   
+  buttonTrigger.onClick.listen((e) => onTriggerClicked(e)) ;
+  
   // create particle toolset
   tool = new CreateParticle(canvas, particles, 0.1) ;
   tool.Activate() ;
   
   simulation = new Simulation() ;
+  simulation.WorldWidth = canvas.clientWidth ;
+  simulation.WorldHeight = canvas.clientHeight ;
   
   renderer = new CanvasRenderer(canvas) ;
   
   window.animationFrame.then(appLoop) ;
+}
+
+void onTriggerClicked(MouseEvent e)
+{
+  if (simulation != null)
+  {
+    if (simulation.IsRunning)
+    {
+      simulation.Stop();
+      buttonTrigger.text = "Play" ;
+    }
+    else
+    {
+      simulation.Start() ;
+      buttonTrigger.text = "Pause" ;
+    }
+  }
 }
 
 void onCreateClicked(MouseEvent e)
@@ -87,7 +109,8 @@ void appLoop(num delta) {
   
   querySelector("span#toolname").text = tool.Name ;
   
-  details.text = "Collision pairs: " + simulation.Collisions.DynamicCollisionsCount.toString() + "/" + simulation.Collisions.Pairs.length.toString() ;
+  if (simulation.Collisions != null)
+    details.text = "Collision pairs: " + simulation.Collisions.DynamicCollisionsCount.toString() + "/" + simulation.Collisions.Pairs.length.toString() ;
   
   if (tool.Position != null)
   {

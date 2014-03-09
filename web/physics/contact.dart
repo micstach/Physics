@@ -1,7 +1,7 @@
 library contact;
 
-import '../math/vec2.dart';
-import '../math/quadric.dart';
+import '../../math/vec2.dart';
+import '../../math/quadric.dart';
 
 import 'particle.dart';
 
