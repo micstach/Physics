@@ -1,5 +1,6 @@
 library toolinterface;
 
+import "../../math/vec2.dart";
 import "../../renderer/renderer.dart" ;
 
 abstract class Tool
@@ -9,4 +10,5 @@ abstract class Tool
   bool get IsActive ;
   void Draw(Renderer renderer) ;
   String get Name ;
+  Vec2 get Position ;
 }

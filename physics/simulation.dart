@@ -10,7 +10,7 @@ import 'gravity.dart' ;
 
 class Simulation
 {
-  static const double DELTA_TIME = 0.1 ;
+  double DELTA_TIME = 0.1 ;
 
   List<Force> forces = new List<Force>() ;
   
@@ -109,9 +109,12 @@ class Simulation
   {
     if (_collisionMap == null)
       _collisionMap = new CollisionMap(particles.length) ;
+    else if (_collisionMap.ParticlesCount != particles.length)
+      _collisionMap = new CollisionMap(particles.length) ;
     else
       _collisionMap.Reset() ;
     
+    // TODO: user collision map here
     for (int i=0; i<particles.length; i++)
     {
       var a = particles[i] ;
@@ -138,24 +141,31 @@ class Simulation
       
       for (CollisionPair pair in pairs)
       {
-        if (pair.Details != null && pair.Details.IsResting == false)
+        if (pair.Details != null)
         {
-          if (min == null)
+          if (pair.Details.IsResting)
           {
-            if (0.0 <= pair.Details.Dt && pair.Details.Dt < 1.0)
-            {
-              min = pair ;
-            }
+            DELTA_TIME = 0.0 ;
           }
           else
           {
-            if (pair.Details.Dt < min.Details.Dt)
+            if (min == null)
             {
-              min = pair ;
+              if (0.0 <= pair.Details.Dt && pair.Details.Dt < 1.0)
+              {
+                min = pair ;
+              }
             }
             else
             {
-              
+              if (pair.Details.Dt < min.Details.Dt)
+              {
+                min = pair ;
+              }
+              else
+              {
+                
+              }
             }
           }
         }
@@ -183,6 +193,7 @@ class Simulation
         Particle b = pair.Details.B ;
   
         const bool solution = false ;
+        bool impulse = false ;
         
         if (!pair.Details.IsResting)
         {
@@ -205,22 +216,33 @@ class Simulation
             
             double factor = (rv | cn) ;
             
-            if (factor < 0.0)
+            if (factor <= 0.0)
             {
               double j = Impulse(DELTA_TIME, 0.5, factor, a.MassInv, b.MassInv) ;
               
               a.AddForce(cn * j) ;
               b.AddForce(cn * (-j)) ;
             }
+            
+            impulse = true ;
           }
         }
-        else
+//        else
+//        {
+//          // TODO: rest contact handling
+//          a.Position = a.Position + a.Velocity * (-1.0 + pair.Details.Dt) ; 
+//          b.Position = b.Position + b.Velocity * (-1.0 + pair.Details.Dt) ;
+//          a.Velocity.Zero();
+//          b.Velocity.Zero();
+//        }
+        
+        if (!impulse)
         {
-          // TODO: rest contact handling
-          a.Position = a.Position + a.Velocity * (-1.0 + pair.Details.Dt) ; 
-          b.Position = b.Position + b.Velocity * (-1.0 + pair.Details.Dt) ;
-          a.Velocity.Zero();
-          b.Velocity.Zero();
+          if ((a.Position - b.Position).Length < (a.Radius + b.Radius))
+          {
+            // separate 
+            a.Position = a.Position + new Vec2(0.0, 0.0);
+          }
         }
       }
     }

@@ -24,6 +24,8 @@ class DeleteParticle extends Tool
     _mouseEvent = e ;
   }
   
+  Vec2 get Position => _mouseEvent == null ? null : new Vec2(_mouseEvent.layer.x.toDouble(), _canvas.clientHeight - _mouseEvent.layer.y.toDouble()) ;
+  
   void _onClick(MouseEvent e)
   {
     double x = e.layer.x.toDouble();

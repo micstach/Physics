@@ -40,15 +40,19 @@ class Contact
     ap = ap - av;
     bp = bp - bv;
     
+    // particle distance
     Vec2 dp = (bp - ap) ;
 
-    var cn = (bp-ap).Normalize() ;
+    // contact normal
+    var cn = dp ;
     
-    var rv = (bv-av) ;
+    // relativeVelocity
+    var rv = (bv - av) ;
 
+    // relative movement
     var rv_dot_cn = rv | cn ;
     
-    const double THRESHOLD = 0.01 ;
+    const double THRESHOLD = 0.0001 ;
     
     if (rv_dot_cn < -THRESHOLD)
     {

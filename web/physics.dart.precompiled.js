@@ -483,6 +483,9 @@ var $$ = {};
     get$isNegative: function(receiver) {
       return receiver === 0 ? 1 / receiver < 0 : receiver < 0;
     },
+    get$isFinite: function(receiver) {
+      return isFinite(receiver);
+    },
     remainder$1: function(receiver, b) {
       return receiver % b;
     },
@@ -4857,24 +4860,40 @@ var $$ = {};
       return J.$index$asx(bucket, index);
     },
     add$1: function(_, element) {
-      var rest, hash, bucket;
-      rest = this._rest;
-      if (rest == null) {
-        rest = P._HashSet__newHashTable();
-        this._rest = rest;
+      var strings, nums, rest, hash, bucket;
+      if (typeof element === "string" && element !== "__proto__") {
+        strings = this._strings;
+        if (strings == null) {
+          strings = P._HashSet__newHashTable();
+          this._strings = strings;
+        }
+        return this._addHashTableEntry$2(strings, element);
+      } else if (typeof element === "number" && (element & 0x3ffffff) === element) {
+        nums = this._nums;
+        if (nums == null) {
+          nums = P._HashSet__newHashTable();
+          this._nums = nums;
+        }
+        return this._addHashTableEntry$2(nums, element);
+      } else {
+        rest = this._rest;
+        if (rest == null) {
+          rest = P._HashSet__newHashTable();
+          this._rest = rest;
+        }
+        hash = this._computeHashCode$1(element);
+        bucket = rest[hash];
+        if (bucket == null)
+          rest[hash] = [element];
+        else {
+          if (this._findBucketIndex$2(bucket, element) >= 0)
+            return false;
+          bucket.push(element);
+        }
+        this._collection$_length = this._collection$_length + 1;
+        this._elements = null;
+        return true;
       }
-      hash = this._computeHashCode$1(element);
-      bucket = rest[hash];
-      if (bucket == null)
-        rest[hash] = [element];
-      else {
-        if (this._findBucketIndex$2(bucket, element) >= 0)
-          return false;
-        bucket.push(element);
-      }
-      this._collection$_length = this._collection$_length + 1;
-      this._elements = null;
-      return true;
     },
     remove$1: function(_, object) {
       var rest, bucket, index;
@@ -4931,6 +4950,14 @@ var $$ = {};
       }
       this._elements = result;
       return result;
+    },
+    _addHashTableEntry$2: function(table, element) {
+      if (table[element] != null)
+        return false;
+      table[element] = 0;
+      this._collection$_length = this._collection$_length + 1;
+      this._elements = null;
+      return true;
     },
     _computeHashCode$1: function(element) {
       return J.get$hashCode$(element) & 0x3ffffff;
@@ -5428,6 +5455,9 @@ var $$ = {};
   print: function(object) {
     var line = H.S(object);
     H.printString(line);
+  },
+  String_String$fromCharCodes: function(charCodes) {
+    return H.Primitives_stringFromCharCodes(charCodes);
   },
   NoSuchMethodError_toString_closure: {
     "": "Closure:16;box_0",
@@ -6268,6 +6298,188 @@ var $$ = {};
     }
   }
 }],
+["json", "package:json/json.dart", , U, {
+  "": "",
+  JsonUnsupportedObjectError: {
+    "": "Error;unsupportedObject,cause",
+    toString$0: function(_) {
+      if (this.cause != null)
+        return "Calling toJson method on object failed.";
+      else
+        return "Object toJson method returns non-serializable value.";
+    },
+    static: {JsonUnsupportedObjectError$: function(unsupportedObject, cause) {
+        return new U.JsonUnsupportedObjectError(unsupportedObject, cause);
+      }}
+  },
+  JsonCyclicError: {
+    "": "JsonUnsupportedObjectError;unsupportedObject,cause",
+    toString$0: function(_) {
+      return "Cyclic error in JSON stringify";
+    },
+    static: {JsonCyclicError$: function(object) {
+        return new U.JsonCyclicError(object, null);
+      }}
+  },
+  _JsonStringifier: {
+    "": "Object;sink,seen",
+    checkCycle$1: function(object) {
+      var t1 = this.seen;
+      if (t1.contains$1(t1, object))
+        throw H.wrapException(U.JsonCyclicError$(object));
+      t1.add$1(t1, object);
+    },
+    stringifyValue$1: function(object) {
+      var customJson, e, t1, t2, exception;
+      if (!this.stringifyJsonValue$1(object)) {
+        t1 = object;
+        t2 = this.seen;
+        if (t2.contains$1(t2, t1))
+          H.throwExpression(U.JsonCyclicError$(t1));
+        t2.add$1(t2, t1);
+        try {
+          customJson = object.toJson$0();
+          if (!this.stringifyJsonValue$1(customJson)) {
+            t1 = U.JsonUnsupportedObjectError$(object, null);
+            throw H.wrapException(t1);
+          }
+          t2.remove$1(t2, object);
+        } catch (exception) {
+          t1 = H.unwrapException(exception);
+          e = t1;
+          throw H.wrapException(U.JsonUnsupportedObjectError$(object, e));
+        }
+
+      }
+    },
+    stringifyJsonValue$1: function(object) {
+      var t1, t2, i, t3;
+      t1 = {};
+      if (typeof object === "number") {
+        if (!C.JSNumber_methods.get$isFinite(object))
+          return false;
+        this.sink.write$1(C.JSNumber_methods.toString$0(object));
+        return true;
+      } else if (object === true) {
+        this.sink.write$1("true");
+        return true;
+      } else if (object === false) {
+        this.sink.write$1("false");
+        return true;
+      } else if (object == null) {
+        this.sink.write$1("null");
+        return true;
+      } else if (typeof object === "string") {
+        t1 = this.sink;
+        t1.write$1("\"");
+        U._JsonStringifier_escape(t1, object);
+        t1.write$1("\"");
+        return true;
+      } else {
+        t2 = J.getInterceptor(object);
+        if (typeof object === "object" && object !== null && (object.constructor === Array || !!t2.$isList)) {
+          this.checkCycle$1(object);
+          t1 = this.sink;
+          t1.write$1("[");
+          if (t2.get$length(object) > 0) {
+            if (0 >= object.length)
+              return H.ioore(object, 0);
+            this.stringifyValue$1(object[0]);
+            for (i = 1; i < object.length; ++i) {
+              t1._contents = t1._contents + ",";
+              this.stringifyValue$1(object[i]);
+            }
+          }
+          t1.write$1("]");
+          t1 = this.seen;
+          t1.remove$1(t1, object);
+          return true;
+        } else if (typeof object === "object" && object !== null && !!t2.$isMap) {
+          this.checkCycle$1(object);
+          t3 = this.sink;
+          t3.write$1("{");
+          t1.first_0 = true;
+          t2.forEach$1(object, new U._JsonStringifier_stringifyJsonValue_closure(t1, this));
+          t3.write$1("}");
+          t3 = this.seen;
+          t3.remove$1(t3, object);
+          return true;
+        } else
+          return false;
+      }
+    },
+    static: {_JsonStringifier_escape: function(sb, s) {
+        var t1, $length, charCodes, needsEscape, i, charCode, t2;
+        t1 = J.getInterceptor$asx(s);
+        $length = t1.get$length(s);
+        charCodes = H.setRuntimeTypeInfo([], [J.JSInt]);
+        if (typeof $length !== "number")
+          return H.iae($length);
+        needsEscape = false;
+        i = 0;
+        for (; i < $length; ++i) {
+          charCode = t1.codeUnitAt$1(s, i);
+          if (charCode < 32) {
+            charCodes.push(92);
+            switch (charCode) {
+              case 8:
+                charCodes.push(98);
+                break;
+              case 9:
+                charCodes.push(116);
+                break;
+              case 10:
+                charCodes.push(110);
+                break;
+              case 12:
+                charCodes.push(102);
+                break;
+              case 13:
+                charCodes.push(114);
+                break;
+              default:
+                charCodes.push(117);
+                t2 = charCode >>> 12 & 15;
+                charCodes.push(t2 < 10 ? 48 + t2 : 87 + t2);
+                t2 = charCode >>> 8 & 15;
+                charCodes.push(t2 < 10 ? 48 + t2 : 87 + t2);
+                t2 = charCode >>> 4 & 15;
+                charCodes.push(t2 < 10 ? 48 + t2 : 87 + t2);
+                t2 = charCode & 15;
+                charCodes.push(t2 < 10 ? 48 + t2 : 87 + t2);
+                break;
+            }
+            needsEscape = true;
+          } else if (charCode === 34 || charCode === 92) {
+            charCodes.push(92);
+            charCodes.push(charCode);
+            needsEscape = true;
+          } else
+            charCodes.push(charCode);
+        }
+        sb.write$1(needsEscape ? P.String_String$fromCharCodes(charCodes) : s);
+      }}
+  },
+  _JsonStringifier_stringifyJsonValue_closure: {
+    "": "Closure:18;box_0,this_1",
+    call$2: function(key, value) {
+      var t1, t2, t3;
+      t1 = this.box_0;
+      t2 = this.this_1;
+      if (!t1.first_0) {
+        t3 = t2.sink;
+        t3.write$1(",\"");
+      } else {
+        t3 = t2.sink;
+        t3.write$1("\"");
+      }
+      U._JsonStringifier_escape(t3, key);
+      t3.write$1("\":");
+      t2.stringifyValue$1(value);
+      t1.first_0 = false;
+    }
+  }
+}],
 ["math.vec2", "../math/vec2.dart", , G, {
   "": "",
   Vec2: {
@@ -6421,7 +6633,7 @@ var $$ = {};
           return H.ioore(particles, t3);
         t1.push(particles[t3]._particle$_position);
         simulation = N.Simulation$();
-        for (i = 0; i < 100; ++i) {
+        for (i = 0; i < 1000; ++i) {
           simulation.Simulate$1(particles);
           t1 = this._path;
           t2 = particles.length;
@@ -6443,21 +6655,24 @@ var $$ = {};
       } else {
         t1 = this._path;
         if (t1 != null) {
-          t2 = t1.length;
-          t3 = t2 - 1;
-          if (t3 < 0)
-            return H.ioore(t1, t3);
-          renderer.drawCircle$3(t1[t3], 10, "rgba(128, 128, 128, " + H.S(this._alpha) + ")");
-          renderer.drawPath$4(this._path, false, "rgba(0, 0, 0, " + H.S(this._alpha) + ")", "rgba(192, 192, 192, " + H.S(this._alpha) + ")");
-          t3 = this._alpha - 0.001;
-          this._alpha = t3;
-          if (t3 <= 0)
+          t2 = this._alpha;
+          if (t2 > 0) {
+            t3 = t1.length;
+            t4 = t3 - 1;
+            if (t4 < 0)
+              return H.ioore(t1, t4);
+            renderer.drawCircle$3(t1[t4], 10, "rgba(128, 128, 128, " + H.S(t2) + ")");
+            renderer.drawPath$4(this._path, false, "rgba(0, 0, 0, " + H.S(this._alpha) + ")", "rgba(192, 192, 192, " + H.S(this._alpha) + ")");
+          }
+          t1 = this._alpha - 0.05;
+          this._alpha = t1;
+          if (t1 <= 0)
             this._alpha = 0;
         }
       }
     },
     get$Name: function() {
-      return "create particle";
+      return "click and hold mouse button to create particle and set its velocity, user CTRL + click to create fixed particle ";
     }
   },
   CreateParticle_Activate_closure: {
@@ -6539,29 +6754,7 @@ var $$ = {};
 ["particle.delete", "tools/particle.delete.dart", , A, {
   "": "",
   DeleteParticle: {
-    "": "Tool;_canvas,_highlighted,_particles,_$delete$_onMouseMoveStream,_onClickStream",
-    _onMouseMove$1: function(e) {
-      var x, t1, t2, mouse, p, t3;
-      J.set$length$asx(this._highlighted, 0);
-      x = J.get$layer$x(e).x;
-      x.toString;
-      t1 = this._canvas.clientHeight;
-      t2 = H.setRuntimeTypeInfo(new P.Point(e.layerX, e.layerY), [null]).y;
-      t2.toString;
-      if (typeof t1 !== "number")
-        return t1.$sub();
-      if (typeof t2 !== "number")
-        return H.iae(t2);
-      mouse = new G.Vec2(x, t1 - t2);
-      for (t1 = this._particles, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
-        p = t1._current;
-        t2 = p.get$Position();
-        t3 = t2.x - mouse.x;
-        t2 = t2.y - mouse.y;
-        if (t3 * t3 + t2 * t2 < 1)
-          this._highlighted.push(p);
-      }
-    },
+    "": "Tool;_canvas,_highlighted,_particles,_mouseEvent,_$delete$_onMouseMoveStream,_onClickStream",
     _onClick$1: function(e) {
       var x, t1, t2, mouse, $delete, p, t3, t4, t5;
       x = J.get$layer$x(e).x;
@@ -6607,16 +6800,46 @@ var $$ = {};
       this._highlighted = H.setRuntimeTypeInfo([], [D.Particle]);
     },
     Draw$1: function(renderer) {
-      return;
+      var t1, x, t2, mouse, p, t3, t4;
+      J.set$length$asx(this._highlighted, 0);
+      t1 = this._mouseEvent;
+      if (t1 != null) {
+        t1 = J.get$layer$x(t1);
+        x = t1.x;
+        x.toString;
+        t2 = this._canvas.clientHeight;
+        t1 = t1.y;
+        t1.toString;
+        if (typeof t2 !== "number")
+          return t2.$sub();
+        if (typeof t1 !== "number")
+          return H.iae(t1);
+        mouse = new G.Vec2(x, t2 - t1);
+        for (t1 = this._particles, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
+          p = t1._current;
+          t2 = p.get$Position();
+          t3 = t2.x - mouse.x;
+          t2 = t2.y - mouse.y;
+          t4 = p._radius;
+          if (t3 * t3 + t2 * t2 < t4 * t4)
+            this._highlighted.push(p);
+        }
+        for (t1 = this._highlighted, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
+          t2 = t1._current.get$Box();
+          renderer.toString;
+          renderer.drawPath$4(t2._points, true, "rgba(255, 0, 0, 1.0)", "rgba(255, 0, 0, 1.0)");
+        }
+      }
     },
     get$Name: function() {
-      return "delete particle";
+      return "click particle to delete";
     }
   },
   DeleteParticle_Activate_closure: {
     "": "Closure:11;this_0",
     call$1: function(e) {
-      return this.this_0._onMouseMove$1(e);
+      this.this_0._mouseEvent = e;
+      return;
     }
   },
   DeleteParticle_Activate_closure0: {
@@ -6718,25 +6941,28 @@ var $$ = {};
   "": "",
   main: [function() {
     var t1, t2;
+    t1 = H.fillLiteralMap(["score", 40], P.LinkedHashMap_LinkedHashMap(null, null, null, null, null));
+    t2 = H.fillLiteralMap(["score", 50], P.LinkedHashMap_LinkedHashMap(null, null, null, null, null));
+    new U._JsonStringifier(P.StringBuffer$(""), P.HashSet_HashSet$identity(null)).stringifyValue$1([t1, t2]);
     $.canvas = document.querySelector("#canvas");
-    t1 = $.get$buttonCreate();
-    t1.toString;
-    t2 = C.EventStreamProvider_click._eventType;
-    t1 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t1, t2, false), [null]);
-    H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t1._target, t1._eventType, W._wrapZone(new V.main_closure()), t1._useCapture), [H.getTypeArgumentByIndex(t1, 0)])._tryResume$0();
-    t1 = $.get$buttonDelete();
-    t1.toString;
-    t2 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t1, t2, false), [null]);
-    H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t2._target, t2._eventType, W._wrapZone(new V.main_closure0()), t2._useCapture), [H.getTypeArgumentByIndex(t2, 0)])._tryResume$0();
-    t2 = $.canvas;
-    t2 = new B.CreateParticle(1, null, $.get$particles(), null, t2, 0.1, null, null, null);
-    $.tool = t2;
-    t2.Activate$0();
+    t2 = $.get$buttonCreate();
+    t2.toString;
+    t1 = C.EventStreamProvider_click._eventType;
+    t2 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t2, t1, false), [null]);
+    H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t2._target, t2._eventType, W._wrapZone(new V.main_closure()), t2._useCapture), [H.getTypeArgumentByIndex(t2, 0)])._tryResume$0();
+    t2 = $.get$buttonDelete();
+    t2.toString;
+    t1 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t2, t1, false), [null]);
+    H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t1._target, t1._eventType, W._wrapZone(new V.main_closure0()), t1._useCapture), [H.getTypeArgumentByIndex(t1, 0)])._tryResume$0();
+    t1 = $.canvas;
+    t1 = new B.CreateParticle(1, null, $.get$particles(), null, t1, 0.1, null, null, null);
+    $.tool = t1;
+    t1.Activate$0();
     $.simulation = N.Simulation$();
-    t2 = $.canvas;
-    t1 = new Q.CanvasRenderer(6.283185307179586, t2, null);
-    t1._context = J.get$context2D$x(t2);
-    $.renderer = t1;
+    t1 = $.canvas;
+    t2 = new Q.CanvasRenderer(6.283185307179586, t1, null);
+    t2._context = J.get$context2D$x(t1);
+    $.renderer = t2;
     C.Window_methods.get$animationFrame(window).then$1(V.appLoop$closure());
   }, "call$0", "main$closure", 0, 0, 0],
   appLoop: [function(delta) {
@@ -6786,7 +7012,7 @@ var $$ = {};
     call$1: function(e) {
       var t1;
       $.tool.Deactivate$0();
-      t1 = new A.DeleteParticle($.canvas, null, $.get$particles(), null, null);
+      t1 = new A.DeleteParticle($.canvas, null, $.get$particles(), null, null, null);
       $.tool = t1;
       t1.Activate$0();
       return;
@@ -7519,6 +7745,7 @@ init.metadata = [{func: "void_", void: true},
 {func: "dynamic__dynamic_StackTrace", args: [null, P.StackTrace]},
 {func: "dynamic__Symbol_dynamic", args: [P.Symbol, null]},
 {func: "String__int", ret: J.JSString, args: [J.JSInt]},
+{func: "dynamic__String_Object", args: [J.JSString, P.Object]},
 ];
 $ = null;
 Isolate = Isolate.$finishIsolateConstructor(Isolate);
@@ -12202,6 +12429,50 @@ function dart_precompiled($collectedClasses) {
   if ($desc instanceof Array)
     $desc = $desc[1];
   Gravity.prototype = $desc;
+  function JsonUnsupportedObjectError(unsupportedObject, cause) {
+    this.unsupportedObject = unsupportedObject;
+    this.cause = cause;
+  }
+  JsonUnsupportedObjectError.builtin$cls = "JsonUnsupportedObjectError";
+  if (!"name" in JsonUnsupportedObjectError)
+    JsonUnsupportedObjectError.name = "JsonUnsupportedObjectError";
+  $desc = $collectedClasses.JsonUnsupportedObjectError;
+  if ($desc instanceof Array)
+    $desc = $desc[1];
+  JsonUnsupportedObjectError.prototype = $desc;
+  function JsonCyclicError(unsupportedObject, cause) {
+    this.unsupportedObject = unsupportedObject;
+    this.cause = cause;
+  }
+  JsonCyclicError.builtin$cls = "JsonCyclicError";
+  if (!"name" in JsonCyclicError)
+    JsonCyclicError.name = "JsonCyclicError";
+  $desc = $collectedClasses.JsonCyclicError;
+  if ($desc instanceof Array)
+    $desc = $desc[1];
+  JsonCyclicError.prototype = $desc;
+  function _JsonStringifier(sink, seen) {
+    this.sink = sink;
+    this.seen = seen;
+  }
+  _JsonStringifier.builtin$cls = "_JsonStringifier";
+  if (!"name" in _JsonStringifier)
+    _JsonStringifier.name = "_JsonStringifier";
+  $desc = $collectedClasses._JsonStringifier;
+  if ($desc instanceof Array)
+    $desc = $desc[1];
+  _JsonStringifier.prototype = $desc;
+  function _JsonStringifier_stringifyJsonValue_closure(box_0, this_1) {
+    this.box_0 = box_0;
+    this.this_1 = this_1;
+  }
+  _JsonStringifier_stringifyJsonValue_closure.builtin$cls = "_JsonStringifier_stringifyJsonValue_closure";
+  if (!"name" in _JsonStringifier_stringifyJsonValue_closure)
+    _JsonStringifier_stringifyJsonValue_closure.name = "_JsonStringifier_stringifyJsonValue_closure";
+  $desc = $collectedClasses._JsonStringifier_stringifyJsonValue_closure;
+  if ($desc instanceof Array)
+    $desc = $desc[1];
+  _JsonStringifier_stringifyJsonValue_closure.prototype = $desc;
   function Vec2(x, y) {
     this.x = x;
     this.y = y;
@@ -12284,10 +12555,11 @@ function dart_precompiled($collectedClasses) {
   if ($desc instanceof Array)
     $desc = $desc[1];
   CreateParticle_Activate_closure1.prototype = $desc;
-  function DeleteParticle(_canvas, _highlighted, _particles, _$delete$_onMouseMoveStream, _onClickStream) {
+  function DeleteParticle(_canvas, _highlighted, _particles, _mouseEvent, _$delete$_onMouseMoveStream, _onClickStream) {
     this._canvas = _canvas;
     this._highlighted = _highlighted;
     this._particles = _particles;
+    this._mouseEvent = _mouseEvent;
     this._$delete$_onMouseMoveStream = _$delete$_onMouseMoveStream;
     this._onClickStream = _onClickStream;
   }
@@ -12391,5 +12663,5 @@ function dart_precompiled($collectedClasses) {
   if ($desc instanceof Array)
     $desc = $desc[1];
   Tool.prototype = $desc;
-  return [HtmlElement, AnchorElement, AnimationEvent, AreaElement, AudioElement, AutocompleteErrorEvent, BRElement, BaseElement, BeforeLoadEvent, BeforeUnloadEvent, BodyElement, ButtonElement, CanvasElement, CanvasGradient, CanvasPattern, CanvasRenderingContext, CanvasRenderingContext2D, CloseEvent, CompositionEvent, ContentElement, CssFontFaceLoadEvent, CustomEvent, DListElement, DataListElement, DetailsElement, DeviceMotionEvent, DeviceOrientationEvent, DialogElement, DivElement, Document, DomError, DomException, Element, EmbedElement, ErrorEvent, Event, EventTarget, FieldSetElement, FileError, FocusEvent, FormElement, HRElement, HashChangeEvent, HeadElement, HeadingElement, HtmlDocument, HtmlHtmlElement, IFrameElement, ImageElement, InputElement, KeyboardEvent, KeygenElement, LIElement, LabelElement, LegendElement, LinkElement, MapElement, MediaElement, MediaError, MediaKeyError, MediaKeyEvent, MediaKeyMessageEvent, MediaKeyNeededEvent, MediaStream, MediaStreamEvent, MediaStreamTrackEvent, MenuElement, MessageEvent, MetaElement, MeterElement, MidiConnectionEvent, MidiMessageEvent, ModElement, MouseEvent, Navigator, NavigatorUserMediaError, Node, OListElement, ObjectElement, OptGroupElement, OptionElement, OutputElement, OverflowEvent, PageTransitionEvent, ParagraphElement, ParamElement, PopStateEvent, PositionError, PreElement, ProgressElement, ProgressEvent, QuoteElement, ResourceProgressEvent, RtcDataChannelEvent, RtcDtmfToneChangeEvent, RtcIceCandidateEvent, ScriptElement, SecurityPolicyViolationEvent, SelectElement, ShadowElement, SourceElement, SpanElement, SpeechInputEvent, SpeechRecognitionError, SpeechRecognitionEvent, SpeechSynthesisEvent, StorageEvent, StyleElement, TableCaptionElement, TableCellElement, TableColElement, TableElement, TableRowElement, TableSectionElement, TemplateElement, TextAreaElement, TextEvent, TitleElement, TouchEvent, TrackElement, TrackEvent, TransitionEvent, UIEvent, UListElement, UnknownElement, VideoElement, WheelEvent, Window, _HTMLAppletElement, _HTMLBaseFontElement, _HTMLDirectoryElement, _HTMLFontElement, _HTMLFrameElement, _HTMLFrameSetElement, _HTMLMarqueeElement, _MutationEvent, _XMLHttpRequestProgressEvent, VersionChangeEvent, AElement, AltGlyphElement, AnimateElement, AnimateMotionElement, AnimateTransformElement, AnimatedLength, AnimatedLengthList, AnimatedNumber, AnimatedNumberList, AnimationElement, CircleElement, ClipPathElement, DefsElement, DescElement, EllipseElement, FEBlendElement, FEColorMatrixElement, FEComponentTransferElement, FECompositeElement, FEConvolveMatrixElement, FEDiffuseLightingElement, FEDisplacementMapElement, FEDistantLightElement, FEFloodElement, FEFuncAElement, FEFuncBElement, FEFuncGElement, FEFuncRElement, FEGaussianBlurElement, FEImageElement, FEMergeElement, FEMergeNodeElement, FEMorphologyElement, FEOffsetElement, FEPointLightElement, FESpecularLightingElement, FESpotLightElement, FETileElement, FETurbulenceElement, FilterElement, ForeignObjectElement, GElement, GraphicsElement, ImageElement0, LineElement, LinearGradientElement, MarkerElement, MaskElement, MetadataElement, PathElement, PatternElement, PolygonElement, PolylineElement, RadialGradientElement, RectElement, ScriptElement0, SetElement, StopElement, StyleElement0, SvgElement, SvgSvgElement, SwitchElement, SymbolElement, TSpanElement, TextContentElement, TextElement, TextPathElement, TextPositioningElement, TitleElement0, UseElement, ViewElement, ZoomEvent, _GradientElement, _SVGAltGlyphDefElement, _SVGAltGlyphItemElement, _SVGAnimateColorElement, _SVGComponentTransferFunctionElement, _SVGCursorElement, _SVGFEDropShadowElement, _SVGFontElement, _SVGFontFaceElement, _SVGFontFaceFormatElement, _SVGFontFaceNameElement, _SVGFontFaceSrcElement, _SVGFontFaceUriElement, _SVGGlyphElement, _SVGGlyphRefElement, _SVGHKernElement, _SVGMPathElement, _SVGMissingGlyphElement, _SVGVKernElement, AudioProcessingEvent, OfflineAudioCompletionEvent, ContextEvent, SqlError, TypedData, Uint8List, JS_CONST, Interceptor, JSBool, JSNull, JavaScriptObject, PlainJavaScriptObject, UnknownJavaScriptObject, JSArray, JSNumber, JSInt, JSDouble, JSString, startRootIsolate_closure, startRootIsolate_closure0, _Manager, _IsolateContext, _EventLoop, _EventLoop__runHelper_next, _IsolateEvent, _MainManagerStub, IsolateNatives__processWorkerMessage_closure, _BaseSendPort, _NativeJsSendPort, _NativeJsSendPort_send_closure, _WorkerSendPort, RawReceivePortImpl, ReceivePortImpl, _JsSerializer, _JsCopier, _JsDeserializer, _JsVisitedMap, _MessageTraverserVisitedMap, _MessageTraverser, _Copier, _Copier_visitMap_closure, _Serializer, _Deserializer, TimerImpl, TimerImpl_internalCallback, TimerImpl_internalCallback0, ReflectionInfo, TypeErrorDecoder, NullError, JsNoSuchMethodError, UnknownJsTypeError, unwrapException_saveStackTrace, _StackTrace, invokeClosure_closure, invokeClosure_closure0, invokeClosure_closure1, invokeClosure_closure2, invokeClosure_closure3, Closure, TearOffClosure, BoundClosure, RuntimeError, RuntimeType, RuntimeFunctionType, DynamicRuntimeType, TypeImpl, initHooks_closure, initHooks_closure0, initHooks_closure1, Box2, CanvasRenderer, Contact, ListIterator, MappedIterable, EfficientLengthMappedIterable, MappedIterator, FixedLengthListMixin, _AsyncError, Future, _Completer, _AsyncCompleter, _Future, _Future__addListener_closure, _Future__chainFutures_closure, _Future__chainFutures_closure0, _Future__asyncComplete_closure, _Future__propagateToListeners_closure, _Future__propagateToListeners_closure0, _Future__propagateToListeners__closure, _Future__propagateToListeners__closure0, Stream, Stream_forEach_closure, Stream_forEach__closure, Stream_forEach__closure0, Stream_forEach_closure0, Stream_length_closure, Stream_length_closure0, StreamSubscription, _StreamController, _StreamController__subscribe_closure, _StreamController__recordCancel_complete, _SyncStreamControllerDispatch, _AsyncStreamControllerDispatch, _AsyncStreamController, _StreamController__AsyncStreamControllerDispatch, _SyncStreamController, _StreamController__SyncStreamControllerDispatch, _ControllerStream, _ControllerSubscription, _EventSink, _BufferingStreamSubscription, _BufferingStreamSubscription__sendDone_sendDone, _StreamImpl, _DelayedEvent, _DelayedData, _DelayedDone, _PendingEvents, _PendingEvents_schedule_closure, _StreamImplEvents, _cancelAndError_closure, _cancelAndErrorClosure_closure, _BaseZone, _BaseZone_bindCallback_closure, _BaseZone_bindCallback_closure0, _BaseZone_bindUnaryCallback_closure, _BaseZone_bindUnaryCallback_closure0, _rootHandleUncaughtError_closure, _rootHandleUncaughtError__closure, _RootZone, _HashMap, _HashMap_values_closure, HashMapKeyIterable, HashMapKeyIterator, _LinkedHashMap, _LinkedHashMap_values_closure, LinkedHashMapCell, LinkedHashMapKeyIterable, LinkedHashMapKeyIterator, _HashSet, _IdentityHashSet, HashSetIterator, _LinkedHashSet, LinkedHashSetCell, LinkedHashSetIterator, _HashSetBase, IterableBase, ListMixin, Maps_mapToString_closure, ListQueue, _ListQueueIterator, NoSuchMethodError_toString_closure, Duration, Duration_toString_sixDigits, Duration_toString_twoDigits, Error, NullThrownError, ArgumentError, RangeError, UnsupportedError, UnimplementedError, StateError, ConcurrentModificationError, StackOverflowError, CyclicInitializationError, _ExceptionImplementation, Expando, Iterator, Null, Object, StackTrace, StringBuffer, Symbol, Window_animationFrame_closure, EventStreamProvider, _EventStream, _ElementEventStreamImpl, _EventStreamSubscription, Point, _NativeTypedArray, _NativeTypedArrayOfInt, _NativeTypedArray_ListMixin, _NativeTypedArray_ListMixin_FixedLengthListMixin, Quadric, Force, Gravity, Vec2, Particle, CreateParticle, CreateParticle_Activate_closure, CreateParticle_Activate_closure0, CreateParticle_Activate_closure1, DeleteParticle, DeleteParticle_Activate_closure, DeleteParticle_Activate_closure0, CollisionPair, CollisionMap, main_closure, main_closure0, Renderer, Simulation, Tool];
+  return [HtmlElement, AnchorElement, AnimationEvent, AreaElement, AudioElement, AutocompleteErrorEvent, BRElement, BaseElement, BeforeLoadEvent, BeforeUnloadEvent, BodyElement, ButtonElement, CanvasElement, CanvasGradient, CanvasPattern, CanvasRenderingContext, CanvasRenderingContext2D, CloseEvent, CompositionEvent, ContentElement, CssFontFaceLoadEvent, CustomEvent, DListElement, DataListElement, DetailsElement, DeviceMotionEvent, DeviceOrientationEvent, DialogElement, DivElement, Document, DomError, DomException, Element, EmbedElement, ErrorEvent, Event, EventTarget, FieldSetElement, FileError, FocusEvent, FormElement, HRElement, HashChangeEvent, HeadElement, HeadingElement, HtmlDocument, HtmlHtmlElement, IFrameElement, ImageElement, InputElement, KeyboardEvent, KeygenElement, LIElement, LabelElement, LegendElement, LinkElement, MapElement, MediaElement, MediaError, MediaKeyError, MediaKeyEvent, MediaKeyMessageEvent, MediaKeyNeededEvent, MediaStream, MediaStreamEvent, MediaStreamTrackEvent, MenuElement, MessageEvent, MetaElement, MeterElement, MidiConnectionEvent, MidiMessageEvent, ModElement, MouseEvent, Navigator, NavigatorUserMediaError, Node, OListElement, ObjectElement, OptGroupElement, OptionElement, OutputElement, OverflowEvent, PageTransitionEvent, ParagraphElement, ParamElement, PopStateEvent, PositionError, PreElement, ProgressElement, ProgressEvent, QuoteElement, ResourceProgressEvent, RtcDataChannelEvent, RtcDtmfToneChangeEvent, RtcIceCandidateEvent, ScriptElement, SecurityPolicyViolationEvent, SelectElement, ShadowElement, SourceElement, SpanElement, SpeechInputEvent, SpeechRecognitionError, SpeechRecognitionEvent, SpeechSynthesisEvent, StorageEvent, StyleElement, TableCaptionElement, TableCellElement, TableColElement, TableElement, TableRowElement, TableSectionElement, TemplateElement, TextAreaElement, TextEvent, TitleElement, TouchEvent, TrackElement, TrackEvent, TransitionEvent, UIEvent, UListElement, UnknownElement, VideoElement, WheelEvent, Window, _HTMLAppletElement, _HTMLBaseFontElement, _HTMLDirectoryElement, _HTMLFontElement, _HTMLFrameElement, _HTMLFrameSetElement, _HTMLMarqueeElement, _MutationEvent, _XMLHttpRequestProgressEvent, VersionChangeEvent, AElement, AltGlyphElement, AnimateElement, AnimateMotionElement, AnimateTransformElement, AnimatedLength, AnimatedLengthList, AnimatedNumber, AnimatedNumberList, AnimationElement, CircleElement, ClipPathElement, DefsElement, DescElement, EllipseElement, FEBlendElement, FEColorMatrixElement, FEComponentTransferElement, FECompositeElement, FEConvolveMatrixElement, FEDiffuseLightingElement, FEDisplacementMapElement, FEDistantLightElement, FEFloodElement, FEFuncAElement, FEFuncBElement, FEFuncGElement, FEFuncRElement, FEGaussianBlurElement, FEImageElement, FEMergeElement, FEMergeNodeElement, FEMorphologyElement, FEOffsetElement, FEPointLightElement, FESpecularLightingElement, FESpotLightElement, FETileElement, FETurbulenceElement, FilterElement, ForeignObjectElement, GElement, GraphicsElement, ImageElement0, LineElement, LinearGradientElement, MarkerElement, MaskElement, MetadataElement, PathElement, PatternElement, PolygonElement, PolylineElement, RadialGradientElement, RectElement, ScriptElement0, SetElement, StopElement, StyleElement0, SvgElement, SvgSvgElement, SwitchElement, SymbolElement, TSpanElement, TextContentElement, TextElement, TextPathElement, TextPositioningElement, TitleElement0, UseElement, ViewElement, ZoomEvent, _GradientElement, _SVGAltGlyphDefElement, _SVGAltGlyphItemElement, _SVGAnimateColorElement, _SVGComponentTransferFunctionElement, _SVGCursorElement, _SVGFEDropShadowElement, _SVGFontElement, _SVGFontFaceElement, _SVGFontFaceFormatElement, _SVGFontFaceNameElement, _SVGFontFaceSrcElement, _SVGFontFaceUriElement, _SVGGlyphElement, _SVGGlyphRefElement, _SVGHKernElement, _SVGMPathElement, _SVGMissingGlyphElement, _SVGVKernElement, AudioProcessingEvent, OfflineAudioCompletionEvent, ContextEvent, SqlError, TypedData, Uint8List, JS_CONST, Interceptor, JSBool, JSNull, JavaScriptObject, PlainJavaScriptObject, UnknownJavaScriptObject, JSArray, JSNumber, JSInt, JSDouble, JSString, startRootIsolate_closure, startRootIsolate_closure0, _Manager, _IsolateContext, _EventLoop, _EventLoop__runHelper_next, _IsolateEvent, _MainManagerStub, IsolateNatives__processWorkerMessage_closure, _BaseSendPort, _NativeJsSendPort, _NativeJsSendPort_send_closure, _WorkerSendPort, RawReceivePortImpl, ReceivePortImpl, _JsSerializer, _JsCopier, _JsDeserializer, _JsVisitedMap, _MessageTraverserVisitedMap, _MessageTraverser, _Copier, _Copier_visitMap_closure, _Serializer, _Deserializer, TimerImpl, TimerImpl_internalCallback, TimerImpl_internalCallback0, ReflectionInfo, TypeErrorDecoder, NullError, JsNoSuchMethodError, UnknownJsTypeError, unwrapException_saveStackTrace, _StackTrace, invokeClosure_closure, invokeClosure_closure0, invokeClosure_closure1, invokeClosure_closure2, invokeClosure_closure3, Closure, TearOffClosure, BoundClosure, RuntimeError, RuntimeType, RuntimeFunctionType, DynamicRuntimeType, TypeImpl, initHooks_closure, initHooks_closure0, initHooks_closure1, Box2, CanvasRenderer, Contact, ListIterator, MappedIterable, EfficientLengthMappedIterable, MappedIterator, FixedLengthListMixin, _AsyncError, Future, _Completer, _AsyncCompleter, _Future, _Future__addListener_closure, _Future__chainFutures_closure, _Future__chainFutures_closure0, _Future__asyncComplete_closure, _Future__propagateToListeners_closure, _Future__propagateToListeners_closure0, _Future__propagateToListeners__closure, _Future__propagateToListeners__closure0, Stream, Stream_forEach_closure, Stream_forEach__closure, Stream_forEach__closure0, Stream_forEach_closure0, Stream_length_closure, Stream_length_closure0, StreamSubscription, _StreamController, _StreamController__subscribe_closure, _StreamController__recordCancel_complete, _SyncStreamControllerDispatch, _AsyncStreamControllerDispatch, _AsyncStreamController, _StreamController__AsyncStreamControllerDispatch, _SyncStreamController, _StreamController__SyncStreamControllerDispatch, _ControllerStream, _ControllerSubscription, _EventSink, _BufferingStreamSubscription, _BufferingStreamSubscription__sendDone_sendDone, _StreamImpl, _DelayedEvent, _DelayedData, _DelayedDone, _PendingEvents, _PendingEvents_schedule_closure, _StreamImplEvents, _cancelAndError_closure, _cancelAndErrorClosure_closure, _BaseZone, _BaseZone_bindCallback_closure, _BaseZone_bindCallback_closure0, _BaseZone_bindUnaryCallback_closure, _BaseZone_bindUnaryCallback_closure0, _rootHandleUncaughtError_closure, _rootHandleUncaughtError__closure, _RootZone, _HashMap, _HashMap_values_closure, HashMapKeyIterable, HashMapKeyIterator, _LinkedHashMap, _LinkedHashMap_values_closure, LinkedHashMapCell, LinkedHashMapKeyIterable, LinkedHashMapKeyIterator, _HashSet, _IdentityHashSet, HashSetIterator, _LinkedHashSet, LinkedHashSetCell, LinkedHashSetIterator, _HashSetBase, IterableBase, ListMixin, Maps_mapToString_closure, ListQueue, _ListQueueIterator, NoSuchMethodError_toString_closure, Duration, Duration_toString_sixDigits, Duration_toString_twoDigits, Error, NullThrownError, ArgumentError, RangeError, UnsupportedError, UnimplementedError, StateError, ConcurrentModificationError, StackOverflowError, CyclicInitializationError, _ExceptionImplementation, Expando, Iterator, Null, Object, StackTrace, StringBuffer, Symbol, Window_animationFrame_closure, EventStreamProvider, _EventStream, _ElementEventStreamImpl, _EventStreamSubscription, Point, _NativeTypedArray, _NativeTypedArrayOfInt, _NativeTypedArray_ListMixin, _NativeTypedArray_ListMixin_FixedLengthListMixin, Quadric, Force, Gravity, JsonUnsupportedObjectError, JsonCyclicError, _JsonStringifier, _JsonStringifier_stringifyJsonValue_closure, Vec2, Particle, CreateParticle, CreateParticle_Activate_closure, CreateParticle_Activate_closure0, CreateParticle_Activate_closure1, DeleteParticle, DeleteParticle_Activate_closure, DeleteParticle_Activate_closure0, CollisionPair, CollisionMap, main_closure, main_closure0, Renderer, Simulation, Tool];
 }

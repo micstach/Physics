@@ -17,6 +17,7 @@ class CreateParticle implements Tool
   Particle _particle = null ;
   final CanvasElement _canvas ;
   final _velocityFactor ;
+  MouseEvent _mouseEvent = null ;
   
   CreateParticle(CanvasElement canvas, particles, velocityFactor)
       : _canvas = canvas
@@ -35,9 +36,9 @@ class CreateParticle implements Tool
     _onMouseMoveStream = _canvas.onMouseMove.listen((e) => onMouseMove(e)) ;
     _onMouseUpStream = _canvas.onMouseUp.listen((e) => onMouseUp(e)) ;
 
-    //_canvas.onTouchStart.listen((e) => onTouchStart(e)) ;
-    //_canvas.onTouchMove.listen((e) => onTouchMove(e)) ;
-    //_canvas.onTouchEnd.listen((e) => onTouchEnd(e)) ;
+//    _canvas.onTouchStart.listen((e) => onTouchStart(e)) ;
+//    _canvas.onTouchMove.listen((e) => onTouchMove(e)) ;
+//    _canvas.onTouchEnd.listen((e) => onTouchEnd(e)) ;
   }
 
   void Deactivate()
@@ -111,10 +112,11 @@ class CreateParticle implements Tool
   
   void onMouseMove(MouseEvent e)
   {
+    _mouseEvent = e ;
+    
     Vec2 point = new Vec2(e.layer.x.toDouble(), _canvas.clientHeight - e.layer.y.toDouble()) ;
     
     changeVelocity(point, (e.ctrlKey) ? double.INFINITY : 1.0) ;
-    
   }
 
   void onMouseUp(MouseEvent e)
@@ -166,7 +168,7 @@ class CreateParticle implements Tool
       _path = new List<Vec2>() ;
       _path.add(particles[particles.length-1].Position);
       
-      var simulation = new Simulation() ;
+      /*var simulation = new Simulation() ;
       
       for (int i=0; i<1000; i++)
       {
@@ -175,7 +177,7 @@ class CreateParticle implements Tool
         // last particle is our NEW particle
         _path.add(particles[particles.length-1].Position);
       }
-
+      */
       _alpha = 0.75 ;
       
       renderer.drawCircle(_particle.Position, _particle.Radius, "rgba(255, 128, 128, ${_alpha})") ;
@@ -201,4 +203,5 @@ class CreateParticle implements Tool
   
   String get Name => "click and hold mouse button to create particle and set its velocity, user CTRL + click to create fixed particle " ;
   
+  Vec2 get Position => _mouseEvent == null ? null : new Vec2(_mouseEvent.layer.x.toDouble(), _canvas.clientHeight - _mouseEvent.layer.y.toDouble()) ;
 }

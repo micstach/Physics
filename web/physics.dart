@@ -11,10 +11,12 @@ import 'tools/particle.delete.dart';
 
 import 'dart:html';
 import 'dart:math';
+import 'package:json/json.dart' as JSON;
 
 final InputElement slider = querySelector("#slider");
 final Element notes = querySelector("#notes");
 final Element details = querySelector("#details");
+final Element position = querySelector("#position");
 
 final num PHI = (sqrt(5) + 1) / 2;
 
@@ -32,6 +34,9 @@ final Element buttonDelete = querySelector('button#delete') ;
 CanvasRenderer renderer = null ;
 
 void main() {
+  var scores = [{'score': 40}, {'score': 50}] ;
+  var jsonText = JSON.stringify(scores) ;
+  
   canvas = querySelector("#canvas") ;
   
   buttonCreate.onClick.listen((e) => onCreateClicked(e)) ;
@@ -83,6 +88,11 @@ void appLoop(num delta) {
   querySelector("span#toolname").text = tool.Name ;
   
   details.text = "Collision pairs: " + simulation.Collisions.DynamicCollisionsCount.toString() + "/" + simulation.Collisions.Pairs.length.toString() ;
+  
+  if (tool.Position != null)
+  {
+    position.text = "Position (${tool.Position.x}, ${tool.Position.y})" ;  
+  }
   
   window.animationFrame.then(appLoop) ;
 }

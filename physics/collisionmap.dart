@@ -55,26 +55,30 @@ class CollisionMap
   
   List<CollisionPair> GetPairs(Particle a)
   {
-    List<CollisionPair> result = new List<CollisionPair>() ;
-    
-    if (_pairs != null)
+    if (_particlePairs.containsKey(a))
+      return _particlePairs[a] ;
+    else
     {
-      for (CollisionPair pair in _pairs.values)
+      List<CollisionPair> result = new List<CollisionPair>() ;
+      
+      if (_pairs != null)
       {
-        if (pair.Details != null)
+        for (CollisionPair pair in _pairs.values)
         {
-          if (pair.Details.A == a || pair.Details.B == a)
+          if (pair.Details != null)
           {
-            result.add(pair) ;
+            if (pair.Details.A == a || pair.Details.B == a)
+            {
+              result.add(pair) ;
+            }
           }
         }
       }
-    }
-    
-    if (!_particlePairs.containsKey(a))
+      
       _particlePairs[a] = result ;
     
-    return _particlePairs[a] ;
+      return _particlePairs[a] ;
+    }
   }
   
   void Reset()
