@@ -176,10 +176,6 @@ class Simulation
                 min.Discard() ;
                 min = pair ;
               }
-              else
-              {
-                
-              }
             }
           }
         }
@@ -203,51 +199,12 @@ class Simulation
     {
       if (pair.GetContact() == null) continue ;
       
-      pair.GetContact().Resolve(pair.A, pair.B) ;
-      
-//      const bool solution = false ;
-//      
-//      if (!pair.Details.IsResting)
-//      {
-//        if (solution)
-//        {
-//            a.Position = a.Position + a.Velocity * (-1.0 + pair.Details.Dt) ; 
-//            b.Position = b.Position + b.Velocity * (-1.0 + pair.Details.Dt) ;
-//            a.Velocity.Zero();
-//            b.Velocity.Zero();
-//            a.Mass = double.INFINITY ;
-//            b.Mass = double.INFINITY ;
-//        }
-//        else
-//        {
-//          a.Position = a.Position + a.Velocity * (-1.0 + pair.Details.Dt) ; 
-//          b.Position = b.Position + b.Velocity * (-1.0 + pair.Details.Dt) ;
-//          
-//          Vec2 rv = b.Velocity - a.Velocity ;
-//          Vec2 cn = (b.Position - a.Position).Normalize() ;
-//          
-//          double factor = (rv | cn) ;
-//          
-//          if (factor <= 0.0)
-//          {
-//            double j = Impulse(_dt, 0.5, factor, a.MassInv, b.MassInv) ;
-//            
-//            a.AddForce(cn * j) ;
-//            b.AddForce(cn * (-j)) ;
-//          }
-//        }
-//      }
-//      else
-//      {
-//        // TODO: rest contact handling
-//        //a.Position = a.Position + a.Velocity * (-1.0 + pair.Details.Dt) ; 
-//        //b.Position = b.Position + b.Velocity * (-1.0 + pair.Details.Dt) ;
-//        //a.Velocity.Zero();
-//        //b.Velocity.Zero();
-//      }
+      if (!pair.GetContact().IsResting)
+        pair.GetContact().Resolve(pair.A, pair.B) ;
     }
 
-    for (int i=0; i<25; i++)
+    // separate objects
+    for (int i=0; i<5; i++)
     {
       for (CollisionPair pair in collisionMap.Pairs)
       {
@@ -257,6 +214,26 @@ class Simulation
           pair.GetContact().Resolve(pair.A, pair.B);
       }
     }
+    
+    // project velocities
+    for (CollisionPair pair in collisionMap.Pairs)
+    {
+      if (pair.GetContact() == null) continue ;
+
+      if (pair.GetContact().IsResting)
+      {
+        Particle a = pair.A ;
+        Particle b = pair.B ;
+        
+        Vec2 cn = (b.Position - a.Position).Normalize() ;
+        
+        a.Velocity = Vec2.Project(a.Velocity, cn);
+        b.Velocity = Vec2.Project(b.Velocity, cn);
+        
+      }
+    }
+    
+    
 //    for (int j=0; j<particles.length; j++)
 //    {
 //      Particle a = particles[j] ;
@@ -277,7 +254,7 @@ class Simulation
       
       // renderer.drawBox(particle.Box, "rgba(64, 64, 64, 1.0)") ;
       
-      renderer.drawVector(particle.Velocity, particle.Position, "rgba(255, 128, 0, 1.0)") ;
+      renderer.drawVector(particle.Velocity * 10.0, particle.Position, "rgba(255, 128, 0, 1.0)") ;
     }
   }
   

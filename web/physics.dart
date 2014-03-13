@@ -55,6 +55,15 @@ void main() {
   
   renderer = new CanvasRenderer(canvas) ;
   
+  
+  for (int i=0; i<10; i++)
+  {
+    Particle p = new Particle(200.0, 50.0 + i * 20) ;
+    p.Mass = 1.0 ;
+    p.Velocity.Zero() ;
+    particles.add(p) ;
+  }  
+  
   window.animationFrame.then(appLoop) ;
 }
 

@@ -14,10 +14,13 @@ class SeparateContact extends Contact
   
   void Resolve(Particle a, Particle b)
   {
+    a.IsResting = true ;
+    b.IsResting = true ;
+
     Vec2 dp = b.Position - a.Position ;
     double len = dp.Length ;
     
-    if (len < (a.Radius + b.Radius))
+    if (len <= (a.Radius + b.Radius))
     {
       Vec2 delta = dp * ((a.Radius + b.Radius - len) / len) * 0.5 ;
       
@@ -56,6 +59,9 @@ class CollidingContact extends Contact
       
       a.AddForce(cn * j) ;
       b.AddForce(cn * (-j)) ;
+      
+      a.IsResting = false ;
+      b.IsResting = false ;
     }
   }
 }
@@ -69,6 +75,15 @@ class RestingContact extends Contact
   void Resolve(Particle a, Particle b)
   {
     return ;
+//    Particle p = (!a.IsFixed) ? a : b ;
+//    
+//    Vec2 cn = (b.Position - a.Position).Normalize() ;
+//    
+//    p.Position = p.Position - p.Velocity ;
+//    p.Velocity.Zero() ;
+        
+    //p.AddForce(cn * 2.5) ;
+    
   }
 }
 
@@ -116,7 +131,7 @@ abstract class Contact
     // relative movement
     var rv_dot_cn = rv | cn ;
     
-    const double THRESHOLD = 0.00001 ;
+    const double THRESHOLD = 0.0001 ;
     
     if (rv_dot_cn < -THRESHOLD)
     {
@@ -129,42 +144,50 @@ abstract class Contact
       
       if (eq.IsSolvable)
       {
-        if (0.0 < eq.x && eq.x <= 1.0 && eq.x < eq.y)
+        if (0.0 <= eq.x && eq.x <= 1.0 && eq.x < eq.y)
         {
           return new CollidingContact(eq.x) ;
         }
-        else if (0.0 < eq.y && eq.y <= 1.0 && eq.y < eq.x)
+        else if (0.0 <= eq.y && eq.y <= 1.0 && eq.y < eq.x)
         {
           return new CollidingContact(eq.y) ;
         }
       }
+      
+      if (dp.Length <= (a.Radius + b.Radius))
+      {
+        return new SeparateContact() ;
+      }      
     }
     else if (rv_dot_cn < THRESHOLD)
     {
-      // colliding contact
-      var ea = rv.SqLength;
-      var eb = 2.0 * ((dp.x * rv.x) + (dp.y * rv.y));
-      var ec = dp.SqLength - ((a.Radius + b.Radius) * (a.Radius + b.Radius)) ;
-
-      Quadric eq = new Quadric(ea, eb, ec) ;
-      
-      if (eq.IsSolvable)
+      if (dp.Length <= (a.Radius + b.Radius))
       {
-        if (0.0 <= eq.x && eq.x <= 1.0 && eq.x < eq.y)
-        {
-          return new RestingContact(eq.x) ;
-        }
-        else if (0.0 <= eq.y && eq.y <= 1.0 && eq.y < eq.x)
-        {
-          return new RestingContact(eq.y) ;
-        }
-      }
+        return new SeparateContact() ;
+      }  
+      
+      //      // colliding contact
+//      var ea = rv.SqLength;
+//      var eb = 2.0 * ((dp.x * rv.x) + (dp.y * rv.y));
+//      var ec = dp.SqLength - ((a.Radius + b.Radius) * (a.Radius + b.Radius)) ;
+//
+//      Quadric eq = new Quadric(ea, eb, ec) ;
+//      
+//      if (eq.IsSolvable)
+//      {
+//        if (0.0 <= eq.x && eq.x <= 1.0 && eq.x < eq.y)
+//        {
+//          return new RestingContact(eq.x) ;
+//        }
+//        else if (0.0 <= eq.y && eq.y <= 1.0 && eq.y < eq.x)
+//        {
+//          return new RestingContact(eq.y) ;
+//        }
+//      }
     }
     
-    if (dp.Length < (a.Radius + b.Radius))
-    {
-      return new SeparateContact() ;
-    }
+    
+
 
     return null ;
   }
@@ -172,5 +195,5 @@ abstract class Contact
   static double Impulse(double dt, double e, double relVel, double invMassA, double invMassB) 
   {
     return ((1.0 + e) / (dt * dt * 0.5)) * (relVel / (invMassA + invMassB)) ; 
-  }  
+  } 
 }

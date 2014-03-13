@@ -17,6 +17,7 @@ class Particle
   double _damping = 0.990 ;
   double _radius = 10.0 ;
   double _mass = double.INFINITY ;
+  bool _resting = false ;
   
   void _initializeBox()
   {
@@ -59,6 +60,9 @@ class Particle
   
   bool get IsFixed => _mass == double.INFINITY;
   
+  bool get IsResting => _resting ;
+  set IsResting(bool resting) => _resting = resting ;
+  
   double get MassInv { return IsFixed ? 0.0 : 1.0/_mass ; }
   
   double get Radius => _radius ;
@@ -75,6 +79,8 @@ class Particle
   {
     if (IsFixed) return ;
     
+    //if (IsResting) return ;
+        
     _acceleration = _force * MassInv ;
     
     Vec2 oldPosition = _position ;
