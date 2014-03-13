@@ -3,24 +3,88 @@ library contact;
 import '../../math/vec2.dart';
 import '../../math/quadric.dart';
 
+//import 'simulation.dart' ;
 import 'particle.dart';
 
-class Contact
+class SeparateContact extends Contact
 {
-  Particle _a ;
-  Particle _b ;
+  SeparateContact() : super(0.0) ;
   
-  double _dt ;
-  bool _resting = false ;
+  bool get IsResting => true ;
   
-  bool get IsResting => _resting ;
-  
-  Contact(this._a, this._b, this._dt) 
+  void Resolve(Particle a, Particle b)
   {
-    _resting = false ;
+    Vec2 dp = b.Position - a.Position ;
+    double len = dp.Length ;
+    
+    if (len < (a.Radius + b.Radius))
+    {
+      Vec2 delta = dp * ((a.Radius + b.Radius - len) / len) * 0.5 ;
+      
+      if (!a.IsFixed)
+      {
+        a.Position -= delta ;
+      }
+      
+      if (!b.IsFixed)
+      {
+        b.Position += delta ;
+      }    
+    }
   }
+}
+
+class CollidingContact extends Contact
+{
+  CollidingContact(double dt) : super(dt) ;
+
+  bool get IsResting => false ;
   
+  void Resolve(Particle a, Particle b)
+  {
+    a.Position = a.Position + a.Velocity * (-1.0 + super.Dt) ; 
+    b.Position = b.Position + b.Velocity * (-1.0 + super.Dt) ;
+    
+    Vec2 rv = b.Velocity - a.Velocity ;
+    Vec2 cn = (b.Position - a.Position).Normalize() ;
+    
+    double factor = (rv | cn) ;
+    
+    if (factor <= 0.0)
+    {
+      double j = Contact.Impulse(0.1, 0.5, factor, a.MassInv, b.MassInv) ;
+      
+      a.AddForce(cn * j) ;
+      b.AddForce(cn * (-j)) ;
+    }
+  }
+}
+
+class RestingContact extends Contact
+{
+  RestingContact(double dt) : super(dt) ;
+  
+  bool get IsResting => true ;
+  
+  void Resolve(Particle a, Particle b)
+  {
+    return ;
+  }
+}
+
+abstract class Contact
+{
+  double _dt ;
+
+  Contact(this._dt) 
+  {
+  }
+
   double get Dt => _dt ;
+  
+  bool get IsResting ;
+  
+  void Resolve(Particle a, Particle b) ;
   
   static Contact Find(Particle a, Particle b)
   {
@@ -52,7 +116,7 @@ class Contact
     // relative movement
     var rv_dot_cn = rv | cn ;
     
-    const double THRESHOLD = 0.0001 ;
+    const double THRESHOLD = 0.00001 ;
     
     if (rv_dot_cn < -THRESHOLD)
     {
@@ -65,28 +129,48 @@ class Contact
       
       if (eq.IsSolvable)
       {
-        if (0.0 <= eq.x && eq.x <= 1.0 && eq.x < eq.y)
+        if (0.0 < eq.x && eq.x <= 1.0 && eq.x < eq.y)
         {
-          return new Contact(a, b, eq.x) ;
+          return new CollidingContact(eq.x) ;
         }
-        else if (0.0 <= eq.y && eq.y <= 1.0 && eq.y < eq.x)
+        else if (0.0 < eq.y && eq.y <= 1.0 && eq.y < eq.x)
         {
-          return new Contact(a, b, eq.y) ;
+          return new CollidingContact(eq.y) ;
         }
       }
     }
-    else if (rv_dot_cn <= 0.0)
+    else if (rv_dot_cn < THRESHOLD)
     {
-      var contact = new Contact(a, b, 0.0) ;
-      contact._resting = true ;
+      // colliding contact
+      var ea = rv.SqLength;
+      var eb = 2.0 * ((dp.x * rv.x) + (dp.y * rv.y));
+      var ec = dp.SqLength - ((a.Radius + b.Radius) * (a.Radius + b.Radius)) ;
+
+      Quadric eq = new Quadric(ea, eb, ec) ;
       
-      return contact ;
+      if (eq.IsSolvable)
+      {
+        if (0.0 <= eq.x && eq.x <= 1.0 && eq.x < eq.y)
+        {
+          return new RestingContact(eq.x) ;
+        }
+        else if (0.0 <= eq.y && eq.y <= 1.0 && eq.y < eq.x)
+        {
+          return new RestingContact(eq.y) ;
+        }
+      }
+    }
+    
+    if (dp.Length < (a.Radius + b.Radius))
+    {
+      return new SeparateContact() ;
     }
 
     return null ;
   }
-  
-  Particle get A => _a ;
-  Particle get B => _b ;
-  
+
+  static double Impulse(double dt, double e, double relVel, double invMassA, double invMassB) 
+  {
+    return ((1.0 + e) / (dt * dt * 0.5)) * (relVel / (invMassA + invMassB)) ; 
+  }  
 }

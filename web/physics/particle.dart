@@ -10,7 +10,9 @@ class Particle
   Vec2 _acceleration = new Vec2(0.0, 0.0);
   Vec2 _force = new Vec2(0.0, 0.0);
   
-  Box2 _box = null ;
+  Box2 _velocityBox = null ;
+  
+  Box2 _largeBox = null ;
   
   double _damping = 0.990 ;
   double _radius = 10.0 ;
@@ -18,7 +20,7 @@ class Particle
   
   void _initializeBox()
   {
-    _box = new Box2(_position - _velocity, _velocity).Extend(_radius) ;
+    _velocityBox = new Box2(_position - _velocity, _velocity).Extend(_radius) ;
   }
   
   Particle.fromParticle(Particle particle)
@@ -61,7 +63,7 @@ class Particle
   
   double get Radius => _radius ;
   
-  Box2 get Box => _box ; 
+  Box2 get Box => _velocityBox ; 
   
   void AddForce(Vec2 force)
   {
