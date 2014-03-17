@@ -4,6 +4,9 @@ import 'renderer/canvasrenderer.dart' ;
 
 import 'physics/particle.dart';
 import 'physics/simulation.dart';
+import 'physics/collisionmap.dart' ;
+import 'physics/constraint.dart' ;
+import 'physics/constraint.distance.dart' ;
 
 import 'tools/tool.dart';
 import 'tools/particle.create.dart';
@@ -17,12 +20,15 @@ final InputElement slider = querySelector("#slider");
 final Element notes = querySelector("#notes");
 final Element details = querySelector("#details");
 final Element position = querySelector("#position");
+final Element collisions = querySelector("#collisions");
 
 final num PHI = (sqrt(5) + 1) / 2;
 
 CanvasElement canvas = null ;
 
 var particles = new List<Particle>() ;
+List<Constraint> constraints = new List<Constraint>() ;
+
 var colliding = new Set<Particle>() ;
 
 Tool tool = null ;
@@ -54,15 +60,69 @@ void main() {
   simulation.WorldHeight = canvas.clientHeight ;
   
   renderer = new CanvasRenderer(canvas) ;
-  
-  
-  for (int i=0; i<10; i++)
+
+  double x = 400.0 ; 
+  double y = 400.0 ; 
+  Particle p1 = new Particle(x, y) ;
+  p1.Mass = double.INFINITY ;
+  p1.Velocity.Zero();
+  particles.add(p1) ;
+
+  for (int i=1; i<=12; i++)
   {
-    Particle p = new Particle(200.0, 50.0 + i * 20) ;
-    p.Mass = 1.0 ;
-    p.Velocity.Zero() ;
-    particles.add(p) ;
-  }  
+    Particle p2 = new Particle(x + i * 25, y) ;
+    p2.Mass = (i==12) ? 100.0 : 1.0 ;
+    p2.Velocity.Zero();
+    particles.add(p2) ;
+  
+    constraints.add(new Distance(p1, p2)) ;
+    
+    p1 = p2 ;
+  }
+ 
+  window.animationFrame.then(appLoop) ;
+}
+
+/// Draw the complete figure for the current number of seeds.
+void appLoop(num delta) {
+  
+  renderer.clear() ;
+  
+  notes.text = "${particles.length} particle(s)";
+  
+  colliding.clear();
+  
+  if (tool != null)
+    tool.Draw(renderer) ;
+  
+  // simulate
+  simulation.Simulate(particles, constraints) ;
+  
+  // draw
+  simulation.Draw(particles, constraints, renderer) ;
+  
+//  collisions.innerHtml = "" ;
+//  if (simulation.Collisions != null)
+//  {
+//    for (CollisionPair collision in simulation.Collisions.Pairs)
+//    {
+//      if (collision.GetContact() != null)
+//      {
+//        collisions.innerHtml += collision.GetContact().Name ;
+//        collisions.innerHtml += """<br />""" ;
+//      }
+//    }
+//  }   
+  
+  querySelector("span#toolname").text = tool.Name ;
+  
+  if (simulation.Collisions != null)
+    details.text = "Collision pairs: " + simulation.Collisions.DynamicCollisionsCount.toString() + "/" + simulation.Collisions.Pairs.length.toString() ;
+  
+  if (tool.Position != null)
+  {
+    position.text = "Position (${tool.Position.x}, ${tool.Position.y})" ;  
+  }
   
   window.animationFrame.then(appLoop) ;
 }
@@ -96,36 +156,5 @@ void onDeleteClicked(MouseEvent e)
   tool.Deactivate() ;
   tool = new DeleteParticle(canvas, particles) ;
   tool.Activate() ;
-}
-
-/// Draw the complete figure for the current number of seeds.
-void appLoop(num delta) {
-  
-  renderer.clear() ;
-  
-  notes.text = "${particles.length} particle(s)";
-  
-  colliding.clear();
-  
-  if (tool != null)
-    tool.Draw(renderer) ;
-  
-  // simulate
-  simulation.Simulate(particles) ;
-  
-  // draw
-  simulation.Draw(particles, renderer) ;
-  
-  querySelector("span#toolname").text = tool.Name ;
-  
-  if (simulation.Collisions != null)
-    details.text = "Collision pairs: " + simulation.Collisions.DynamicCollisionsCount.toString() + "/" + simulation.Collisions.Pairs.length.toString() ;
-  
-  if (tool.Position != null)
-  {
-    position.text = "Position (${tool.Position.x}, ${tool.Position.y})" ;  
-  }
-  
-  window.animationFrame.then(appLoop) ;
 }
 

@@ -4,9 +4,11 @@ import "../../renderer/renderer.dart" ;
 import "../../math/vec2.dart" ;
 import "particle.dart" ;
 import 'collisionmap.dart';
+import 'collision.pair.dart';
 import 'contact.dart';
 import 'force.dart' ;
 import 'gravity.dart' ;
+import 'constraint.dart' ;
 
 class Simulation
 {
@@ -55,9 +57,23 @@ class Simulation
     _worldCollisionDetection(particle) ;  
   }
   
-  void Simulate(List particles)
+  void Simulate(List<Particle> particles, List<Constraint> constraints)
   {
     if (!IsRunning) return ;
+    
+    for (int i=0; i<10; i++)
+    {
+      for (var constraint in constraints)
+      {
+        constraint.Resolve() ;
+      }
+      // constraints.sort((a, b) => b.order.compareTo(a.order)) ;
+    }
+    
+    for (var constraint in constraints)
+    {
+      constraint.ResolveForces() ;
+    }
 
     for (var particle in particles)
     {
@@ -180,38 +196,24 @@ class Simulation
           }
         }
       }
-      
-//      if (min != null)
-//      {
-//        for (CollisionPair pair in pairs)
-//        {
-//          if (pair.GetContact() == null) continue ;
-//          
-//          if (pair.GetContact().IsResting == false && min != pair)
-//          {
-//            pair.Discard() ;
-//          }
-//        }
-//      }
     }
     
+    // resolve collisions
     for (CollisionPair pair in collisionMap.Pairs)
     {
       if (pair.GetContact() == null) continue ;
       
-      if (!pair.GetContact().IsResting)
-        pair.GetContact().Resolve(pair.A, pair.B) ;
+      pair.GetContact().Resolve(pair) ;
     }
 
     // separate objects
-    for (int i=0; i<5; i++)
+    for (int i=0; i<10; i++)
     {
       for (CollisionPair pair in collisionMap.Pairs)
       {
         if (pair.GetContact() == null) continue ;
 
-        if (pair.GetContact().IsResting)
-          pair.GetContact().Resolve(pair.A, pair.B);
+        pair.GetContact().Separate(pair);
       }
     }
     
@@ -220,28 +222,11 @@ class Simulation
     {
       if (pair.GetContact() == null) continue ;
 
-      if (pair.GetContact().IsResting)
-      {
-        Particle a = pair.A ;
-        Particle b = pair.B ;
-        
-        Vec2 cn = (b.Position - a.Position).Normalize() ;
-        
-        a.Velocity = Vec2.Project(a.Velocity, cn);
-        b.Velocity = Vec2.Project(b.Velocity, cn);
-        
-      }
+      pair.GetContact().ProjectVelocity(pair) ;
     }
-    
-    
-//    for (int j=0; j<particles.length; j++)
-//    {
-//      Particle a = particles[j] ;
-//      
-//    }
   }
   
-  void Draw(List<Particle> particles, Renderer renderer)
+  void Draw(List<Particle> particles, List<Constraint> constraints, Renderer renderer)
   {
     for (var particle in particles)
     {
@@ -255,6 +240,11 @@ class Simulation
       // renderer.drawBox(particle.Box, "rgba(64, 64, 64, 1.0)") ;
       
       renderer.drawVector(particle.Velocity * 10.0, particle.Position, "rgba(255, 128, 0, 1.0)") ;
+    }
+    
+    for (var constraint in constraints)
+    {
+      constraint.Render(renderer) ;
     }
   }
   

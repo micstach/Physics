@@ -14,7 +14,7 @@ class Particle
   
   Box2 _largeBox = null ;
   
-  double _damping = 0.990 ;
+  double _damping = 1.0 ;
   double _radius = 10.0 ;
   double _mass = double.INFINITY ;
   bool _resting = false ;
