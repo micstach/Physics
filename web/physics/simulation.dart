@@ -21,7 +21,7 @@ class Simulation
   
   CollisionMap _collisionMap = null ;
   
-  final Vec2 gravityForce = new Vec2(0.0, -9.81) ;
+  final Vec2 gravityForce = new Vec2(0.0, -0.0981) ;
 
   Simulation() 
   {
@@ -61,25 +61,28 @@ class Simulation
   {
     if (!IsRunning) return ;
     
-    for (int i=0; i<10; i++)
+    for (var particle in particles)
+    {
+      _simulateParticle(particle);
+    }
+    
+    int steps = 15 ;
+    for (int i=0; i<steps; i++)
     {
       for (var constraint in constraints)
       {
-        constraint.Resolve() ;
+        constraint.Resolve(i) ;
       }
-      // constraints.sort((a, b) => b.order.compareTo(a.order)) ;
     }
     
     for (var constraint in constraints)
     {
       constraint.ResolveForces() ;
     }
-
-    for (var particle in particles)
-    {
-      _simulateParticle(particle);
-    }
     
+    //for (var particle in particles)
+    //  particle.Integrate(0.1) ;
+
     CollisionMap collisions = _detectCollisions(particles) ;
     
     _resolveCollisions(particles, collisions) ;

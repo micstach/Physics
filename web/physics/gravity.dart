@@ -13,6 +13,7 @@ class Gravity extends Force
   
   void Apply(Particle particle) 
   {
-    particle.AddForce(_force * particle.Mass) ;
+    double dt = 0.1;
+    particle.AddForce(_force * particle.Mass * (1.0 / (dt * dt))) ;
   }
 }

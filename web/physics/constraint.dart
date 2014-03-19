@@ -14,7 +14,7 @@ abstract class Constraint
   
   Particle get B => _b ;
   
-  void Resolve() ;
+  void Resolve(int nsteps) ;
   
   double get Order => order ;
   

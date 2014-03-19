@@ -79,13 +79,13 @@ class Particle
   {
     if (IsFixed) return ;
     
-    //if (IsResting) return ;
-        
+    _force += _velocity * ((-(1.0 - _damping) * Mass) / (dt * dt * 0.5)) ;
+    
     _acceleration = _force * MassInv ;
     
     Vec2 oldPosition = _position ;
     
-    _position += (_velocity * _damping) + _acceleration * (dt * dt * 0.5) ;
+    _position += (_velocity) + _acceleration * (dt * dt * 0.5) ;
     
     _velocity = (_position - oldPosition) ;
     

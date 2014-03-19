@@ -11,6 +11,7 @@ import 'physics/constraint.distance.dart' ;
 import 'tools/tool.dart';
 import 'tools/particle.create.dart';
 import 'tools/particle.delete.dart';
+import 'tools/particle.select.dart';
 
 import 'dart:html';
 import 'dart:math';
@@ -37,6 +38,7 @@ Simulation simulation = null ;
 final Element buttonTrigger = querySelector('button#trigger') ;
 final Element buttonCreate = querySelector('button#create') ;
 final Element buttonDelete = querySelector('button#delete') ;
+final Element buttonSelect = querySelector('button#select') ;
 
 CanvasRenderer renderer = null ;
 
@@ -48,6 +50,7 @@ void main() {
   
   buttonCreate.onClick.listen((e) => onCreateClicked(e)) ;
   buttonDelete.onClick.listen((e) => onDeleteClicked(e)) ;
+  buttonSelect.onClick.listen((e) => onSelectClicked(e)) ;
   
   buttonTrigger.onClick.listen((e) => onTriggerClicked(e)) ;
   
@@ -61,17 +64,20 @@ void main() {
   
   renderer = new CanvasRenderer(canvas) ;
 
+  double s = 25.0 ;
   double x = 400.0 ; 
   double y = 400.0 ; 
+  int count = 8 ;
+
   Particle p1 = new Particle(x, y) ;
   p1.Mass = double.INFINITY ;
   p1.Velocity.Zero();
   particles.add(p1) ;
 
-  for (int i=1; i<=12; i++)
+  for (int i=1; i<=count; i++)
   {
-    Particle p2 = new Particle(x + i * 25, y) ;
-    p2.Mass = (i==12) ? 100.0 : 1.0 ;
+    Particle p2 = new Particle(x + i * s, y) ;
+    p2.Mass = (i==count) ? 10.0 : 1.0 ;
     p2.Velocity.Zero();
     particles.add(p2) ;
   
@@ -79,8 +85,15 @@ void main() {
     
     p1 = p2 ;
   }
+  
+//  p1 = new Particle(x, y-100) ;
+//  p1.Mass = double.INFINITY ;
+//  p1.Velocity.Zero();
+//  particles.add(p1) ;
+
  
   window.animationFrame.then(appLoop) ;
+  //setTimeout(appLoop(0), 10000) ;
 }
 
 /// Draw the complete figure for the current number of seeds.
@@ -142,6 +155,13 @@ void onTriggerClicked(MouseEvent e)
       buttonTrigger.text = "Pause" ;
     }
   }
+}
+
+void onSelectClicked(MouseEvent e)
+{
+  tool.Deactivate() ;
+  tool = new SelectParticle(canvas, collisions, particles) ;
+  tool.Activate() ;
 }
 
 void onCreateClicked(MouseEvent e)

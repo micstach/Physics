@@ -9,48 +9,70 @@ class Distance extends Constraint
 {
   double _distance = 0.0 ;
   
+  Vec2 _ia = null ;
+  Vec2 _ib = null ;
+  
   Distance(Particle a, Particle b) : super(a, b)
   {
     _distance = (A.Position - B.Position).Length ;
   }
   
-  void Resolve()
+  void Resolve(int nsteps)
   {
     Vec2 dp = B.Position - A.Position ;
     double len = dp.Length ;
     double diff = (_distance - len) ;
     
-    //if (diff != 0.0)
+    Vec2 delta = dp * ((diff / len)) ;
+    
+    if (!A.IsFixed)
     {
-      Vec2 delta = dp * ((diff / len) * 0.5) ;
-      
-      if (!A.IsFixed)
-      {
-        A.Position -= delta ;
-      }
-      
-      if (!B.IsFixed)
-      {
-        B.Position += delta ;
-      }
-      
-      double j = Distance.Impulse(0.1, 0.0, diff / len, A.MassInv, B.MassInv) ;
-          
-      A.AddForce(dp * (-j)) ;
-      
-      B.AddForce(dp * (j)) ;
+      double s = A.MassInv / (A.MassInv + B.MassInv) ;
+      A.Position -= delta * s;
+      A.Velocity -= delta * s;
     }
+    
+    if (!B.IsFixed)
+    {
+      double s = B.MassInv / (A.MassInv + B.MassInv) ;
+      B.Position += delta * s ;
+      B.Velocity += delta * s;
+    }
+    
+    //int step = nsteps ;
+    //nsteps = 1 ;
+    //double j = Distance.Impulse(0.1 / nsteps, 0.0, (diff/len) * 0.5, A.MassInv, B.MassInv) ;
+    
+//    if (!A.IsFixed)
+//      A.AddForce(dp * (-j)) ;
+//
+//    if (!B.IsFixed)
+//      B.AddForce(dp * ( j)) ;
+//    
+//    A.Integrate(0.1 / nsteps) ;
+//    B.Integrate(0.1 / nsteps) ;
+    
+    
   }
   
   void ResolveForces() 
   {
 //    Vec2 dp = B.Position - A.Position ;
 //    dp.Normalize() ;
+//
+//    double avl = A.Velocity.Length ;
 //    
-//    double j = Distance.Impulse(0.1, 0.0, (B.Velocity - A.Velocity) | dp, A.MassInv, B.MassInv) ;
+//    A.Velocity = Vec2.Project(A.Velocity, dp) ;
+//
+//    double bvl = B.Velocity.Length ;
 //    
-//    A.AddForce(dp * (j)) ;
-//    B.AddForce(dp * (-j)) ;
+//    B.Velocity = Vec2.Project(B.Velocity, dp) ;
+//    
+//    double rv_dot_cn = (B.Velocity - A.Velocity) | dp ;
+//    double j = Distance.Impulse(0.1, 0.0, rv_dot_cn, A.MassInv, B.MassInv) ;
+//    
+//    A.AddForce(dp * (-j) ) ; 
+//    B.AddForce(dp * ( j) ) ;
   }
   
   void Render(Renderer renderer)
