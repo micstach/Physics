@@ -6,8 +6,11 @@ import "particle.dart" ;
 import 'collisionmap.dart';
 import 'collision.pair.dart';
 import 'contact.dart';
+
 import 'force.dart' ;
-import 'gravity.dart' ;
+import 'force.gravity.dart' ;
+import 'force.damping.dart' ;
+
 import 'constraint.dart' ;
 
 class Simulation
@@ -26,6 +29,7 @@ class Simulation
   Simulation() 
   {
     forces.add(new Gravity(gravityForce)) ;
+    forces.add(new Damping(0.999)) ;
   }
 
   set WorldWidth(int value) => _worldWidth = value ;
@@ -65,7 +69,8 @@ class Simulation
     {
       _simulateParticle(particle);
     }
-    
+
+    // resolve constraints
     int steps = 15 ;
     for (int i=0; i<steps; i++)
     {
@@ -74,46 +79,12 @@ class Simulation
         constraint.Resolve(i) ;
       }
     }
-    
-    for (var constraint in constraints)
-    {
-      constraint.ResolveForces() ;
-    }
-    
-    //for (var particle in particles)
-    //  particle.Integrate(0.1) ;
 
+    // detect collisions
     CollisionMap collisions = _detectCollisions(particles) ;
     
+    // resolve collisions
     _resolveCollisions(particles, collisions) ;
-  }
-  
-  bool _isWorldCollisionDetection(Particle particle)
-  {
-    if (particle.IsFixed) return false ;
-    
-    // world box collisions detection
-    int PARTICLE_RADIUS = particle.Radius.toInt() ;
-    
-    if (particle.Position.x > _worldWidth - PARTICLE_RADIUS)
-    {
-      return true ;
-    }
-
-    if (particle.Position.x < 0.0 + PARTICLE_RADIUS)
-    {
-      return true ;
-    }
-
-    if (particle.Position.y <= 0.0 + PARTICLE_RADIUS)
-    {
-      return true ;
-    }
-    
-    if (particle.Position.y > _worldHeight - PARTICLE_RADIUS)
-    {
-      return true ;
-    }
   }
   
   void _worldCollisionDetection(Particle particle)
@@ -167,6 +138,7 @@ class Simulation
 
   void _resolveCollisions(List<Particle> particles, CollisionMap collisionMap)
   {
+    // find "first-in-time" contacts
     for (Particle p in particles)
     {
       CollisionPair min = null ;
@@ -201,7 +173,7 @@ class Simulation
       }
     }
     
-    // resolve collisions
+    // resolve contacts
     for (CollisionPair pair in collisionMap.Pairs)
     {
       if (pair.GetContact() == null) continue ;
@@ -209,8 +181,8 @@ class Simulation
       pair.GetContact().Resolve(pair) ;
     }
 
-    // separate objects
-    for (int i=0; i<10; i++)
+    // iterative object separation
+    for (int i=0; i<15; i++)
     {
       for (CollisionPair pair in collisionMap.Pairs)
       {
@@ -218,14 +190,6 @@ class Simulation
 
         pair.GetContact().Separate(pair);
       }
-    }
-    
-    // project velocities
-    for (CollisionPair pair in collisionMap.Pairs)
-    {
-      if (pair.GetContact() == null) continue ;
-
-      pair.GetContact().ProjectVelocity(pair) ;
     }
   }
   

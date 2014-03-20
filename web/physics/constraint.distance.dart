@@ -38,41 +38,6 @@ class Distance extends Constraint
       B.Position += delta * s ;
       B.Velocity += delta * s;
     }
-    
-    //int step = nsteps ;
-    //nsteps = 1 ;
-    //double j = Distance.Impulse(0.1 / nsteps, 0.0, (diff/len) * 0.5, A.MassInv, B.MassInv) ;
-    
-//    if (!A.IsFixed)
-//      A.AddForce(dp * (-j)) ;
-//
-//    if (!B.IsFixed)
-//      B.AddForce(dp * ( j)) ;
-//    
-//    A.Integrate(0.1 / nsteps) ;
-//    B.Integrate(0.1 / nsteps) ;
-    
-    
-  }
-  
-  void ResolveForces() 
-  {
-//    Vec2 dp = B.Position - A.Position ;
-//    dp.Normalize() ;
-//
-//    double avl = A.Velocity.Length ;
-//    
-//    A.Velocity = Vec2.Project(A.Velocity, dp) ;
-//
-//    double bvl = B.Velocity.Length ;
-//    
-//    B.Velocity = Vec2.Project(B.Velocity, dp) ;
-//    
-//    double rv_dot_cn = (B.Velocity - A.Velocity) | dp ;
-//    double j = Distance.Impulse(0.1, 0.0, rv_dot_cn, A.MassInv, B.MassInv) ;
-//    
-//    A.AddForce(dp * (-j) ) ; 
-//    B.AddForce(dp * ( j) ) ;
   }
   
   void Render(Renderer renderer)

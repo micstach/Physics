@@ -16,9 +16,5 @@ abstract class Constraint
   
   void Resolve(int nsteps) ;
   
-  double get Order => order ;
-  
-  void ResolveForces() ;
-  
   void Render(Renderer renderer) ;
 }

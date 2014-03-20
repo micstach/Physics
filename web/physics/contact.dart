@@ -18,58 +18,6 @@ class SeparateContact extends Contact
   {
     return ;
   }
-  
-  void Separate(CollisionPair pair)
-  {
-    var a = pair.A ;
-    var b = pair.B ;
-    
-    Vec2 dp = b.Position - a.Position ;
-    double len = dp.Length ;
-    double diff = (a.Radius + b.Radius - len) ;
-    
-    if (diff >= 0.0)
-    {
-      Vec2 delta = dp * ((diff / len) * 0.5) ;
-      
-      if (!a.IsFixed)
-      {
-        a.Position -= delta ;
-      }
-      
-      if (!b.IsFixed)
-      {
-        b.Position += delta ;
-      }    
-    }
-  }
-
-  void ProjectVelocity(CollisionPair pair)
-  {
-    var a = pair.A ;
-    var b = pair.B ;
-    
-    Vec2 dp = b.Position - a.Position ;
-    dp.Normalize() ;
-
-    double rv_dot_cn = (b.Velocity - a.Velocity) | dp ;
-    
-    double j = Contact.Impulse(0.1, 0.0, rv_dot_cn, a.MassInv, b.MassInv);
-    
-    if (rv_dot_cn < 0.0)
-    {
-      a.AddForce(dp * j) ;
-      b.AddForce(dp * (-j)) ;
-    }
-//    if (super._rv_dot_cn < 0.0)
-//    {
-//      var a = pair.A ;
-//      var b = pair.B ;
-//      
-//      a.Velocity = Vec2.Project(a.Velocity, super._cn);
-//      b.Velocity = Vec2.Project(b.Velocity, super._cn);
-//    }
-  }
 }
 
 class RestingContact extends SeparateContact
@@ -84,11 +32,6 @@ class RestingContact extends SeparateContact
   {
     return ;
   }
-  
-  void ProjectVelocity(CollisionPair pair)
-  {
-    return ;
-  }
 }
 
 class CollidingContact extends Contact
@@ -96,12 +39,7 @@ class CollidingContact extends Contact
   CollidingContact(double dt, Vec2 cn, Vec2 rv, double rv_dot_cn) : super(dt, cn, rv, rv_dot_cn) ;
 
   bool get IsResting => false ;
-  
-  void Separate(CollisionPair pair)
-  {
-    return ;
-  }
-  
+
   void Resolve(CollisionPair pair)
   {
     var a = pair.A ;
@@ -110,18 +48,13 @@ class CollidingContact extends Contact
     a.Position += a.Velocity * (-1.0 + super.Dt) ; 
     b.Position += b.Velocity * (-1.0 + super.Dt) ;
     
-    double j = Contact.Impulse(0.1, 0.75, super._rv_dot_cn, a.MassInv, b.MassInv) ;
+    double j = Contact.Impulse(0.1, 0.25, super._rv_dot_cn, a.MassInv, b.MassInv) ;
     
-    a.AddForce(super._cn * j) ;
+    a.AddForce(super._cn * ( j)) ;
     b.AddForce(super._cn * (-j)) ;
     
-    a.Integrate(0.1) ;
-    b.Integrate(0.1) ;
-  }
-  
-  void ProjectVelocity(CollisionPair pair)
-  {
-    return ;
+    //a.Integrate(0.1) ;
+    //b.Integrate(0.1) ;
   }
 }
 
@@ -143,11 +76,38 @@ abstract class Contact
   
   String get Name => "Contact" ;
   
-  void Resolve(CollisionPair pair) ;
+  void Resolve(CollisionPair pair) ; 
   
-  void Separate(CollisionPair pair) ;
-  
-  void ProjectVelocity(CollisionPair pair) ;
+  void Separate(CollisionPair pair)
+  {
+    var a = pair.A ;
+    var b = pair.B ;
+    
+    Vec2 dp = b.Position - a.Position ;
+    double len = dp.Length ;
+    double diff = (a.Radius + b.Radius - len) ;
+    
+    if (diff >= 0.0)
+    {
+      Vec2 delta = dp * (diff / len) ;
+      
+      if (!a.IsFixed)
+      {
+        double s = a.MassInv / (a.MassInv + b.MassInv) ;
+
+        a.Position -= delta * s ;
+        a.Velocity -= delta * s ;
+      }
+      
+      if (!b.IsFixed)
+      {
+        double s = b.MassInv / (a.MassInv + b.MassInv) ;
+
+        b.Position += delta * s ;
+        b.Velocity += delta * s ;
+      }    
+    }    
+  }
   
   static Contact Find(Particle a, Particle b)
   {

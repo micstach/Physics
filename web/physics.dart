@@ -66,8 +66,8 @@ void main() {
 
   double s = 25.0 ;
   double x = 400.0 ; 
-  double y = 400.0 ; 
-  int count = 8 ;
+  double y = 500.0 ; 
+  int count = 15 ;
 
   Particle p1 = new Particle(x, y) ;
   p1.Mass = double.INFINITY ;
@@ -77,7 +77,7 @@ void main() {
   for (int i=1; i<=count; i++)
   {
     Particle p2 = new Particle(x + i * s, y) ;
-    p2.Mass = (i==count) ? 10.0 : 1.0 ;
+    p2.Mass = (i==count) ? 1.0 : 1.0 ;
     p2.Velocity.Zero();
     particles.add(p2) ;
   
