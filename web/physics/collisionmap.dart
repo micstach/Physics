@@ -1,5 +1,6 @@
 library phx_collisions ;
 
+import 'constraint.dart';
 import 'particle.dart';
 import 'collision.pair.dart' ;
 
@@ -7,23 +8,30 @@ class CollisionMap
 {
   List<Particle> Particles = null ;
   
+  List<Constraint> _constraints = null ;
+  
   int _particlesCount = 0 ;
   
   Map<Particle, int> _index = null ;
   Map<int, CollisionPair> _pairs = null ;
   Map<Particle, List<CollisionPair>> _particlePairs = null ;
   
-  CollisionMap(List<Particle> particles)
+  CollisionMap(List<Particle> particles, List<Constraint> constraints)
   {
     Particles = particles ;
-
+    _constraints = constraints ;
+    
     _initialize() ;
   }
   
-  void Update(List<Particle> particles)
+  void Update(List<Particle> particles, List<Constraint> constraints)
   {
     if (particles.length != _particlesCount)
     {
+      Particles = particles ;
+      
+      _constraints = constraints ;
+      
       _initialize() ;
     }
   }
@@ -33,7 +41,9 @@ class CollisionMap
     _particlesCount = Particles.length ;
 
     _index = new Map<Particle, int>() ;
+    
     _pairs = new Map<int, CollisionPair>() ;
+    
     _particlePairs = new Map<Particle, List<CollisionPair>>() ;
     
     // initialize collision pairs
@@ -52,6 +62,14 @@ class CollisionMap
         if (!_pairs.containsKey(index))
           _pairs[index] = new CollisionPair(a, b) ;
       }
+    }
+
+    // remove constraint pairs
+    for (Constraint constraint in _constraints)
+    {
+      int index = _getPairIndex(constraint.A, constraint.B);
+      
+      _pairs.remove(index) ;
     }
     
     // initialize particle pairs

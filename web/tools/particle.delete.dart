@@ -3,6 +3,7 @@ library particle.delete;
 import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart' ;
 
+import '../physics/constraint.dart' ;
 import '../physics/particle.dart' ;
 import 'tool.dart' ;
 
@@ -13,10 +14,11 @@ class DeleteParticle extends Tool
   final CanvasElement _canvas ;
   List<Particle> _highlighted = null ;
   List<Particle> _particles = null ;
+  List<Constraint> _constraints = null ;
   
   MouseEvent _mouseEvent = null ;
   
-  DeleteParticle(this._canvas, this._particles) 
+  DeleteParticle(this._canvas, this._particles, this._constraints) 
   {
   }
   
@@ -34,17 +36,35 @@ class DeleteParticle extends Tool
     
     Vec2 mouse = new Vec2(x, y) ;
     
-    var delete = new List<Particle>() ;
+    var delete_particles = new List<Particle>() ;
     
     for (Particle p in _particles)
     {
       if ((p.Position - mouse).SqLength < (p.Radius * p.Radius))
       {
-        delete.add(p) ;
+        delete_particles.add(p) ;
+      }
+    }
+
+    var delete_constraints = new List<Constraint>() ;
+    
+    for (Particle p in delete_particles)
+    {
+      for (Constraint c in _constraints)
+      {
+        if (c.A == p || c.B == p)
+        {
+          delete_constraints.add(c) ;
+        }
       }
     }
     
-    for (Particle p in delete)
+    for (Constraint c in delete_constraints)
+    {
+      _constraints.remove(c) ;
+    }
+    
+    for (Particle p in delete_particles)
     {
       _particles.remove(p) ;
     }

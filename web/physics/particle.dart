@@ -29,20 +29,25 @@ class Particle
     Position = particle.Position ;
     Velocity = particle.Velocity ;
     _force = particle._force ;
+    _radius = particle._radius ;
     Mass = particle.Mass;
     
     _initializeBox();
   }
   
-  Particle.fromVec2(Vec2 position)
+  Particle.fromVec2(Vec2 position, [double r])
   {
+    _radius = r ;
     Position = position ;
    
     _initializeBox();
   }
 
-  Particle(double x, double y)
+  Particle(double x, double y, [double r])
   { 
+    if (r != null)
+      _radius = r ;
+    
     _position = new Vec2(x, y);
     
     _initializeBox() ;

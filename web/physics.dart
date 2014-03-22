@@ -43,8 +43,8 @@ final Element buttonSelect = querySelector('button#select') ;
 CanvasRenderer renderer = null ;
 
 void main() {
-  var scores = [{'score': 40}, {'score': 50}] ;
-  var jsonText = JSON.stringify(scores) ;
+//  var scores = [{'score': 40}, {'score': 50}] ;
+//  var jsonText = JSON.stringify(scores) ;
   
   canvas = querySelector("#canvas") ;
   
@@ -64,36 +64,66 @@ void main() {
   
   renderer = new CanvasRenderer(canvas) ;
 
-  double s = 25.0 ;
+  double s = 15.0 ;
   double x = 400.0 ; 
   double y = 500.0 ; 
-  int count = 15 ;
+  int count = 25 ;
 
   Particle p1 = new Particle(x, y) ;
   p1.Mass = double.INFINITY ;
   p1.Velocity.Zero();
   particles.add(p1) ;
-
+  
+  Particle p0 = p1 ;
+  
   for (int i=1; i<=count; i++)
   {
-    Particle p2 = new Particle(x + i * s, y) ;
-    p2.Mass = (i==count) ? 1.0 : 1.0 ;
+    Particle p2 = new Particle(x + i * s, y, 5.0 + (i*2.0)/count) ;
+    p2.Mass = i * 1.0 ; //(i==count) ? 100.0 : 1.0 ;
     p2.Velocity.Zero();
     particles.add(p2) ;
   
     constraints.add(new Distance(p1, p2)) ;
-    
     p1 = p2 ;
+
+//    Particle p3 = new Particle(x - i * s, y, 5.0 + (i*2.0)/count) ;
+//    p3.Mass = i * 1.0 ; //(i==count) ? 100.0 : 1.0 ;
+//    p3.Velocity.Zero();
+//    particles.add(p3) ;
+//  
+//    constraints.add(new Distance(p0, p3)) ;
+//    p0 = p3 ;
   }
   
-//  p1 = new Particle(x, y-100) ;
-//  p1.Mass = double.INFINITY ;
-//  p1.Velocity.Zero();
-//  particles.add(p1) ;
+  p1 = new Particle(30.0, 30.0, 15.0) ;
+  p1.Mass = 5.0 ;
+  p1.Velocity.Zero();
+  particles.add(p1) ;
+  
+  var p2 = new Particle(70.0, 30.0, 15.0) ;
+  p2.Mass = 5.0 ;
+  p2.Velocity.Zero();
+  particles.add(p2) ;
+  
+  var p3 = new Particle(70.0, 70.0) ;
+  p3.Mass = 5.0 ;
+  p3.Velocity.Zero();
+  particles.add(p3) ;
 
+  var p4 = new Particle(30.0, 70.0) ;
+  p4.Mass = 5.0 ;
+  p4.Velocity.Zero();
+  particles.add(p4) ;
+  
+  constraints.add(new Distance(p1, p2)) ;
+  constraints.add(new Distance(p2, p3)) ;
+  constraints.add(new Distance(p3, p4)) ;
+  constraints.add(new Distance(p4, p1)) ;
+  constraints.add(new Distance(p1, p3)) ;
+  constraints.add(new Distance(p2, p4)) ;
+  
  
   window.animationFrame.then(appLoop) ;
-  //setTimeout(appLoop(0), 10000) ;
 }
 
 /// Draw the complete figure for the current number of seeds.
@@ -113,19 +143,6 @@ void appLoop(num delta) {
   
   // draw
   simulation.Draw(particles, constraints, renderer) ;
-  
-//  collisions.innerHtml = "" ;
-//  if (simulation.Collisions != null)
-//  {
-//    for (CollisionPair collision in simulation.Collisions.Pairs)
-//    {
-//      if (collision.GetContact() != null)
-//      {
-//        collisions.innerHtml += collision.GetContact().Name ;
-//        collisions.innerHtml += """<br />""" ;
-//      }
-//    }
-//  }   
   
   querySelector("span#toolname").text = tool.Name ;
   
@@ -174,7 +191,7 @@ void onCreateClicked(MouseEvent e)
 void onDeleteClicked(MouseEvent e)
 {
   tool.Deactivate() ;
-  tool = new DeleteParticle(canvas, particles) ;
+  tool = new DeleteParticle(canvas, particles, constraints) ;
   tool.Activate() ;
 }
 

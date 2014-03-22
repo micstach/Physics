@@ -105,7 +105,7 @@ class CreateParticle implements Tool
   {
     if (_particle != null)
     {
-      _particle.Mass = 1.0 ;
+      _particle.Mass = 5.0 ;
     }
   }
   
@@ -180,6 +180,8 @@ class CreateParticle implements Tool
       _alpha = 0.75 ;
       
       renderer.drawCircle(_particle.Position, _particle.Radius, "rgba(255, 128, 128, ${_alpha})") ;
+      renderer.drawVector(_particle.Velocity * 10.0, _particle.Position, "rgba(255, 128, 0, 1.0)") ;
+
       renderer.drawPath(_path, false, "rgba(0, 0, 0, ${_alpha})", "rgba(192, 192, 192, ${_alpha})");
       renderer.drawCircle(_path[_path.length-1], _particle.Radius, "rgba(128, 128, 128, ${_alpha/2.0})") ;
     }

@@ -483,9 +483,6 @@ var $$ = {};
     get$isNegative: function(receiver) {
       return receiver === 0 ? 1 / receiver < 0 : receiver < 0;
     },
-    get$isFinite: function(receiver) {
-      return isFinite(receiver);
-    },
     remainder$1: function(receiver, b) {
       return receiver % b;
     },
@@ -504,6 +501,15 @@ var $$ = {};
         return -Math.round(-receiver);
       else
         return Math.round(receiver);
+    },
+    toStringAsFixed$1: function(receiver, fractionDigits) {
+      var result;
+      if (fractionDigits > 20)
+        throw H.wrapException(P.RangeError$(fractionDigits));
+      result = receiver.toFixed(fractionDigits);
+      if (receiver === 0 && this.get$isNegative(receiver))
+        return "-" + result;
+      return result;
     },
     toString$0: function(receiver) {
       if (receiver === 0 && 1 / receiver < 0)
@@ -2639,6 +2645,10 @@ var $$ = {};
     "": "Object;_min<,_max,_points",
     Extend$1: function(r) {
       var t, t1;
+      if (typeof r !== "number")
+        return r.$lt();
+      if (r < 0)
+        r = -r;
       t = new G.Vec2(r, r);
       t1 = this._min;
       this._min = t1.$sub(t1, t);
@@ -2713,7 +2723,7 @@ var $$ = {};
       t4.lineWidth = 2;
       t4.fillStyle = color;
       t4.strokeStyle = color;
-      t4.arc(t1, t2 - t3, C.JSInt_methods.toInt$0(radius), 0, this.TAU, false);
+      t4.arc(t1, t2 - t3, J.toInt$0$n(radius), 0, this.TAU, false);
       t4.fill();
       t4.closePath();
       t4.stroke();
@@ -2748,84 +2758,206 @@ var $$ = {};
         t7.lineTo(t2, t5 - t6);
         t7.stroke();
       }
+    },
+    drawVector$3: function(vector, origin, color) {
+      var t1, t2, t3, t4, t5, t6, t7;
+      t1 = origin.x;
+      t2 = this._canvasrenderer$_canvas;
+      t3 = t2.clientHeight;
+      t4 = origin.y;
+      if (typeof t3 !== "number")
+        return t3.$sub();
+      t5 = origin.$add(origin, vector);
+      t6 = t5.x;
+      t2 = t2.clientHeight;
+      t5 = t5.y;
+      if (typeof t2 !== "number")
+        return t2.$sub();
+      t7 = this._context;
+      t7.beginPath();
+      t7.lineWidth = 3;
+      t7.fillStyle = color;
+      t7.strokeStyle = color;
+      t7.lineTo(t1, t3 - t4);
+      t7.lineTo(t6, t2 - t5);
+      t7.fill();
+      t7.closePath();
+      t7.stroke();
     }
   }
 }],
-["contact", "../physics/contact.dart", , S, {
+["contact", "physics/contact.dart", , S, {
   "": "",
+  Contact_Find: function(a, b) {
+    var ap, bp, av, bv, t1, t2, t3, t4, t5, t6, dp_len, cn, rv_dot_cn, ea, eb, ec, eq;
+    if (!a._velocityBox.Intersect$1(b.get$Box()))
+      return;
+    ap = a._position;
+    bp = b._position;
+    av = a._velocity;
+    bv = b._velocity;
+    t1 = ap.x;
+    t2 = av.x;
+    t3 = ap.y;
+    t4 = av.y;
+    t5 = bp.x;
+    t6 = bv.x;
+    t2 = t5 - t6 - (t1 - t2);
+    t4 = bp.y - bv.y - (t3 - t4);
+    dp_len = Math.sqrt(t2 * t2 + t4 * t4);
+    t1 = 1 / dp_len;
+    t3 = t2 * t1;
+    t1 = t4 * t1;
+    cn = new G.Vec2(t3, t1);
+    t5 = bv.x - av.x;
+    t6 = bv.y - av.y;
+    rv_dot_cn = t5 * t3 + t6 * t1;
+    if (rv_dot_cn < -1e-9) {
+      ea = t5 * t5 + t6 * t6;
+      eb = 2 * (t2 * t5 + t4 * t6);
+      t1 = a._radius;
+      t3 = b._radius;
+      if (typeof t1 !== "number")
+        return t1.$add();
+      if (typeof t3 !== "number")
+        return H.iae(t3);
+      t3 = t1 + t3;
+      ec = t2 * t2 + t4 * t4 - t3 * t3;
+      eq = new B.Quadric(ea, eb, ec, -1, null, null);
+      eq.Quadric$3(ea, eb, ec);
+      if (eq._d >= 0) {
+        t1 = eq._x;
+        if (typeof t1 !== "number")
+          return H.iae(t1);
+        if (0 <= t1 && t1 <= 1)
+          return new S.CollidingContact(t1, rv_dot_cn, cn, new G.Vec2(t5, t6));
+      }
+    } else if (rv_dot_cn <= 1e-9) {
+      t1 = a._radius;
+      t2 = b._radius;
+      if (typeof t1 !== "number")
+        return t1.$add();
+      if (typeof t2 !== "number")
+        return H.iae(t2);
+      if (dp_len <= t1 + t2)
+        return new S.RestingContact(0, 0, null, null);
+    }
+    t1 = a._radius;
+    t2 = b._radius;
+    if (typeof t1 !== "number")
+      return t1.$add();
+    if (typeof t2 !== "number")
+      return H.iae(t2);
+    if (dp_len <= t1 + t2)
+      return new S.SeparateContact(0, rv_dot_cn, cn, null);
+    return;
+  },
+  SeparateContact: {
+    "": "Contact;_contact$_dt,_rv_dot_cn,_cn,_rv",
+    Resolve$1: function(pair) {
+      return;
+    }
+  },
+  RestingContact: {
+    "": "SeparateContact;_contact$_dt,_rv_dot_cn,_cn,_rv",
+    Resolve$1: function(pair) {
+      return;
+    }
+  },
+  CollidingContact: {
+    "": "Contact;_contact$_dt,_rv_dot_cn,_cn,_rv",
+    Resolve$1: function(pair) {
+      var a, b, t1, t2, t3, t4, j;
+      a = pair.get$A();
+      b = pair._phx_collision_pair$_b;
+      t1 = a._position;
+      t2 = a._velocity;
+      t3 = S.Contact.prototype.get$Dt.call(this);
+      if (typeof t3 !== "number")
+        return H.iae(t3);
+      t3 = -1 + t3;
+      a._position = t1.$add(t1, new G.Vec2(t2.x * t3, t2.y * t3));
+      t3 = b.get$Position();
+      t2 = b.get$Velocity();
+      t1 = S.Contact.prototype.get$Dt.call(this);
+      if (typeof t1 !== "number")
+        return H.iae(t1);
+      t1 = -1 + t1;
+      b.set$Position(t3.$add(t3, new G.Vec2(t2.x * t1, t2.y * t1)));
+      t1 = this._rv_dot_cn;
+      t2 = a._mass;
+      t3 = t2 === 1 / 0;
+      t2 = t3 ? 0 : 1 / t2;
+      t4 = b._mass;
+      j = 249.99999999999994 * (t1 / (t2 + (t4 === 1 / 0 ? 0 : 1 / t4)));
+      t1 = this._cn;
+      t2 = t1.x;
+      t1 = t1.y;
+      if (!t3) {
+        t3 = a._force;
+        a._force = t3.$add(t3, new G.Vec2(t2 * j, t1 * j));
+      }
+      t1 = this._cn;
+      t2 = -j;
+      t3 = t1.x;
+      t1 = t1.y;
+      if (b._mass !== 1 / 0) {
+        t4 = b._force;
+        b._force = t4.$add(t4, new G.Vec2(t3 * t2, t1 * t2));
+      }
+      a.Integrate$1(0.1);
+      b.Integrate$1(0.1);
+    }
+  },
   Contact: {
-    "": "Object;_a,_b,_dt,_resting",
-    static: {Contact_Find: function(a, b) {
-        var ap, bp, av, bv, t1, t2, t3, t4, t5, t6, cn, f, rv_dot_cn, ea, eb, ec, eq, contact;
-        if (a.get$IsFixed() && b.get$IsFixed())
-          return;
-        if (!a._box.Intersect$1(b.get$Box()))
-          return;
-        ap = a._particle$_position;
-        bp = b._particle$_position;
-        av = a._velocity;
-        bv = b._velocity;
-        t1 = ap.x;
-        t2 = av.x;
-        t3 = ap.y;
-        t4 = av.y;
-        t5 = bp.x;
-        t6 = bv.x;
-        t2 = t5 - t6 - (t1 - t2);
-        t4 = bp.y - bv.y - (t3 - t4);
-        cn = new G.Vec2(t2, t4);
-        f = 1 / Math.sqrt(t2 * t2 + t4 * t4);
-        t1 = t2 * f;
-        cn.x = t1;
-        t3 = t4 * f;
-        cn.y = t3;
-        t5 = bv.x - av.x;
-        t6 = bv.y - av.y;
-        rv_dot_cn = t5 * t1 + t6 * t3;
-        if (rv_dot_cn < -0.01) {
-          ea = t5 * t5 + t6 * t6;
-          eb = 2 * (t2 * t5 + t4 * t6);
-          t1 = a._radius + b._radius;
-          ec = t2 * t2 + t4 * t4 - t1 * t1;
-          eq = new B.Quadric(ea, eb, ec, -1, null, null);
-          eq.Quadric$3(ea, eb, ec);
-          if (eq._d >= 0) {
-            t1 = eq._x;
-            if (typeof t1 !== "number")
-              return H.iae(t1);
-            if (0 <= t1)
-              if (t1 <= 1) {
-                t2 = eq._y;
-                if (typeof t2 !== "number")
-                  return H.iae(t2);
-                t2 = t1 < t2;
-              } else
-                t2 = false;
-            else
-              t2 = false;
-            if (t2) {
-              t1 = new S.Contact(a, b, t1, false);
-              t1._resting = false;
-              return t1;
-            } else {
-              t2 = eq._y;
-              if (typeof t2 !== "number")
-                return H.iae(t2);
-              if (0 <= t2 && t2 <= 1 && t2 < t1) {
-                t1 = new S.Contact(a, b, t2, false);
-                t1._resting = false;
-                return t1;
-              }
-            }
-          }
-        } else if (rv_dot_cn <= 0) {
-          contact = new S.Contact(a, b, 0, false);
-          contact._resting = false;
-          contact._resting = true;
-          return contact;
-        }
+    "": "Object;",
+    get$Dt: function() {
+      return this._contact$_dt;
+    },
+    Separate$1: function(pair) {
+      var a, b, t1, dp, t2, len, diff, t3, t4, t5, s;
+      a = pair._phx_collision_pair$_a;
+      b = pair._phx_collision_pair$_b;
+      t1 = b.get$Position();
+      dp = t1.$sub(t1, a._position);
+      t1 = dp.x;
+      t2 = dp.y;
+      len = Math.sqrt(t1 * t1 + t2 * t2);
+      t1 = a._radius;
+      t2 = b.get$Radius();
+      if (typeof t1 !== "number")
+        return t1.$add();
+      if (typeof t2 !== "number")
+        return H.iae(t2);
+      diff = t1 + t2 - len;
+      if (diff < 0)
         return;
-      }}
+      t1 = diff / len;
+      t2 = dp.x * t1;
+      t1 = dp.y * t1;
+      t3 = a._mass;
+      if (t3 !== 1 / 0) {
+        t4 = 1 / t3;
+        t3 = 1 / t3;
+        t5 = b._mass;
+        s = t4 / (t3 + (t5 === 1 / 0 ? 0 : 1 / t5));
+        t3 = a._position;
+        a._position = t3.$sub(t3, new G.Vec2(t2 * s, t1 * s));
+        t3 = a._velocity;
+        a._velocity = t3.$sub(t3, new G.Vec2(t2 * s, t1 * s));
+      }
+      t3 = b._mass;
+      if (t3 !== 1 / 0) {
+        t4 = 1 / t3;
+        t5 = a._mass;
+        t5 = t5 === 1 / 0 ? 0 : 1 / t5;
+        s = t4 / (t5 + 1 / t3);
+        t3 = b._position;
+        b._position = t3.$add(t3, new G.Vec2(t2 * s, t1 * s));
+        t3 = b._velocity;
+        b._velocity = t3.$add(t3, new G.Vec2(t2 * s, t1 * s));
+      }
+    }
   }
 }],
 ["dart._collection.dev", "dart:_collection-dev", , H, {
@@ -4860,40 +4992,24 @@ var $$ = {};
       return J.$index$asx(bucket, index);
     },
     add$1: function(_, element) {
-      var strings, nums, rest, hash, bucket;
-      if (typeof element === "string" && element !== "__proto__") {
-        strings = this._strings;
-        if (strings == null) {
-          strings = P._HashSet__newHashTable();
-          this._strings = strings;
-        }
-        return this._addHashTableEntry$2(strings, element);
-      } else if (typeof element === "number" && (element & 0x3ffffff) === element) {
-        nums = this._nums;
-        if (nums == null) {
-          nums = P._HashSet__newHashTable();
-          this._nums = nums;
-        }
-        return this._addHashTableEntry$2(nums, element);
-      } else {
-        rest = this._rest;
-        if (rest == null) {
-          rest = P._HashSet__newHashTable();
-          this._rest = rest;
-        }
-        hash = this._computeHashCode$1(element);
-        bucket = rest[hash];
-        if (bucket == null)
-          rest[hash] = [element];
-        else {
-          if (this._findBucketIndex$2(bucket, element) >= 0)
-            return false;
-          bucket.push(element);
-        }
-        this._collection$_length = this._collection$_length + 1;
-        this._elements = null;
-        return true;
+      var rest, hash, bucket;
+      rest = this._rest;
+      if (rest == null) {
+        rest = P._HashSet__newHashTable();
+        this._rest = rest;
       }
+      hash = this._computeHashCode$1(element);
+      bucket = rest[hash];
+      if (bucket == null)
+        rest[hash] = [element];
+      else {
+        if (this._findBucketIndex$2(bucket, element) >= 0)
+          return false;
+        bucket.push(element);
+      }
+      this._collection$_length = this._collection$_length + 1;
+      this._elements = null;
+      return true;
     },
     remove$1: function(_, object) {
       var rest, bucket, index;
@@ -4950,14 +5066,6 @@ var $$ = {};
       }
       this._elements = result;
       return result;
-    },
-    _addHashTableEntry$2: function(table, element) {
-      if (table[element] != null)
-        return false;
-      table[element] = 0;
-      this._collection$_length = this._collection$_length + 1;
-      this._elements = null;
-      return true;
     },
     _computeHashCode$1: function(element) {
       return J.get$hashCode$(element) & 0x3ffffff;
@@ -5332,7 +5440,7 @@ var $$ = {};
     static: {"": "ListQueue__INITIAL_CAPACITY"}
   },
   _ListQueueIterator: {
-    "": "Object;_queue,_end,_modificationCount,_position,_collection$_current",
+    "": "Object;_queue,_end,_modificationCount,_collection$_position,_collection$_current",
     get$current: function() {
       return this._collection$_current;
     },
@@ -5341,7 +5449,7 @@ var $$ = {};
       t1 = this._queue;
       if (this._modificationCount !== t1._modificationCount)
         H.throwExpression(P.ConcurrentModificationError$(t1));
-      t2 = this._position;
+      t2 = this._collection$_position;
       if (t2 === this._end) {
         this._collection$_current = null;
         return false;
@@ -5351,7 +5459,7 @@ var $$ = {};
       if (t2 >= t3)
         return H.ioore(t1, t2);
       this._collection$_current = t1[t2];
-      this._position = (t2 + 1 & t3 - 1) >>> 0;
+      this._collection$_position = (t2 + 1 & t3 - 1) >>> 0;
       return true;
     }
   }
@@ -5455,9 +5563,6 @@ var $$ = {};
   print: function(object) {
     var line = H.S(object);
     H.printString(line);
-  },
-  String_String$fromCharCodes: function(charCodes) {
-    return H.Primitives_stringFromCharCodes(charCodes);
   },
   NoSuchMethodError_toString_closure: {
     "": "Closure:16;box_0",
@@ -5567,7 +5672,9 @@ var $$ = {};
     toString$0: function(_) {
       return "RangeError: " + H.S(this.message);
     },
-    static: {RangeError$value: function(value) {
+    static: {RangeError$: function(message) {
+        return new P.RangeError(message);
+      }, RangeError$value: function(value) {
         return new P.RangeError("value " + H.S(value));
       }, RangeError$range: function(value, start, end) {
         return new P.RangeError("value " + H.S(value) + " not in range " + start + ".." + H.S(end));
@@ -6280,13 +6387,35 @@ var $$ = {};
     }
   }
 }],
-["force", "../physics/force.dart", , L, {
+["force", "physics/force.dart", , L, {
   "": "",
   Force: {
     "": "Object;"
   }
 }],
-["force.gavity", "../physics/gravity.dart", , K, {
+["force.damping", "physics/force.damping.dart", , V, {
+  "": "",
+  Damping: {
+    "": "Force;_factor",
+    Apply$1: function(particle) {
+      var t1, t2;
+      t1 = particle.get$Velocity();
+      t2 = -this._factor;
+      particle.AddForce$1(new G.Vec2(t1.x * t2, t1.y * t2));
+    },
+    Damping$1: function(factor) {
+      var t1 = factor < 0 ? -factor : factor;
+      this._factor = t1;
+      if (t1 > 1) {
+        this._factor = 1;
+        t1 = 1;
+      }
+      if (t1 < 0)
+        this._factor = 0;
+    }
+  }
+}],
+["force.gavity", "physics/force.gravity.dart", , K, {
   "": "",
   Gravity: {
     "": "Force;_gavity$_force",
@@ -6294,189 +6423,7 @@ var $$ = {};
       var t1, t2;
       t1 = this._gavity$_force;
       t2 = particle.get$Mass();
-      particle.AddForce$1(new G.Vec2(t1.x * t2, t1.y * t2));
-    }
-  }
-}],
-["json", "package:json/json.dart", , U, {
-  "": "",
-  JsonUnsupportedObjectError: {
-    "": "Error;unsupportedObject,cause",
-    toString$0: function(_) {
-      if (this.cause != null)
-        return "Calling toJson method on object failed.";
-      else
-        return "Object toJson method returns non-serializable value.";
-    },
-    static: {JsonUnsupportedObjectError$: function(unsupportedObject, cause) {
-        return new U.JsonUnsupportedObjectError(unsupportedObject, cause);
-      }}
-  },
-  JsonCyclicError: {
-    "": "JsonUnsupportedObjectError;unsupportedObject,cause",
-    toString$0: function(_) {
-      return "Cyclic error in JSON stringify";
-    },
-    static: {JsonCyclicError$: function(object) {
-        return new U.JsonCyclicError(object, null);
-      }}
-  },
-  _JsonStringifier: {
-    "": "Object;sink,seen",
-    checkCycle$1: function(object) {
-      var t1 = this.seen;
-      if (t1.contains$1(t1, object))
-        throw H.wrapException(U.JsonCyclicError$(object));
-      t1.add$1(t1, object);
-    },
-    stringifyValue$1: function(object) {
-      var customJson, e, t1, t2, exception;
-      if (!this.stringifyJsonValue$1(object)) {
-        t1 = object;
-        t2 = this.seen;
-        if (t2.contains$1(t2, t1))
-          H.throwExpression(U.JsonCyclicError$(t1));
-        t2.add$1(t2, t1);
-        try {
-          customJson = object.toJson$0();
-          if (!this.stringifyJsonValue$1(customJson)) {
-            t1 = U.JsonUnsupportedObjectError$(object, null);
-            throw H.wrapException(t1);
-          }
-          t2.remove$1(t2, object);
-        } catch (exception) {
-          t1 = H.unwrapException(exception);
-          e = t1;
-          throw H.wrapException(U.JsonUnsupportedObjectError$(object, e));
-        }
-
-      }
-    },
-    stringifyJsonValue$1: function(object) {
-      var t1, t2, i, t3;
-      t1 = {};
-      if (typeof object === "number") {
-        if (!C.JSNumber_methods.get$isFinite(object))
-          return false;
-        this.sink.write$1(C.JSNumber_methods.toString$0(object));
-        return true;
-      } else if (object === true) {
-        this.sink.write$1("true");
-        return true;
-      } else if (object === false) {
-        this.sink.write$1("false");
-        return true;
-      } else if (object == null) {
-        this.sink.write$1("null");
-        return true;
-      } else if (typeof object === "string") {
-        t1 = this.sink;
-        t1.write$1("\"");
-        U._JsonStringifier_escape(t1, object);
-        t1.write$1("\"");
-        return true;
-      } else {
-        t2 = J.getInterceptor(object);
-        if (typeof object === "object" && object !== null && (object.constructor === Array || !!t2.$isList)) {
-          this.checkCycle$1(object);
-          t1 = this.sink;
-          t1.write$1("[");
-          if (t2.get$length(object) > 0) {
-            if (0 >= object.length)
-              return H.ioore(object, 0);
-            this.stringifyValue$1(object[0]);
-            for (i = 1; i < object.length; ++i) {
-              t1._contents = t1._contents + ",";
-              this.stringifyValue$1(object[i]);
-            }
-          }
-          t1.write$1("]");
-          t1 = this.seen;
-          t1.remove$1(t1, object);
-          return true;
-        } else if (typeof object === "object" && object !== null && !!t2.$isMap) {
-          this.checkCycle$1(object);
-          t3 = this.sink;
-          t3.write$1("{");
-          t1.first_0 = true;
-          t2.forEach$1(object, new U._JsonStringifier_stringifyJsonValue_closure(t1, this));
-          t3.write$1("}");
-          t3 = this.seen;
-          t3.remove$1(t3, object);
-          return true;
-        } else
-          return false;
-      }
-    },
-    static: {_JsonStringifier_escape: function(sb, s) {
-        var t1, $length, charCodes, needsEscape, i, charCode, t2;
-        t1 = J.getInterceptor$asx(s);
-        $length = t1.get$length(s);
-        charCodes = H.setRuntimeTypeInfo([], [J.JSInt]);
-        if (typeof $length !== "number")
-          return H.iae($length);
-        needsEscape = false;
-        i = 0;
-        for (; i < $length; ++i) {
-          charCode = t1.codeUnitAt$1(s, i);
-          if (charCode < 32) {
-            charCodes.push(92);
-            switch (charCode) {
-              case 8:
-                charCodes.push(98);
-                break;
-              case 9:
-                charCodes.push(116);
-                break;
-              case 10:
-                charCodes.push(110);
-                break;
-              case 12:
-                charCodes.push(102);
-                break;
-              case 13:
-                charCodes.push(114);
-                break;
-              default:
-                charCodes.push(117);
-                t2 = charCode >>> 12 & 15;
-                charCodes.push(t2 < 10 ? 48 + t2 : 87 + t2);
-                t2 = charCode >>> 8 & 15;
-                charCodes.push(t2 < 10 ? 48 + t2 : 87 + t2);
-                t2 = charCode >>> 4 & 15;
-                charCodes.push(t2 < 10 ? 48 + t2 : 87 + t2);
-                t2 = charCode & 15;
-                charCodes.push(t2 < 10 ? 48 + t2 : 87 + t2);
-                break;
-            }
-            needsEscape = true;
-          } else if (charCode === 34 || charCode === 92) {
-            charCodes.push(92);
-            charCodes.push(charCode);
-            needsEscape = true;
-          } else
-            charCodes.push(charCode);
-        }
-        sb.write$1(needsEscape ? P.String_String$fromCharCodes(charCodes) : s);
-      }}
-  },
-  _JsonStringifier_stringifyJsonValue_closure: {
-    "": "Closure:18;box_0,this_1",
-    call$2: function(key, value) {
-      var t1, t2, t3;
-      t1 = this.box_0;
-      t2 = this.this_1;
-      if (!t1.first_0) {
-        t3 = t2.sink;
-        t3.write$1(",\"");
-      } else {
-        t3 = t2.sink;
-        t3.write$1("\"");
-      }
-      U._JsonStringifier_escape(t3, key);
-      t3.write$1("\":");
-      t2.stringifyValue$1(value);
-      t1.first_0 = false;
+      particle.AddForce$1(new G.Vec2(t1.x * t2 * 99.99999999999999, t1.y * t2 * 99.99999999999999));
     }
   }
 }],
@@ -6502,32 +6449,26 @@ var $$ = {};
     },
     $mul: function(_, f) {
       return new G.Vec2(this.x * f, this.y * f);
-    },
-    $or: function(_, v) {
-      return this.x * v.x + this.y * v.y;
-    },
-    Neg$0: function() {
-      this.x = -this.x;
-      this.y = -this.y;
-      return this;
-    },
-    static: {Vec2_Reflect: function(v, n) {
-        var t1 = 2 * n.$or(n, v);
-        t1 = new G.Vec2(n.x * t1, n.y * t1);
-        return t1.$sub(t1, v);
-      }}
+    }
   }
 }],
-["particle", "../physics/particle.dart", , D, {
+["particle", "physics/particle.dart", , D, {
   "": "",
   Particle: {
-    "": "Object;_particle$_position,_velocity,_acceleration,_force,_box,_damping,_radius,_mass",
+    "": "Object;_position,_velocity,_acceleration,_force,_velocityBox,_largeBox,_damping,_radius,_mass,_resting",
     _initializeBox$0: function() {
-      var t1 = this._particle$_position;
-      this._box = K.Box2$(t1.$sub(t1, this._velocity), this._velocity).Extend$1(this._radius);
+      var t1 = this._position;
+      this._velocityBox = K.Box2$(t1.$sub(t1, this._velocity), this._velocity).Extend$1(this._radius);
     },
     get$Position: function() {
-      return this._particle$_position;
+      return this._position;
+    },
+    set$Position: function(value) {
+      this._position = value;
+      return value;
+    },
+    get$Velocity: function() {
+      return this._velocity;
     },
     get$Mass: function() {
       return this._mass;
@@ -6535,8 +6476,11 @@ var $$ = {};
     get$IsFixed: function() {
       return this._mass === 1 / 0;
     },
+    get$Radius: function() {
+      return this._radius;
+    },
     get$Box: function() {
-      return this._box;
+      return this._velocityBox;
     },
     AddForce$1: function(force) {
       var t1;
@@ -6555,29 +6499,38 @@ var $$ = {};
       t3 = t2.x * t1;
       t1 = t2.y * t1;
       this._acceleration = new G.Vec2(t3, t1);
-      oldPosition = this._particle$_position;
+      oldPosition = this._position;
       t2 = this._velocity;
-      t4 = this._damping;
-      t4 = new G.Vec2(t2.x * t4, t2.y * t4);
-      t2 = dt * dt * 0.5;
-      t2 = oldPosition.$add(oldPosition, t4.$add(t4, new G.Vec2(t3 * t2, t1 * t2)));
-      this._particle$_position = t2;
-      this._velocity = t2.$sub(t2, oldPosition);
+      t4 = dt * dt * 0.5;
+      t4 = oldPosition.$add(oldPosition, t2.$add(t2, new G.Vec2(t3 * t4, t1 * t4)));
+      this._position = t4;
+      this._velocity = t4.$sub(t4, oldPosition);
       this._initializeBox$0();
-      t2 = this._force;
-      t2.x = 0;
-      t2.y = 0;
+      t4 = this._force;
+      t4.x = 0;
+      t4.y = 0;
     },
     Particle$fromParticle$1: function(particle) {
-      this._particle$_position = particle.get$Position();
-      this._velocity = particle._velocity;
+      this._position = particle.get$Position();
+      this._velocity = particle.get$Velocity();
       this._force = particle._force;
+      this._radius = particle._radius;
       this._mass = particle._mass;
       this._initializeBox$0();
     },
+    Particle$3: function(x, y, r) {
+      if (r != null)
+        this._radius = r;
+      this._position = new G.Vec2(x, y);
+      this._initializeBox$0();
+    },
     static: {Particle$fromParticle: function(particle) {
-        var t1 = new D.Particle(null, new G.Vec2(0, 0), new G.Vec2(0, 0), new G.Vec2(0, 0), null, 0.99, 10, 1 / 0);
+        var t1 = new D.Particle(null, new G.Vec2(0, 0), new G.Vec2(0, 0), new G.Vec2(0, 0), null, null, 0.99, 10, 1 / 0, false);
         t1.Particle$fromParticle$1(particle);
+        return t1;
+      }, Particle$: function(x, y, r) {
+        var t1 = new D.Particle(null, new G.Vec2(0, 0), new G.Vec2(0, 0), new G.Vec2(0, 0), null, null, 0.99, 10, 1 / 0, false);
+        t1.Particle$3(x, y, r);
         return t1;
       }}
   }
@@ -6585,7 +6538,7 @@ var $$ = {};
 ["particle.create", "tools/particle.create.dart", , B, {
   "": "",
   CreateParticle: {
-    "": "Object;_alpha,_path,_create$_particles,_particle,_create$_canvas,_velocityFactor,_onMouseDownStream,_onMouseMoveStream,_onMouseUpStream",
+    "": "Object;_alpha,_path,_create$_particles,_particle,_create$_canvas,_velocityFactor,_mouseEvent,_onMouseDownStream,_onMouseMoveStream,_onMouseUpStream",
     Activate$0: function() {
       var t1, t2;
       t1 = this._create$_canvas;
@@ -6609,21 +6562,11 @@ var $$ = {};
       this._onMouseUpStream.cancel$0();
     },
     Draw$1: function(renderer) {
-      var particles, t1, p, t2, t3, t4, simulation, i;
+      var particles, t1, t2, t3, t4;
       if (this._particle != null) {
         particles = H.setRuntimeTypeInfo([], [D.Particle]);
-        for (t1 = this._create$_particles, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
-          p = t1._current;
-          t2 = new D.Particle(null, new G.Vec2(0, 0), new G.Vec2(0, 0), new G.Vec2(0, 0), null, 0.99, 10, 1 / 0);
-          t3 = p.get$Position();
-          t2._particle$_position = t3;
-          t4 = p._velocity;
-          t2._velocity = t4;
-          t2._force = p._force;
-          t2._mass = p._mass;
-          t2._box = K.Box2$(new G.Vec2(t3.x - t4.x, t3.y - t4.y), t4).Extend$1(10);
-          particles.push(t2);
-        }
+        for (t1 = this._create$_particles, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();)
+          particles.push(D.Particle$fromParticle(t1._current));
         particles.push(D.Particle$fromParticle(this._particle));
         t1 = H.setRuntimeTypeInfo([], [G.Vec2]);
         this._path = t1;
@@ -6631,27 +6574,20 @@ var $$ = {};
         t3 = t2 - 1;
         if (t3 < 0)
           return H.ioore(particles, t3);
-        t1.push(particles[t3]._particle$_position);
-        simulation = N.Simulation$();
-        for (i = 0; i < 1000; ++i) {
-          simulation.Simulate$1(particles);
-          t1 = this._path;
-          t2 = particles.length;
-          t3 = t2 - 1;
-          if (t3 < 0)
-            return H.ioore(particles, t3);
-          t1.push(particles[t3]._particle$_position);
-        }
+        t1.push(particles[t3]._position);
         this._alpha = 0.75;
-        t1 = this._particle;
-        renderer.drawCircle$3(t1._particle$_position, t1._radius, "rgba(255, 128, 128, 0.75)");
+        t3 = this._particle;
+        renderer.drawCircle$3(t3._position, t3._radius, "rgba(255, 128, 128, 0.75)");
+        t3 = this._particle;
+        t1 = t3._velocity;
+        renderer.drawVector$3(new G.Vec2(t1.x * 10, t1.y * 10), t3._position, "rgba(255, 128, 0, 1.0)");
         renderer.drawPath$4(this._path, false, "rgba(0, 0, 0, " + H.S(this._alpha) + ")", "rgba(192, 192, 192, " + H.S(this._alpha) + ")");
-        t1 = this._path;
-        t2 = t1.length;
-        t3 = t2 - 1;
-        if (t3 < 0)
-          return H.ioore(t1, t3);
-        renderer.drawCircle$3(t1[t3], this._particle._radius, "rgba(128, 128, 128, " + H.S(this._alpha / 2) + ")");
+        t3 = this._path;
+        t1 = t3.length;
+        t2 = t1 - 1;
+        if (t2 < 0)
+          return H.ioore(t3, t2);
+        renderer.drawCircle$3(t3[t2], this._particle._radius, "rgba(128, 128, 128, " + H.S(this._alpha / 2) + ")");
       } else {
         t1 = this._path;
         if (t1 != null) {
@@ -6673,12 +6609,32 @@ var $$ = {};
     },
     get$Name: function() {
       return "click and hold mouse button to create particle and set its velocity, user CTRL + click to create fixed particle ";
+    },
+    get$Position: function() {
+      var t1, t2, t3;
+      t1 = this._mouseEvent;
+      if (t1 == null)
+        t1 = null;
+      else {
+        t1 = J.get$layer$x(t1);
+        t2 = t1.x;
+        t2.toString;
+        t3 = this._create$_canvas.clientHeight;
+        t1 = t1.y;
+        t1.toString;
+        if (typeof t3 !== "number")
+          return t3.$sub();
+        if (typeof t1 !== "number")
+          return H.iae(t1);
+        t1 = new G.Vec2(t2, t3 - t1);
+      }
+      return t1;
     }
   },
   CreateParticle_Activate_closure: {
     "": "Closure:11;this_0",
     call$1: function(e) {
-      var t1, t2, x, t3, t4, t5;
+      var t1, t2, x, t3, t4;
       t1 = this.this_0;
       t2 = J.getInterceptor$x(e);
       x = t2.get$layer(e).x;
@@ -6691,14 +6647,12 @@ var $$ = {};
       if (typeof t4 !== "number")
         return H.iae(t4);
       t2 = t2.get$ctrlKey(e) === true ? 1 / 0 : 1;
-      t5 = new D.Particle(null, new G.Vec2(0, 0), new G.Vec2(0, 0), new G.Vec2(0, 0), null, 0.99, 10, 1 / 0);
-      t5._particle$_position = new G.Vec2(x, t3 - t4);
-      t5._initializeBox$0();
-      t1._particle = t5;
-      t5._mass = t2;
-      t5 = t5._velocity;
-      t5.x = 0;
-      t5.y = 0;
+      t4 = D.Particle$(x, t3 - t4, null);
+      t1._particle = t4;
+      t4._mass = t2;
+      t4 = t4._velocity;
+      t4.x = 0;
+      t4.y = 0;
       return;
     }
   },
@@ -6707,6 +6661,7 @@ var $$ = {};
     call$1: function(e) {
       var t1, t2, t3, t4, t5, point;
       t1 = this.this_1;
+      t1._mouseEvent = e;
       t2 = J.getInterceptor$x(e);
       t3 = t2.get$layer(e).x;
       t3.toString;
@@ -6723,7 +6678,7 @@ var $$ = {};
       if (t3 != null) {
         t3._mass = t2;
         if (t2 !== 1 / 0) {
-          t2 = point.$sub(point, t3._particle$_position);
+          t2 = point.$sub(point, t3._position);
           t1 = t1._velocityFactor;
           t3._velocity = new G.Vec2(t2.x * t1, t2.y * t1);
         } else {
@@ -6754,9 +6709,29 @@ var $$ = {};
 ["particle.delete", "tools/particle.delete.dart", , A, {
   "": "",
   DeleteParticle: {
-    "": "Tool;_canvas,_highlighted,_particles,_mouseEvent,_$delete$_onMouseMoveStream,_onClickStream",
+    "": "Tool;_canvas,_highlighted,_particles,_constraints,_$delete$_mouseEvent,_$delete$_onMouseMoveStream,_onClickStream",
+    get$Position: function() {
+      var t1, t2, t3;
+      t1 = this._$delete$_mouseEvent;
+      if (t1 == null)
+        t1 = null;
+      else {
+        t1 = J.get$layer$x(t1);
+        t2 = t1.x;
+        t2.toString;
+        t3 = this._canvas.clientHeight;
+        t1 = t1.y;
+        t1.toString;
+        if (typeof t3 !== "number")
+          return t3.$sub();
+        if (typeof t1 !== "number")
+          return H.iae(t1);
+        t1 = new G.Vec2(t2, t3 - t1);
+      }
+      return t1;
+    },
     _onClick$1: function(e) {
-      var x, t1, t2, mouse, $delete, p, t3, t4, t5;
+      var x, t1, t2, mouse, delete_particles, p, t3, t4, t5, t6, delete_constraints, c;
       x = J.get$layer$x(e).x;
       x.toString;
       t1 = this._canvas.clientHeight;
@@ -6767,17 +6742,33 @@ var $$ = {};
       if (typeof t2 !== "number")
         return H.iae(t2);
       mouse = new G.Vec2(x, t1 - t2);
-      $delete = H.setRuntimeTypeInfo([], [D.Particle]);
+      delete_particles = H.setRuntimeTypeInfo([], [D.Particle]);
       for (t1 = this._particles, t2 = new H.ListIterator(t1, t1.length, 0, null); t2.moveNext$0();) {
         p = t2._current;
         t3 = p.get$Position();
         t4 = t3.x - mouse.x;
         t3 = t3.y - mouse.y;
-        t5 = p._radius;
-        if (t4 * t4 + t3 * t3 < t5 * t5)
-          $delete.push(p);
+        t5 = p.get$Radius();
+        t6 = p._radius;
+        if (typeof t5 !== "number")
+          return t5.$mul();
+        if (typeof t6 !== "number")
+          return H.iae(t6);
+        if (t4 * t4 + t3 * t3 < t5 * t6)
+          delete_particles.push(p);
       }
-      for (t2 = new H.ListIterator($delete, $delete.length, 0, null), t3 = J.getInterceptor$ax(t1); t2.moveNext$0();)
+      delete_constraints = H.setRuntimeTypeInfo([], [Q.Constraint]);
+      for (t2 = new H.ListIterator(delete_particles, delete_particles.length, 0, null), t3 = this._constraints; t2.moveNext$0();) {
+        p = t2._current;
+        for (t4 = new H.ListIterator(t3, t3.length, 0, null); t4.moveNext$0();) {
+          c = t4._current;
+          if (c.get$A() === p || J.$eq(c.get$B(), p))
+            delete_constraints.push(c);
+        }
+      }
+      for (t2 = new H.ListIterator(delete_constraints, delete_constraints.length, 0, null), t4 = J.getInterceptor$ax(t3); t2.moveNext$0();)
+        t4.remove$1(t3, t2._current);
+      for (t2 = new H.ListIterator(delete_particles, delete_particles.length, 0, null), t3 = J.getInterceptor$ax(t1); t2.moveNext$0();)
         t3.remove$1(t1, t2._current);
     },
     Deactivate$0: function() {
@@ -6800,9 +6791,9 @@ var $$ = {};
       this._highlighted = H.setRuntimeTypeInfo([], [D.Particle]);
     },
     Draw$1: function(renderer) {
-      var t1, x, t2, mouse, p, t3, t4;
+      var t1, x, t2, mouse, p, t3, t4, t5;
       J.set$length$asx(this._highlighted, 0);
-      t1 = this._mouseEvent;
+      t1 = this._$delete$_mouseEvent;
       if (t1 != null) {
         t1 = J.get$layer$x(t1);
         x = t1.x;
@@ -6820,8 +6811,13 @@ var $$ = {};
           t2 = p.get$Position();
           t3 = t2.x - mouse.x;
           t2 = t2.y - mouse.y;
-          t4 = p._radius;
-          if (t3 * t3 + t2 * t2 < t4 * t4)
+          t4 = p.get$Radius();
+          t5 = p._radius;
+          if (typeof t4 !== "number")
+            return t4.$mul();
+          if (typeof t5 !== "number")
+            return H.iae(t5);
+          if (t3 * t3 + t2 * t2 < t4 * t5)
             this._highlighted.push(p);
         }
         for (t1 = this._highlighted, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
@@ -6838,7 +6834,7 @@ var $$ = {};
   DeleteParticle_Activate_closure: {
     "": "Closure:11;this_0",
     call$1: function(e) {
-      this.this_0._mouseEvent = e;
+      this.this_0._$delete$_mouseEvent = e;
       return;
     }
   },
@@ -6849,120 +6845,395 @@ var $$ = {};
     }
   }
 }],
-["phx_collisions", "../physics/collisionmap.dart", , Z, {
+["particle.select", "tools/particle.select.dart", , D, {
+  "": "",
+  SelectParticle: {
+    "": "Tool;_select$_canvas,_output,_select$_highlighted,_select$_particles,_tracked,_select$_mouseEvent,_select$_onMouseMoveStream,_select$_onClickStream",
+    get$Position: function() {
+      var t1, t2, t3;
+      t1 = this._select$_mouseEvent;
+      if (t1 == null)
+        t1 = null;
+      else {
+        t1 = J.get$layer$x(t1);
+        t2 = t1.x;
+        t2.toString;
+        t3 = this._select$_canvas.clientHeight;
+        t1 = t1.y;
+        t1.toString;
+        if (typeof t3 !== "number")
+          return t3.$sub();
+        if (typeof t1 !== "number")
+          return H.iae(t1);
+        t1 = new G.Vec2(t2, t3 - t1);
+      }
+      return t1;
+    },
+    _select$_onClick$1: function(e) {
+      var x, t1, t2, mouse, p, t3, t4, t5, t6;
+      x = J.get$layer$x(e).x;
+      x.toString;
+      t1 = this._select$_canvas.clientHeight;
+      t2 = H.setRuntimeTypeInfo(new P.Point(e.layerX, e.layerY), [null]).y;
+      t2.toString;
+      if (typeof t1 !== "number")
+        return t1.$sub();
+      if (typeof t2 !== "number")
+        return H.iae(t2);
+      mouse = new G.Vec2(x, t1 - t2);
+      t2 = this._tracked;
+      C.JSArray_methods.set$length(t2, 0);
+      for (t1 = this._select$_particles, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
+        p = t1._current;
+        t3 = p.get$Position();
+        t4 = t3.x - mouse.x;
+        t3 = t3.y - mouse.y;
+        t5 = p.get$Radius();
+        t6 = p._radius;
+        if (typeof t5 !== "number")
+          return t5.$mul();
+        if (typeof t6 !== "number")
+          return H.iae(t6);
+        if (t4 * t4 + t3 * t3 < t5 * t6)
+          t2.push(p);
+      }
+    },
+    Deactivate$0: function() {
+      this._select$_onMouseMoveStream.cancel$0();
+      this._select$_onClickStream.cancel$0();
+      this._select$_highlighted = H.setRuntimeTypeInfo([], [D.Particle]);
+    },
+    Activate$0: function() {
+      var t1, t2;
+      t1 = this._select$_canvas;
+      t1.toString;
+      t2 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t1, C.EventStreamProvider_mousemove._eventType, false), [null]);
+      t2 = H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t2._target, t2._eventType, W._wrapZone(new D.SelectParticle_Activate_closure(this)), t2._useCapture), [H.getTypeArgumentByIndex(t2, 0)]);
+      t2._tryResume$0();
+      this._select$_onMouseMoveStream = t2;
+      t1 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t1, C.EventStreamProvider_click._eventType, false), [null]);
+      t1 = H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t1._target, t1._eventType, W._wrapZone(new D.SelectParticle_Activate_closure0(this)), t1._useCapture), [H.getTypeArgumentByIndex(t1, 0)]);
+      t1._tryResume$0();
+      this._select$_onClickStream = t1;
+      this._select$_highlighted = H.setRuntimeTypeInfo([], [D.Particle]);
+    },
+    Draw$1: function(renderer) {
+      var t1, info, p, t2, t3, t4;
+      for (t1 = this._tracked, t1 = new H.ListIterator(t1, t1.length, 0, null), info = ""; t1.moveNext$0();) {
+        p = t1._current;
+        t2 = p.get$Box();
+        renderer.toString;
+        renderer.drawPath$4(t2._points, true, "rgba(255, 0, 0, 1.0)", "rgba(255, 0, 0, 1.0)");
+        t2 = "Velocity: (" + C.JSNumber_methods.toStringAsFixed$1(p._velocity.x, 4) + ", " + C.JSNumber_methods.toStringAsFixed$1(p._velocity.y, 4) + "), length=";
+        t3 = p._velocity;
+        t4 = t3.x;
+        t3 = t3.y;
+        info += t2 + C.JSDouble_methods.toStringAsFixed$1(Math.sqrt(t4 * t4 + t3 * t3), 4);
+        t2 = p._mass;
+        info = t2 === 1 / 0 ? info + (", Mass: " + H.S(t2)) : info + (", Mass: " + C.JSNumber_methods.toStringAsFixed$1(t2, 2));
+      }
+      t1 = this._output;
+      if (t1 != null)
+        t1.textContent = info;
+    },
+    get$Name: function() {
+      return "click particle to select";
+    }
+  },
+  SelectParticle_Activate_closure: {
+    "": "Closure:11;this_0",
+    call$1: function(e) {
+      this.this_0._select$_mouseEvent = e;
+      return;
+    }
+  },
+  SelectParticle_Activate_closure0: {
+    "": "Closure:11;this_1",
+    call$1: function(e) {
+      return this.this_1._select$_onClick$1(e);
+    }
+  }
+}],
+["phx_collision_pair", "physics/collision.pair.dart", , U, {
   "": "",
   CollisionPair: {
-    "": "Object;_contact",
+    "": "Object;_phx_collision_pair$_a,_phx_collision_pair$_b,_contact",
     SetContact$1: function(contact) {
       if (contact == null)
         return;
       this._contact = contact;
     },
-    get$Details: function() {
+    GetContact$0: function() {
       return this._contact;
     },
     Discard$0: function() {
       this._contact = null;
+    },
+    get$A: function() {
+      return this._phx_collision_pair$_a;
+    },
+    get$B: function() {
+      return this._phx_collision_pair$_b;
     }
-  },
+  }
+}],
+["phx_collisions", "physics/collisionmap.dart", , Z, {
+  "": "",
   CollisionMap: {
-    "": "Object;_particlesCount,_phx_collisions$_index,_pairs,_particlePairs",
-    _getParticleIndex$1: function(p) {
-      var t1, t2;
-      if (!this._phx_collisions$_index.containsKey$1(p)) {
-        t1 = this._phx_collisions$_index;
-        t2 = t1.get$values(t1)._iterable;
-        t1.$indexSet(t1, p, t2.get$length(t2));
+    "": "Object;Particles,_phx_collisions$_constraints,_particlesCount,_phx_collisions$_index,_pairs,_particlePairs",
+    _initialize$0: function() {
+      var i, t1, a, j, j0, b, index, t2, constraint;
+      this._particlesCount = this.Particles.length;
+      this._phx_collisions$_index = P.LinkedHashMap_LinkedHashMap(null, null, null, D.Particle, J.JSInt);
+      this._pairs = P.LinkedHashMap_LinkedHashMap(null, null, null, J.JSInt, U.CollisionPair);
+      this._particlePairs = P.LinkedHashMap_LinkedHashMap(null, null, null, D.Particle, [J.JSArray, U.CollisionPair]);
+      for (i = 0; t1 = this.Particles, i < t1.length; i = j) {
+        a = t1[i];
+        for (j = i + 1, j0 = j; t1 = this.Particles, j0 < t1.length; ++j0) {
+          b = t1[j0];
+          if (a.get$IsFixed() && b.get$IsFixed())
+            continue;
+          index = this._getPairIndex$2(a, b);
+          if (!this._pairs.containsKey$1(index)) {
+            t1 = this._pairs;
+            t2 = new U.CollisionPair(a, b, null);
+            t2._contact = null;
+            t1.$indexSet(t1, index, t2);
+          }
+        }
       }
-      t1 = this._phx_collisions$_index;
-      return t1.$index(t1, p);
+      for (t1 = this._phx_collisions$_constraints, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
+        constraint = t1._current;
+        index = this._getPairIndex$2(constraint.get$A(), constraint.get$B());
+        t2 = this._pairs;
+        t2.remove$1(t2, index);
+      }
+      for (i = 0; t1 = this.Particles, i < t1.length; ++i)
+        this.GetPairs$1(t1[i]);
     },
     GetPairs$1: function(a) {
-      var result, t1, t2, pair;
-      result = H.setRuntimeTypeInfo([], [Z.CollisionPair]);
-      t1 = this._pairs;
-      if (t1 != null)
-        for (t1 = t1.get$values(t1), t2 = t1._iterable, t1 = H.setRuntimeTypeInfo(new H.MappedIterator(null, t2.get$iterator(t2), t1._f), [H.getTypeArgumentByIndex(t1, 0), H.getTypeArgumentByIndex(t1, 1)]); t1.moveNext$0();) {
-          pair = t1._current;
-          if (pair.get$Details() != null) {
-            t2 = pair._contact;
-            if (t2._a === a || t2._b === a)
+      var t1, result, t2, pair;
+      if (this._particlePairs.containsKey$1(a)) {
+        t1 = this._particlePairs;
+        return t1.$index(t1, a);
+      } else {
+        result = [];
+        result.$builtinTypeInfo = [U.CollisionPair];
+        t1 = this._pairs;
+        if (t1 != null) {
+          t1 = t1.get$values(t1);
+          t2 = t1._iterable;
+          t2 = new H.MappedIterator(null, t2.get$iterator(t2), t1._f);
+          t2.$builtinTypeInfo = [H.getTypeArgumentByIndex(t1, 0), H.getTypeArgumentByIndex(t1, 1)];
+          for (; t2.moveNext$0();) {
+            pair = t2._current;
+            if (pair.get$A() === a || J.$eq(pair.get$B(), a))
               result.push(pair);
           }
         }
-      if (!this._particlePairs.containsKey$1(a)) {
         t1 = this._particlePairs;
         t1.$indexSet(t1, a, result);
+        t1 = this._particlePairs;
+        return t1.$index(t1, a);
       }
-      t1 = this._particlePairs;
-      return t1.$index(t1, a);
     },
     Reset$0: function() {
       var t1, t2;
       for (t1 = this._pairs, t1 = t1.get$values(t1), t2 = t1._iterable, t1 = H.setRuntimeTypeInfo(new H.MappedIterator(null, t2.get$iterator(t2), t1._f), [H.getTypeArgumentByIndex(t1, 0), H.getTypeArgumentByIndex(t1, 1)]); t1.moveNext$0();)
         t1._current.Discard$0();
     },
-    Get$2: function(a, b) {
-      var idxA, idxB, t0, index, t1, t2;
-      if (a.get$IsFixed() && b.get$IsFixed())
-        return;
-      idxA = this._getParticleIndex$1(a);
-      idxB = this._getParticleIndex$1(b);
+    _getPairIndex$2: function(a, b) {
+      var t1, t2, idxA, idxB, t0;
+      if (!this._phx_collisions$_index.containsKey$1(a)) {
+        t1 = this._phx_collisions$_index;
+        t2 = t1.get$values(t1)._iterable;
+        t1.$indexSet(t1, a, t2.get$length(t2));
+      }
+      t1 = this._phx_collisions$_index;
+      idxA = t1.$index(t1, a);
+      if (!this._phx_collisions$_index.containsKey$1(b)) {
+        t1 = this._phx_collisions$_index;
+        t2 = t1.get$values(t1)._iterable;
+        t1.$indexSet(t1, b, t2.get$length(t2));
+      }
+      t1 = this._phx_collisions$_index;
+      idxB = t1.$index(t1, b);
       if (J.$gt$n(idxB, idxA)) {
         t0 = idxB;
         idxB = idxA;
         idxA = t0;
       }
-      index = J.$add$ns(J.$mul$n(idxB, this._particlesCount), idxA);
-      if (!this._pairs.containsKey$1(index)) {
-        t1 = this._pairs;
-        t2 = new Z.CollisionPair(null);
-        t2._contact = null;
-        t1.$indexSet(t1, index, t2);
-      }
-      t1 = this._pairs;
-      return t1.$index(t1, index);
+      return J.$add$ns(J.$mul$n(idxB, this.Particles.length), idxA);
     },
     get$DynamicCollisionsCount: function() {
       var t1, result;
       for (t1 = this._pairs, t1 = t1.get$values(t1), t1 = P.List_List$from(t1, false, H.getRuntimeTypeArgument(t1, "IterableBase", 0)), t1 = new H.ListIterator(t1, t1.length, 0, null), result = 0; t1.moveNext$0();)
-        result += t1._current.get$Details() != null ? 1 : 0;
+        result += t1._current.GetContact$0() != null ? 1 : 0;
       return result;
-    },
-    CollisionMap$1: function(n) {
-      this._particlesCount = n;
-      this._phx_collisions$_index = P.LinkedHashMap_LinkedHashMap(null, null, null, D.Particle, J.JSInt);
-      this._pairs = P.LinkedHashMap_LinkedHashMap(null, null, null, J.JSInt, Z.CollisionPair);
-      this._particlePairs = P.LinkedHashMap_LinkedHashMap(null, null, null, D.Particle, [J.JSArray, Z.CollisionPair]);
     }
+  }
+}],
+["phx_constraint", "physics/constraint.dart", , Q, {
+  "": "",
+  Constraint: {
+    "": "Object;",
+    get$A: function() {
+      return this._a;
+    },
+    get$B: function() {
+      return this._b;
+    }
+  }
+}],
+["phx_constraint_distance", "physics/constraint.distance.dart", , T, {
+  "": "",
+  Distance: {
+    "": "Constraint;_distance,_ia,_ib,order,_a,_b",
+    Resolve$1: function(nsteps) {
+      var t1, t2, t3, dp, t4, len, t5, t6, t7, s;
+      t1 = this._b;
+      t2 = t1._position;
+      t3 = this._a;
+      dp = t2.$sub(t2, t3._position);
+      t2 = dp.x;
+      t4 = dp.y;
+      len = Math.sqrt(t2 * t2 + t4 * t4);
+      t2 = (this._distance - len) / len;
+      t4 = dp.x * t2;
+      t2 = dp.y * t2;
+      t5 = t3._mass;
+      if (t5 !== 1 / 0) {
+        t6 = 1 / t5;
+        t5 = 1 / t5;
+        t7 = t1._mass;
+        s = t6 / (t5 + (t7 === 1 / 0 ? 0 : 1 / t7));
+        t5 = t3._position;
+        t3._position = t5.$sub(t5, new G.Vec2(t4 * s, t2 * s));
+        t5 = t3._velocity;
+        t3._velocity = t5.$sub(t5, new G.Vec2(t4 * s, t2 * s));
+      }
+      t5 = t1._mass;
+      if (t5 !== 1 / 0) {
+        t6 = 1 / t5;
+        t3 = t3._mass;
+        t3 = t3 === 1 / 0 ? 0 : 1 / t3;
+        s = t6 / (t3 + 1 / t5);
+        t3 = t1._position;
+        t1._position = t3.$add(t3, new G.Vec2(t4 * s, t2 * s));
+        t3 = t1._velocity;
+        t1._velocity = t3.$add(t3, new G.Vec2(t4 * s, t2 * s));
+      }
+    },
+    Render$1: function(renderer) {
+      renderer.drawPath$4([this._a._position, this._b._position], false, "rgb(128, 128, 128)", "rgb(128, 128, 128)");
+    },
+    Distance$2: function(a, b) {
+      var t1, t2;
+      t1 = this._a._position;
+      t1 = t1.$sub(t1, this._b._position);
+      t2 = t1.x;
+      t1 = t1.y;
+      this._distance = Math.sqrt(t2 * t2 + t1 * t1);
+    },
+    static: {Distance$: function(a, b) {
+        var t1 = new T.Distance(0, null, null, 0, a, b);
+        t1.Distance$2(a, b);
+        return t1;
+      }}
   }
 }],
 ["physicsdemo", "physics.dart", , V, {
   "": "",
   main: [function() {
-    var t1, t2;
-    t1 = H.fillLiteralMap(["score", 40], P.LinkedHashMap_LinkedHashMap(null, null, null, null, null));
-    t2 = H.fillLiteralMap(["score", 50], P.LinkedHashMap_LinkedHashMap(null, null, null, null, null));
-    new U._JsonStringifier(P.StringBuffer$(""), P.HashSet_HashSet$identity(null)).stringifyValue$1([t1, t2]);
+    var t1, t2, p1, i, t3, p2, t4, t5, p3, p4;
     $.canvas = document.querySelector("#canvas");
-    t2 = $.get$buttonCreate();
-    t2.toString;
-    t1 = C.EventStreamProvider_click._eventType;
-    t2 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t2, t1, false), [null]);
-    H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t2._target, t2._eventType, W._wrapZone(new V.main_closure()), t2._useCapture), [H.getTypeArgumentByIndex(t2, 0)])._tryResume$0();
-    t2 = $.get$buttonDelete();
-    t2.toString;
-    t1 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t2, t1, false), [null]);
+    t1 = $.get$buttonCreate();
+    t1.toString;
+    t2 = C.EventStreamProvider_click._eventType;
+    t1 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t1, t2, false), [null]);
+    H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t1._target, t1._eventType, W._wrapZone(new V.main_closure()), t1._useCapture), [H.getTypeArgumentByIndex(t1, 0)])._tryResume$0();
+    t1 = $.get$buttonDelete();
+    t1.toString;
+    t1 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t1, t2, false), [null]);
     H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t1._target, t1._eventType, W._wrapZone(new V.main_closure0()), t1._useCapture), [H.getTypeArgumentByIndex(t1, 0)])._tryResume$0();
+    t1 = $.get$buttonSelect();
+    t1.toString;
+    t1 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t1, t2, false), [null]);
+    H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t1._target, t1._eventType, W._wrapZone(new V.main_closure1()), t1._useCapture), [H.getTypeArgumentByIndex(t1, 0)])._tryResume$0();
+    t1 = $.get$buttonTrigger();
+    t1.toString;
+    t2 = H.setRuntimeTypeInfo(new W._ElementEventStreamImpl(t1, t2, false), [null]);
+    H.setRuntimeTypeInfo(new W._EventStreamSubscription(0, t2._target, t2._eventType, W._wrapZone(new V.main_closure2()), t2._useCapture), [H.getTypeArgumentByIndex(t2, 0)])._tryResume$0();
+    t2 = $.canvas;
+    t2 = new B.CreateParticle(1, null, $.get$particles(), null, t2, 0.1, null, null, null, null);
+    $.tool = t2;
+    t2.Activate$0();
+    t2 = new N.Simulation(null, null, 0, H.setRuntimeTypeInfo([], [L.Force]), null, new G.Vec2(0, -0.0981));
+    t2.Simulation$0();
+    $.simulation = t2;
     t1 = $.canvas;
-    t1 = new B.CreateParticle(1, null, $.get$particles(), null, t1, 0.1, null, null, null);
-    $.tool = t1;
-    t1.Activate$0();
-    $.simulation = N.Simulation$();
-    t1 = $.canvas;
+    t2._worldWidth = t1.clientWidth;
+    t2._worldHeight = t1.clientHeight;
     t2 = new Q.CanvasRenderer(6.283185307179586, t1, null);
     t2._context = J.get$context2D$x(t1);
     $.renderer = t2;
+    p1 = D.Particle$(400, 500, null);
+    p1._mass = 1 / 0;
+    t2 = p1._velocity;
+    t2.x = 0;
+    t2.y = 0;
+    $.get$particles().push(p1);
+    for (i = 1; i <= 25; ++i, p1 = p2) {
+      t1 = 400 + i * 15;
+      t2 = 5 + i * 2 / 25;
+      t3 = new G.Vec2(0, 0);
+      p2 = new D.Particle(null, t3, new G.Vec2(0, 0), new G.Vec2(0, 0), null, null, 0.99, 10, 1 / 0, false);
+      p2._radius = t2;
+      p2._position = new G.Vec2(t1, 500);
+      p2._velocityBox = K.Box2$(new G.Vec2(t1 - 0, 500), t3).Extend$1(t2);
+      p2._mass = i * 1;
+      t3.x = 0;
+      t3.y = 0;
+      $.get$particles().push(p2);
+      t1 = $.get$constraints();
+      t2 = new T.Distance(0, null, null, 0, p1, p2);
+      t3 = p1._position;
+      t4 = p2._position;
+      t5 = t3.x - t4.x;
+      t4 = t3.y - t4.y;
+      t2._distance = Math.sqrt(t5 * t5 + t4 * t4);
+      t1.push(t2);
+    }
+    p1 = D.Particle$(30, 30, 15);
+    p1._mass = 5;
+    t1 = p1._velocity;
+    t1.x = 0;
+    t1.y = 0;
+    $.get$particles().push(p1);
+    p2 = D.Particle$(70, 30, 15);
+    p2._mass = 5;
+    t1 = p2._velocity;
+    t1.x = 0;
+    t1.y = 0;
+    $.get$particles().push(p2);
+    p3 = D.Particle$(70, 70, null);
+    p3._mass = 5;
+    t1 = p3._velocity;
+    t1.x = 0;
+    t1.y = 0;
+    $.get$particles().push(p3);
+    p4 = D.Particle$(30, 70, null);
+    p4._mass = 5;
+    t1 = p4._velocity;
+    t1.x = 0;
+    t1.y = 0;
+    $.get$particles().push(p4);
+    $.get$constraints().push(T.Distance$(p1, p2));
+    $.get$constraints().push(T.Distance$(p2, p3));
+    $.get$constraints().push(T.Distance$(p3, p4));
+    $.get$constraints().push(T.Distance$(p4, p1));
+    $.get$constraints().push(T.Distance$(p1, p3));
+    $.get$constraints().push(T.Distance$(p2, p4));
     C.Window_methods.get$animationFrame(window).then$1(V.appLoop$closure());
   }, "call$0", "main$closure", 0, 0, 0],
   appLoop: [function(delta) {
@@ -6985,14 +7256,19 @@ var $$ = {};
     t1 = $.tool;
     if (t1 != null)
       t1.Draw$1($.renderer);
-    $.simulation.Simulate$1($.get$particles());
-    $.simulation.Draw$2($.get$particles(), $.renderer);
+    $.simulation.Simulate$2($.get$particles(), $.get$constraints());
+    $.simulation.Draw$3($.get$particles(), $.get$constraints(), $.renderer);
     document.querySelector("span#toolname").textContent = $.tool.get$Name();
-    t1 = $.get$details();
-    t2 = "Collision pairs: " + C.JSInt_methods.toString$0($.simulation._collisionMap.get$DynamicCollisionsCount()) + "/";
-    t3 = $.simulation._collisionMap._pairs;
-    t3 = t3.get$values(t3);
-    t1.textContent = t2 + C.JSInt_methods.toString$0(P.List_List$from(t3, false, H.getRuntimeTypeArgument(t3, "IterableBase", 0)).length);
+    t1 = $.simulation._collisionMap;
+    if (t1 != null) {
+      t2 = $.get$details();
+      t1 = "Collision pairs: " + C.JSInt_methods.toString$0(t1.get$DynamicCollisionsCount()) + "/";
+      t3 = $.simulation._collisionMap._pairs;
+      t3 = t3.get$values(t3);
+      t2.textContent = t1 + C.JSInt_methods.toString$0(P.List_List$from(t3, false, H.getRuntimeTypeArgument(t3, "IterableBase", 0)).length);
+    }
+    if ($.tool.get$Position() != null)
+      $.get$position().textContent = "Position (" + H.S($.tool.get$Position().x) + ", " + H.S($.tool.get$Position().y) + ")";
     C.Window_methods.get$animationFrame(window).then$1(V.appLoop$closure());
   }, "call$1", "appLoop$closure", 2, 0, 8],
   main_closure: {
@@ -7001,7 +7277,7 @@ var $$ = {};
       var t1;
       $.tool.Deactivate$0();
       t1 = $.canvas;
-      t1 = new B.CreateParticle(1, null, $.get$particles(), null, t1, 0.1, null, null, null);
+      t1 = new B.CreateParticle(1, null, $.get$particles(), null, t1, 0.1, null, null, null, null);
       $.tool = t1;
       t1.Activate$0();
       return;
@@ -7012,9 +7288,35 @@ var $$ = {};
     call$1: function(e) {
       var t1;
       $.tool.Deactivate$0();
-      t1 = new A.DeleteParticle($.canvas, null, $.get$particles(), null, null, null);
+      t1 = new A.DeleteParticle($.canvas, null, $.get$particles(), $.get$constraints(), null, null, null);
       $.tool = t1;
       t1.Activate$0();
+      return;
+    }
+  },
+  main_closure1: {
+    "": "Closure:11;",
+    call$1: function(e) {
+      var t1;
+      $.tool.Deactivate$0();
+      t1 = new D.SelectParticle($.canvas, $.get$collisions(), null, $.get$particles(), H.setRuntimeTypeInfo([], [D.Particle]), null, null, null);
+      $.tool = t1;
+      t1.Activate$0();
+      return;
+    }
+  },
+  main_closure2: {
+    "": "Closure:11;",
+    call$1: function(e) {
+      var t1 = $.simulation;
+      if (t1 != null)
+        if (t1._dt > 0) {
+          t1._dt = 0;
+          $.get$buttonTrigger().textContent = "Play";
+        } else {
+          t1._dt = 0.1;
+          $.get$buttonTrigger().textContent = "Pause";
+        }
       return;
     }
   }
@@ -7026,220 +7328,169 @@ var $$ = {};
     "": "Object;"
   }
 }],
-["simulation", "../physics/simulation.dart", , N, {
+["simulation", "physics/simulation.dart", , N, {
   "": "",
   Simulation: {
-    "": "Object;forces,_collisionMap,gravityForce,_worldWidth,_worldHeight",
+    "": "Object;_worldWidth,_worldHeight,_dt,_forces,_collisionMap,gravityForce",
     _simulateParticle$1: function(particle) {
       var t1;
-      for (t1 = this.forces, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();)
+      for (t1 = this._forces, t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();)
         t1._current.Apply$1(particle);
-      particle.Integrate$1(0.1);
-      this._worldCollisionDetection$1(particle);
+      particle.Integrate$1(this._dt);
     },
-    Simulate$1: function(particles) {
+    Simulate$2: function(particles, constraints) {
       var t1;
+      if (!(this._dt > 0))
+        return;
       for (t1 = new H.ListIterator(particles, particles.length, 0, null); t1.moveNext$0();)
         this._simulateParticle$1(t1._current);
-      this._resolveCollisions$2(particles, this._detectCollisions$1(particles));
+      this._resolveCollisions$3(particles, constraints, this._detectCollisions$2(particles, constraints));
+      for (t1 = new H.ListIterator(particles, particles.length, 0, null); t1.moveNext$0();)
+        this._worldCollisionDetection$1(t1._current);
     },
     _worldCollisionDetection$1: function(particle) {
-      var PARTICLE_RADIUS, t1, t2;
-      if (particle._mass === 1 / 0)
+      var PARTICLE_RADIUS, t1, t2, t3, t4, t5;
+      if (particle.get$IsFixed())
         return;
-      PARTICLE_RADIUS = C.JSInt_methods.toInt$0(particle._radius);
-      t1 = particle._particle$_position;
-      t2 = this._worldWidth - PARTICLE_RADIUS;
-      if (t1.x > t2) {
-        particle._velocity = G.Vec2_Reflect(particle._velocity, new G.Vec2(-1, 0)).Neg$0();
-        t1 = new G.Vec2(t2, particle._particle$_position.y);
-        particle._particle$_position = t1;
+      PARTICLE_RADIUS = J.toInt$0$n(particle._radius);
+      t1 = particle._position;
+      t2 = t1.x;
+      t3 = this._worldWidth;
+      if (typeof t3 !== "number")
+        return t3.$sub();
+      if (t2 > t3 - PARTICLE_RADIUS) {
+        t2 = particle._velocity;
+        t4 = t2.x;
+        t2 = t2.y;
+        t5 = 2 * (-1 * t4 + 0 * t2);
+        t4 = -1 * t5 - t4;
+        t2 = 0 * t5 - t2;
+        t5 = new G.Vec2(t4, t2);
+        t5.x = -t4;
+        t5.y = -t2;
+        particle._velocity = t5;
+        t1 = new G.Vec2(t3 - PARTICLE_RADIUS, t1.y);
+        particle._position = t1;
       }
       t2 = 0 + PARTICLE_RADIUS;
       if (t1.x < t2) {
-        particle._velocity = G.Vec2_Reflect(particle._velocity, new G.Vec2(1, 0)).Neg$0();
-        t1 = new G.Vec2(PARTICLE_RADIUS, particle._particle$_position.y);
-        particle._particle$_position = t1;
+        t3 = particle._velocity;
+        t4 = t3.x;
+        t3 = t3.y;
+        t5 = 2 * (1 * t4 + 0 * t3);
+        t4 = 1 * t5 - t4;
+        t3 = 0 * t5 - t3;
+        t5 = new G.Vec2(t4, t3);
+        t5.x = -t4;
+        t5.y = -t3;
+        particle._velocity = t5;
+        t1 = new G.Vec2(PARTICLE_RADIUS, t1.y);
+        particle._position = t1;
       }
       if (t1.y <= t2) {
-        particle._velocity = G.Vec2_Reflect(particle._velocity, new G.Vec2(0, 1)).Neg$0();
-        t1 = new G.Vec2(particle._particle$_position.x, t2);
-        particle._particle$_position = t1;
+        t3 = particle._velocity;
+        t4 = t3.x;
+        t3 = t3.y;
+        t5 = 2 * (0 * t4 + 1 * t3);
+        t4 = 0 * t5 - t4;
+        t3 = 1 * t5 - t3;
+        t5 = new G.Vec2(t4, t3);
+        t5.x = -t4;
+        t5.y = -t3;
+        particle._velocity = t5;
+        t2 = new G.Vec2(t1.x, t2);
+        particle._position = t2;
+        t1 = t2;
       }
-      t2 = this._worldHeight - PARTICLE_RADIUS;
-      if (t1.y > t2) {
-        particle._velocity = G.Vec2_Reflect(particle._velocity, new G.Vec2(0, -1)).Neg$0();
-        particle._particle$_position = new G.Vec2(particle._particle$_position.x, t2);
+      t2 = t1.y;
+      t3 = this._worldHeight;
+      if (typeof t3 !== "number")
+        return t3.$sub();
+      if (t2 > t3 - PARTICLE_RADIUS) {
+        t2 = particle._velocity;
+        t4 = t2.x;
+        t2 = t2.y;
+        t5 = 2 * (0 * t4 + -1 * t2);
+        t4 = 0 * t5 - t4;
+        t2 = -1 * t5 - t2;
+        t5 = new G.Vec2(t4, t2);
+        t5.x = -t4;
+        t5.y = -t2;
+        particle._velocity = t5;
+        particle._position = new G.Vec2(t1.x, t3 - PARTICLE_RADIUS);
       }
     },
-    _detectParticleCollisions$3: function(particle, particles, collisionMap) {
-      var t1, p, pair;
-      for (t1 = new H.ListIterator(particles, particles.length, 0, null); t1.moveNext$0();) {
-        p = t1._current;
-        pair = collisionMap.Get$2(particle, p);
-        if (pair != null)
-          pair.SetContact$1(S.Contact_Find(particle, p));
-      }
-    },
-    _detectCollisions$1: function(particles) {
-      var t1, i, a, collidable, k, k0;
+    _detectCollisions$2: function(particles, constraints) {
+      var t1, pairs, pair, contact;
       t1 = this._collisionMap;
       if (t1 == null) {
-        t1 = new Z.CollisionMap(0, null, null, null);
-        t1.CollisionMap$1(particles.length);
+        t1 = new Z.CollisionMap(null, null, 0, null, null, null);
+        t1.Particles = particles;
+        t1._phx_collisions$_constraints = constraints;
+        t1._initialize$0();
         this._collisionMap = t1;
-      } else
-        t1.Reset$0();
-      for (i = 0; i < particles.length; i = k) {
-        a = particles[i];
-        collidable = [];
-        collidable.$builtinTypeInfo = [D.Particle];
-        for (k = i + 1, k0 = k; k0 < particles.length; ++k0)
-          collidable.push(particles[k0]);
-        this._detectParticleCollisions$3(a, collidable, this._collisionMap);
-      }
-      return this._collisionMap;
-    },
-    _resolveCollisions$2: function(particles, collisionMap) {
-      var t1, pairs, t2, t3, min, pair, t4, t5, a, b, t6, t7, t8, cn, f, factor, j;
-      for (t1 = new H.ListIterator(particles, particles.length, 0, null); t1.moveNext$0();) {
-        pairs = collisionMap.GetPairs$1(t1._current);
-        for (t2 = J.getInterceptor$ax(pairs), t3 = t2.get$iterator(pairs), min = null; t3.moveNext$0();) {
-          pair = t3.get$current();
-          if (pair.get$Details() != null && !pair._contact._resting)
-            if (min == null) {
-              t4 = pair._contact._dt;
-              if (typeof t4 !== "number")
-                return H.iae(t4);
-              if (0 <= t4 && t4 < 1)
-                min = pair;
-            } else {
-              t4 = pair._contact._dt;
-              t5 = min._contact._dt;
-              if (typeof t4 !== "number")
-                return t4.$lt();
-              if (typeof t5 !== "number")
-                return H.iae(t5);
-              if (t4 < t5)
-                min = pair;
-            }
+      } else {
+        t1.toString;
+        if (particles.length !== t1._particlesCount) {
+          t1.Particles = particles;
+          t1._phx_collisions$_constraints = constraints;
+          t1._initialize$0();
         }
-        if (min != null)
-          for (t2 = t2.get$iterator(pairs); t2.moveNext$0();) {
-            pair = t2.get$current();
-            if (pair.get$Details() != null && !pair._contact._resting && (min == null ? pair != null : min !== pair))
-              pair._contact = null;
-          }
       }
-      for (t1 = collisionMap._pairs, t1 = t1.get$values(t1), t1 = P.List_List$from(t1, false, H.getRuntimeTypeArgument(t1, "IterableBase", 0)), t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
+      this._collisionMap.Reset$0();
+      pairs = H.setRuntimeTypeInfo([], [U.CollisionPair]);
+      for (t1 = this._collisionMap._pairs, t1 = t1.get$values(t1), t1 = P.List_List$from(t1, false, H.getRuntimeTypeArgument(t1, "IterableBase", 0)), t1 = new H.ListIterator(t1, t1.length, 0, null); t1.moveNext$0();) {
         pair = t1._current;
-        if (pair.get$Details() != null) {
-          t2 = pair._contact;
-          a = t2._a;
-          b = t2._b;
-          if (!t2._resting) {
-            t3 = a._particle$_position;
-            t4 = a._velocity;
-            t2 = t2._dt;
-            if (typeof t2 !== "number")
-              return H.iae(t2);
-            t5 = -1 + t2;
-            t6 = t4.x;
-            t4 = t4.y;
-            a._particle$_position = new G.Vec2(t3.x + t6 * t5, t3.y + t4 * t5);
-            t5 = b._particle$_position;
-            t3 = b._velocity;
-            t2 = -1 + t2;
-            t7 = t3.x;
-            t3 = t3.y;
-            t8 = t5.x + t7 * t2;
-            t2 = t5.y + t3 * t2;
-            b._particle$_position = new G.Vec2(t8, t2);
-            t5 = a._particle$_position;
-            t8 -= t5.x;
-            t5 = t2 - t5.y;
-            cn = new G.Vec2(t8, t5);
-            f = 1 / Math.sqrt(t8 * t8 + t5 * t5);
-            t2 = t8 * f;
-            cn.x = t2;
-            t5 *= f;
-            cn.y = t5;
-            factor = (t7 - t6) * t2 + (t3 - t4) * t5;
-            if (factor < 0) {
-              t3 = a._mass;
-              t4 = t3 === 1 / 0;
-              t3 = t4 ? 0 : 1 / t3;
-              t6 = b._mass;
-              j = 299.99999999999994 * (factor / (t3 + (t6 === 1 / 0 ? 0 : 1 / t6)));
-              if (!t4) {
-                t3 = a._force;
-                a._force = new G.Vec2(t3.x + t2 * j, t3.y + t5 * j);
-              }
-              t3 = -j;
-              if (t6 !== 1 / 0) {
-                t4 = b._force;
-                b._force = new G.Vec2(t4.x + t2 * t3, t4.y + t5 * t3);
-              }
-            }
-          } else {
-            t3 = a._particle$_position;
-            t4 = a._velocity;
-            t2 = t2._dt;
-            if (typeof t2 !== "number")
-              return H.iae(t2);
-            t5 = -1 + t2;
-            t6 = t4.x;
-            t7 = t4.y;
-            a._particle$_position = new G.Vec2(t3.x + t6 * t5, t3.y + t7 * t5);
-            t5 = b._particle$_position;
-            t7 = b._velocity;
-            t2 = -1 + t2;
-            t3 = t7.x;
-            t6 = t7.y;
-            b._particle$_position = new G.Vec2(t5.x + t3 * t2, t5.y + t6 * t2);
-            t4.x = 0;
-            t4.y = 0;
-            t7.x = 0;
-            t7.y = 0;
-          }
+        contact = S.Contact_Find(pair.get$A(), pair.get$B());
+        if (contact != null) {
+          pair.SetContact$1(contact);
+          pairs.push(pair);
         }
       }
+      return pairs;
     },
-    Draw$2: function(particles, renderer) {
-      var t1, t2, particle, color, t3, t4, t5, t6, t7, t8;
-      for (t1 = new H.ListIterator(particles, particles.length, 0, null), t2 = renderer._canvasrenderer$_canvas; t1.moveNext$0();) {
-        particle = t1._current;
-        color = particle.get$IsFixed() ? "rgba(32, 32, 32, 0.5)" : "rgba(255, 128, 0, 0.75)";
-        renderer.drawCircle$3(particle._particle$_position, particle._radius, color);
-        t3 = particle._velocity;
-        t4 = particle._particle$_position;
-        t5 = t4.x;
-        t6 = t2.clientHeight;
-        t4 = t4.y;
-        if (typeof t6 !== "number")
-          return t6.$sub();
-        t7 = t3.x;
-        t3 = t3.y;
-        t8 = renderer._context;
-        t8.beginPath();
-        t8.lineWidth = 3;
-        t8.fillStyle = "rgba(255, 128, 0, 1.0)";
-        t8.strokeStyle = "rgba(255, 128, 0, 1.0)";
-        t8.lineTo(t5, t6 - t4);
-        t8.lineTo(t5 + t7, t6 - (t4 + t3));
-        t8.fill();
-        t8.closePath();
-        t8.stroke();
+    _resolveCollisions$3: function(particles, constraints, pairs) {
+      var i, t1, pair;
+      for (i = 0; i < 25; ++i) {
+        for (t1 = new H.ListIterator(pairs, pairs.length, 0, null); t1.moveNext$0();) {
+          pair = t1._current;
+          pair.GetContact$0().Separate$1(pair);
+        }
+        for (t1 = new H.ListIterator(constraints, constraints.length, 0, null); t1.moveNext$0();)
+          t1._current.Resolve$1(i);
       }
+      for (t1 = new H.ListIterator(pairs, pairs.length, 0, null); t1.moveNext$0();) {
+        pair = t1._current;
+        pair.GetContact$0().Resolve$1(pair);
+      }
+    },
+    Draw$3: function(particles, constraints, renderer) {
+      var t1, particle, color, t2;
+      for (t1 = new H.ListIterator(particles, particles.length, 0, null); t1.moveNext$0();) {
+        particle = t1._current;
+        if (particle.get$IsFixed())
+          color = "rgba(0, 0, 0, 0.5)";
+        else {
+          t2 = particle._mass;
+          color = "rgba(" + C.JSNumber_methods.toInt$0(255 * (t2 === 1 / 0 ? 0 : 1 / t2)) + ", 0, 0, 0.75)";
+        }
+        renderer.drawCircle$3(particle._position, particle._radius, color);
+        if (!(this._dt > 0)) {
+          t2 = particle._velocity;
+          renderer.drawVector$3(new G.Vec2(t2.x * 10, t2.y * 10), particle._position, "rgba(255, 128, 0, 0.5)");
+        }
+      }
+      for (t1 = new H.ListIterator(constraints, constraints.length, 0, null); t1.moveNext$0();)
+        t1._current.Render$1(renderer);
     },
     Simulation$0: function() {
-      this.forces.push(new K.Gravity(new G.Vec2(0, -9.81)));
-    },
-    static: {"": "Simulation_DELTA_TIME", Simulation$: function() {
-        var t1 = new N.Simulation(H.setRuntimeTypeInfo([], [L.Force]), null, new G.Vec2(0, -9.81), 800, 600);
-        t1.Simulation$0();
-        return t1;
-      }}
+      var t1, t2;
+      t1 = this._forces;
+      t1.push(new K.Gravity(this.gravityForce));
+      t2 = new V.Damping(1);
+      t2.Damping$1(0.999);
+      t1.push(t2);
+    }
   }
 }],
 ["toolinterface", "tools/tool.dart", , T, {
@@ -7261,13 +7512,14 @@ J.JSString.$isObject = true;
 J.JSNumber.$isnum = true;
 J.JSNumber.$isObject = true;
 P.Duration.$isObject = true;
+L.Force.$isObject = true;
 W.MouseEvent.$isMouseEvent = true;
 W.MouseEvent.$isObject = true;
 D.Particle.$isObject = true;
-Z.CollisionPair.$isObject = true;
+Q.Constraint.$isObject = true;
+U.CollisionPair.$isObject = true;
 J.JSArray.$isObject = true;
 G.Vec2.$isObject = true;
-L.Force.$isObject = true;
 H.RawReceivePortImpl.$isObject = true;
 H._IsolateEvent.$isObject = true;
 H._IsolateContext.$isObject = true;
@@ -7442,6 +7694,9 @@ J.removeEventListener$3$x = function(receiver, a0, a1, a2) {
 J.set$length$asx = function(receiver, value) {
   return J.getInterceptor$asx(receiver).set$length(receiver, value);
 };
+J.toInt$0$n = function(receiver) {
+  return J.getInterceptor$n(receiver).toInt$0(receiver);
+};
 J.toString$0 = function(receiver) {
   return J.getInterceptor(receiver).toString$0(receiver);
 };
@@ -7454,6 +7709,7 @@ C.EventStreamProvider_mousedown = new W.EventStreamProvider("mousedown");
 C.EventStreamProvider_mousemove = new W.EventStreamProvider("mousemove");
 C.EventStreamProvider_mouseup = new W.EventStreamProvider("mouseup");
 C.JSArray_methods = J.JSArray.prototype;
+C.JSDouble_methods = J.JSDouble.prototype;
 C.JSInt_methods = J.JSInt.prototype;
 C.JSNumber_methods = J.JSNumber.prototype;
 C.JSString_methods = J.JSString.prototype;
@@ -7711,17 +7967,32 @@ Isolate.$lazy($, "notes", "notes", "get$notes", function() {
 Isolate.$lazy($, "details", "details", "get$details", function() {
   return document.querySelector("#details");
 });
+Isolate.$lazy($, "position", "position", "get$position", function() {
+  return document.querySelector("#position");
+});
+Isolate.$lazy($, "collisions", "collisions", "get$collisions", function() {
+  return document.querySelector("#collisions");
+});
 Isolate.$lazy($, "particles", "particles", "get$particles", function() {
   return H.setRuntimeTypeInfo([], [D.Particle]);
 });
+Isolate.$lazy($, "constraints", "constraints", "get$constraints", function() {
+  return H.setRuntimeTypeInfo([], [Q.Constraint]);
+});
 Isolate.$lazy($, "colliding", "colliding", "get$colliding", function() {
   return P.LinkedHashSet_LinkedHashSet(null, null, null, D.Particle);
+});
+Isolate.$lazy($, "buttonTrigger", "buttonTrigger", "get$buttonTrigger", function() {
+  return document.querySelector("button#trigger");
 });
 Isolate.$lazy($, "buttonCreate", "buttonCreate", "get$buttonCreate", function() {
   return document.querySelector("button#create");
 });
 Isolate.$lazy($, "buttonDelete", "buttonDelete", "get$buttonDelete", function() {
   return document.querySelector("button#delete");
+});
+Isolate.$lazy($, "buttonSelect", "buttonSelect", "get$buttonSelect", function() {
+  return document.querySelector("button#select");
 });
 // Native classes
 
@@ -7745,7 +8016,6 @@ init.metadata = [{func: "void_", void: true},
 {func: "dynamic__dynamic_StackTrace", args: [null, P.StackTrace]},
 {func: "dynamic__Symbol_dynamic", args: [P.Symbol, null]},
 {func: "String__int", ret: J.JSString, args: [J.JSInt]},
-{func: "dynamic__String_Object", args: [J.JSString, P.Object]},
 ];
 $ = null;
 Isolate = Isolate.$finishIsolateConstructor(Isolate);

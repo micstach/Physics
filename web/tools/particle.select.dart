@@ -77,6 +77,11 @@ class SelectParticle extends Tool
     {
       renderer.drawBox(p.Box, "rgba(255, 0, 0, 1.0)") ;
       info += "Velocity: (${p.Velocity.x.toStringAsFixed(4)}, ${p.Velocity.y.toStringAsFixed(4)}), length=${p.Velocity.Length.toStringAsFixed(4)}" ;
+      if (p.IsFixed)
+        info += ", Mass: ${p.Mass}" ;
+      else
+        info += ", Mass: ${p.Mass.toStringAsFixed(2)}" ;
+          
     }
     
     if (_output != null)

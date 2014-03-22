@@ -53,8 +53,8 @@ class CollidingContact extends Contact
     a.AddForce(super._cn * ( j)) ;
     b.AddForce(super._cn * (-j)) ;
     
-    //a.Integrate(0.1) ;
-    //b.Integrate(0.1) ;
+    a.Integrate(0.1) ;
+    b.Integrate(0.1) ;
   }
 }
 
@@ -87,33 +87,29 @@ abstract class Contact
     double len = dp.Length ;
     double diff = (a.Radius + b.Radius - len) ;
     
-    if (diff >= 0.0)
+    if (diff < 0.0) return ;
+
+    Vec2 delta = dp * (diff / len) ;
+    
+    if (!a.IsFixed)
     {
-      Vec2 delta = dp * (diff / len) ;
-      
-      if (!a.IsFixed)
-      {
-        double s = a.MassInv / (a.MassInv + b.MassInv) ;
+      double s = a.MassInv / (a.MassInv + b.MassInv) ;
 
-        a.Position -= delta * s ;
-        a.Velocity -= delta * s ;
-      }
-      
-      if (!b.IsFixed)
-      {
-        double s = b.MassInv / (a.MassInv + b.MassInv) ;
+      a.Position -= delta * s ;
+      a.Velocity -= delta * s ;
+    }
+    
+    if (!b.IsFixed)
+    {
+      double s = b.MassInv / (a.MassInv + b.MassInv) ;
 
-        b.Position += delta * s ;
-        b.Velocity += delta * s ;
-      }    
+      b.Position += delta * s ;
+      b.Velocity += delta * s ;
     }    
   }
   
   static Contact Find(Particle a, Particle b)
   {
-    if (a.IsFixed && b.IsFixed)
-      return null ;
-    
     if (!(a.Box * b.Box))
       return null ;
 
@@ -129,9 +125,10 @@ abstract class Contact
     
     // particle distance
     Vec2 dp = (bp - ap) ;
-
+    double dp_len = dp.Length ;
+    
     // contact normal
-    Vec2 cn = (new Vec2(dp.x, dp.y)).Normalize() ;
+    Vec2 cn = dp * (1.0 / dp_len) ;
     
     // relativeVelocity
     Vec2 rv = (bv - av) ;
@@ -160,13 +157,13 @@ abstract class Contact
     }
     else if (rv_dot_cn <= THRESHOLD)
     {
-      if (dp.Length <= (a.Radius + b.Radius))
+      if (dp_len <= (a.Radius + b.Radius))
       {
         return new RestingContact() ;
       }      
     }
     
-    if (dp.Length <= (a.Radius + b.Radius))
+    if (dp_len <= (a.Radius + b.Radius))
     {
       return new SeparateContact(cn, rv_dot_cn) ;
     }
