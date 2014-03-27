@@ -5,35 +5,37 @@
     <meta charset="utf-8">
     <title>Physics Demo</title>
     <link type="text/css" rel="stylesheet" href="physics.css">
+    <script type="text/javascript" src="libs/jquery/jquery-2.1.0.min.js"></script>
+    <script type="text/javascript" src="physics.js"></script>
   </head>
   <body>
-    <h1>Playground</h1>
-      <button id="trigger">Play</button>
-      <button id="create">Create particle</button>
-      <button id="draw">Draw particle</button>
-      <button id="delete">Delete particle</button>
-      <button id="select">Select particle</button>
-      <button id="create-constraint">Create constraint</button>
-      
-    <p>
-      <span><b>active tool: </b></span>
-      <span id='toolname'>toolname</span>
-    </p>
+    
+    <button id="create">Create particle</button>
+    <button id="draw">Draw particles</button>
+    <button id="delete">Delete particle</button>
+    <button id="select">Select particle</button>
+    <button id="create-constraint">Create constraint</button>
+    <br/>
+    <span id='active-tool-label'>Active tool:</span>
+    <span id='active-tool-description'>toolname</span>
 
     <div id="container">
       <canvas tabindex='1' id="canvas" width="800" height="600" class="center"></canvas>
     </div>
+    
     <p>
+      <button id="trigger">Play</button>
       <button id="clearscene">Clear scene</button>
       <button id="samplescene">Sample scene</button>
     </p>    
 
+    <span id="position"></span>
+    <span id="fps"></span>
+
     <footer>
       <p id="summary"> </p>
-      <p id="fps">fps</p>
       <p id="notes"> </p>
       <p id="details"> </p>
-      <p id="position"> </p>
       <p id="collisions"> </p>
     </footer>
 

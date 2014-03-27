@@ -100,30 +100,32 @@ void frameDraw(num delta) {
   
   
   // html
-  querySelector("span#toolname").text = tool.Name ;
+  querySelector("span#active-tool-description").text = tool.Name ;
   
   if (simulation.Collisions != null)
     details.text = "Collision pairs: " + simulation.Collisions.DynamicCollisionsCount.toString() + "/" + simulation.Collisions.Pairs.length.toString() ;
   
-  if (tool.Position != null)
-  {
-    position.text = "Position (${tool.Position.x}, ${tool.Position.y})" ;  
-  }
-  
+  position.text = (tool.Position != null) ? "[${tool.Position.x}, ${tool.Position.y}]" : "" ;  
+
+  drawFps(delta) ;
+
+  window.animationFrame.then(frameDraw) ;
+}
+
+void drawFps(num delta)
+{
   if (last > 0.0)
   {
     double one_frame_time = (delta - last) / 20.0 ;
     double fps_counter = ((60.0 / (one_frame_time)) * 0.05) + (_lastFps * 0.95) ;
     
-    fps.text = "${fps_counter.toStringAsFixed(2)} fps" ;
+    fps.text = "FPS ${fps_counter.toStringAsFixed(2)}" ;
   
     last = delta ;
     _lastFps = fps_counter ;
   }
   else
     last = delta ;
-
-  window.animationFrame.then(frameDraw) ;
 }
 
 void onSampleSceneClicked(MouseEvent e)

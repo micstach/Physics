@@ -7,7 +7,7 @@ import 'dart:html' ;
 
 abstract class CanvasTool extends Tool
 {
-  final CanvasElement _canvas ;
+  CanvasElement _canvas ;
   
   MouseEvent _mouseEvent = null ;
   
@@ -48,9 +48,9 @@ abstract class CanvasTool extends Tool
       String color = "rgba(0, 0, 255, 0.05)" ;
       
       renderer.drawVector(new Vec2(0.0, -point.y), point, color) ;
-      renderer.drawVector(new Vec2(0.0, _canvas.height - point.y), point, color) ;
+      renderer.drawVector(new Vec2(0.0, _canvas.clientHeight - point.y), point, color) ;
       renderer.drawVector(new Vec2(-point.x, 0.0), point, color) ;
-      renderer.drawVector(new Vec2(_canvas.width - point.x, 0.0), point, color) ;
+      renderer.drawVector(new Vec2(_canvas.clientWidth - point.x, 0.0), point, color) ;
     }
   }
   

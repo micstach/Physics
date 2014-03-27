@@ -3,7 +3,7 @@
 /* BSD-style license that can be found in the LICENSE file. */
 
 body {
-  background-color: #F8F8F8;
+  background-color: rgb(196, 198, 198);
   font-family: 'Open Sans', sans-serif;
   font-size: 14px;
   font-weight: normal;
@@ -19,21 +19,53 @@ p {
   width: 100%;
   height: 600px;
   position: relative;
-  background-color: #fff;
+  background-color: rgb(226, 226, 226);
+  box-shadow:0px 0px 16px rgba(0,0,0,0.5);
 }
 
 #canvas {
-  border: 1px solid #ccc;
+  border: 0px solid #ccc;
 }
 
 #summary {
   float: left;
 }
 
+button{
+  font-size: 11px;
+  border: 0px;
+  border-radius: 5px;
+  padding: 5px;
+  box-shadow: 0px 0px 8px rgba(0,0,0,0.5);
+}
+
+button:hover{
+  font-size: 11px;
+  //color: rgb(255,255,255);
+  border: 0px;
+  border-radius: 5px;
+  box-shadow: 0px 0px 8px rgba(0,0,0,1.0);
+}
+
 #fps {
-  float: right;
-  width: 100px;
+  pointer-events: none;
+  position: absolute;
+  width: 50px;
   text-align: right;
+  font-size: 11px;
+  font-weight: bold;
+  color: rgba(0,0,0,0.5);
+}
+
+#position {
+  pointer-events: none;
+  position: absolute;
+  width: 100px;
+  text-align: left;
+  font-size: 11px;
+  font-weight: bold;
+  color: rgba(0,0,0,0.5);
+  margin: 0px;
 }
 
 #notes {
@@ -57,3 +89,16 @@ img {
   margin: 0px auto;
   text-align: center;
 }
+
+#active-tool-label
+{
+  font-weight: bold;
+  font-size: 11px;
+}
+
+#active-tool-description
+{
+  font-weight: normal;
+  font-size: 11px;
+}
+
