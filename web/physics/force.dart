@@ -1,4 +1,4 @@
-library force ;
+library phx.force ;
 
 import 'particle.dart' ;
 

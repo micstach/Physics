@@ -1,5 +1,4 @@
 name: physics
-description: drfibonacci's Sunflower Spectacular
 environment:
   sdk: '>=0.8.10+6 <2.0.0'
 dependencies:

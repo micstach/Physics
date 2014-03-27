@@ -1,4 +1,4 @@
-library physics;
+library phx.object;
 
 abstract class Object
 {

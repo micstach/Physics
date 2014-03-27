@@ -1,4 +1,4 @@
-library box2 ;
+library math.box2 ;
 
 import 'dart:math' ;
 import 'vec2.dart' ;

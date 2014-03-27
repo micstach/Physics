@@ -1,4 +1,4 @@
-library phx_collisions ;
+library phx.collision.map ;
 
 import 'constraint.dart';
 import 'particle.dart';
@@ -71,12 +71,6 @@ class CollisionMap
       
       _pairs.remove(index) ;
     }
-    
-    // initialize particle pairs
-    for (int i=0; i<Particles.length; i++)
-    {
-      GetPairs(Particles[i]) ;
-    }
   }
   
   int _getParticleIndex(Particle p)
@@ -85,31 +79,6 @@ class CollisionMap
       _index[p] = _index.values.length ;
     
     return _index[p] ;
-  }
-  
-  List<CollisionPair> GetPairs(Particle a)
-  {
-    if (_particlePairs.containsKey(a))
-      return _particlePairs[a] ;
-    else
-    {
-      List<CollisionPair> result = new List<CollisionPair>() ;
-      
-      if (_pairs != null)
-      {
-        for (CollisionPair pair in _pairs.values)
-        {
-          if (pair.A == a || pair.B == a)
-          {
-            result.add(pair) ;
-          }
-        }
-      }
-      
-      _particlePairs[a] = result ;
-    
-      return _particlePairs[a] ;
-    }
   }
   
   void Reset()
@@ -139,19 +108,6 @@ class CollisionMap
     // unique index
     return (idxB * Particles.length + idxA) ;    
   }
-  
-//  CollisionPair Get(Particle a, Particle b)
-//  {
-//    if (a.IsFixed && b.IsFixed)
-//      return null ;
-//    
-//    int index = _getPairIndex(a, b);
-//    
-//    if (!_pairs.containsKey(index))
-//      _pairs[index] = new CollisionPair(a, b) ;
-//    
-//    return _pairs[index] ;
-//  }
   
   List<CollisionPair> get Pairs => _pairs.values.toList(growable: false) ;
   

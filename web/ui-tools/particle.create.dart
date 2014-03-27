@@ -4,51 +4,43 @@ import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart';
 import '../physics/particle.dart';
 
-import 'tool.dart' ;
+import 'canvas.tool.dart' ;
 
 import 'dart:html';
 
-class CreateParticle implements Tool
+class CreateParticle extends CanvasTool
 {
   double _alpha = 1.0 ;
   List _path = null ;
   final List _particles ;
   Particle _particle = null ;
-  final CanvasElement _canvas ;
   final _velocityFactor ;
   MouseEvent _mouseEvent = null ;
   
   CreateParticle(CanvasElement canvas, particles, velocityFactor)
-      : _canvas = canvas
+      : super(canvas)
       , _velocityFactor = velocityFactor
       , _particles = particles 
   {
   }
   
   var _onMouseDownStream = null ;
-  var _onMouseMoveStream = null ;
   var _onMouseUpStream = null ;
   
   void Activate()
   {
-    _onMouseDownStream = _canvas.onMouseDown.listen((e) => onMouseDown(e)) ;
-    _onMouseMoveStream = _canvas.onMouseMove.listen((e) => onMouseMove(e)) ;
-    _onMouseUpStream = _canvas.onMouseUp.listen((e) => onMouseUp(e)) ;
+    super.Activate() ;
 
-//    _canvas.onTouchStart.listen((e) => onTouchStart(e)) ;
-//    _canvas.onTouchMove.listen((e) => onTouchMove(e)) ;
-//    _canvas.onTouchEnd.listen((e) => onTouchEnd(e)) ;
+    _onMouseDownStream = Canvas.onMouseDown.listen((e) => onMouseDown(e)) ;
+    _onMouseUpStream = Canvas.onMouseUp.listen((e) => onMouseUp(e)) ;
   }
 
   void Deactivate()
   {
+    super.Deactivate() ;
+    
     _onMouseDownStream.cancel() ;
-    _onMouseMoveStream.cancel() ;
     _onMouseUpStream.cancel() ;
-
-    //_canvas.onTouchStart.listen((e) => onTouchStart(e)) ;
-    //_canvas.onTouchMove.listen((e) => onTouchMove(e)) ;
-    //_canvas.onTouchEnd.listen((e) => onTouchEnd(e)) ;
   }
 
   void createParticle(double x, double y, double mass)
@@ -84,10 +76,9 @@ class CreateParticle implements Tool
   
   void onMouseDown(MouseEvent e)
   {
-    double x = e.layer.x.toDouble();
-    double y = _canvas.clientHeight - e.layer.y.toDouble() ;
+    Vec2 point = ConvertToWorldCoords(e) ;
     
-    createParticle(x, y, (e.ctrlKey) ? double.INFINITY : 1.0) ;
+    createParticle(point.x, point.y, (e.ctrlKey) ? double.INFINITY : 1.0) ;
   }
 
   void onKeyDown(KeyboardEvent e)
@@ -111,9 +102,9 @@ class CreateParticle implements Tool
   
   void onMouseMove(MouseEvent e)
   {
-    _mouseEvent = e ;
+    super.onMouseMove(e) ;
     
-    Vec2 point = new Vec2(e.layer.x.toDouble(), _canvas.clientHeight - e.layer.y.toDouble()) ;
+    Vec2 point = ConvertToWorldCoords(e) ;
     
     changeVelocity(point, (e.ctrlKey) ? double.INFINITY : 1.0) ;
   }
@@ -123,26 +114,6 @@ class CreateParticle implements Tool
     addParticle((e.ctrlKey) ? double.INFINITY : 1.0) ;
   }
   
-  void onTouchStart(TouchEvent e)
-  {
-    double x = e.layer.x.toDouble();
-    double y = _canvas.clientHeight - e.layer.y.toDouble() ;
-
-    createParticle(x, y, (e.ctrlKey) ? double.INFINITY : 1.0) ;
-  }
-
-  void onTouchMove(TouchEvent e)
-  {
-    Vec2 point = new Vec2(e.layer.x.toDouble(), _canvas.clientHeight - e.layer.y.toDouble()) ;
-    
-    changeVelocity(point, (e.ctrlKey) ? double.INFINITY : 1.0) ;
-  }
-
-  void onTouchEnd(TouchEvent e)
-  {
-    addParticle((e.ctrlKey) ? double.INFINITY : 1.0) ;
-  }
-
   bool get IsActive => _particle != null ; 
   
   List GetParticlePath() { return _path ; }
@@ -151,6 +122,8 @@ class CreateParticle implements Tool
   
   void Draw(Renderer renderer)
   {
+    super.Draw(renderer) ;
+    
     if (IsActive)
     {
       if (_particle == null) return ;
@@ -199,10 +172,7 @@ class CreateParticle implements Tool
           _alpha = 0.0 ;
       }
     }
-    
   }
   
   String get Name => "click and hold mouse button to create particle and set its velocity, user CTRL + click to create fixed particle " ;
-  
-  Vec2 get Position => _mouseEvent == null ? null : new Vec2(_mouseEvent.layer.x.toDouble(), _canvas.clientHeight - _mouseEvent.layer.y.toDouble()) ;
 }

@@ -1,16 +1,14 @@
-library phx_collision_pair;
+library phx.collision.pair;
 
 import 'particle.dart' ;
 import 'contact.dart' ;
+import 'pair.dart' ;
 
-class CollisionPair
+class CollisionPair extends Pair
 {
-  Particle _a ;
-  Particle _b ;
-  
   Contact _contact = null ;
   
-  CollisionPair(this._a, this._b)
+  CollisionPair(Particle a, Particle b) : super(a, b)
   {
     _contact = null ;
   }
@@ -31,7 +29,5 @@ class CollisionPair
   {
     _contact = null ;
   }
-  
-  Particle get A => _a ;
-  Particle get B => _b ;
 }
+

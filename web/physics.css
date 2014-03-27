@@ -30,6 +30,12 @@ p {
   float: left;
 }
 
+#fps {
+  float: right;
+  width: 100px;
+  text-align: right;
+}
+
 #notes {
   float: right;
   width: 120px;

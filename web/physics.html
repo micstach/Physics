@@ -8,21 +8,29 @@
   </head>
   <body>
     <h1>Playground</h1>
-
       <button id="trigger">Play</button>
       <button id="create">Create particle</button>
+      <button id="draw">Draw particle</button>
       <button id="delete">Delete particle</button>
       <button id="select">Select particle</button>
-    <p><span><b>active tool: </b></span>
-    <span id='toolname'>toolname</span>
+      <button id="create-constraint">Create constraint</button>
+      
+    <p>
+      <span><b>active tool: </b></span>
+      <span id='toolname'>toolname</span>
     </p>
 
     <div id="container">
       <canvas tabindex='1' id="canvas" width="800" height="600" class="center"></canvas>
     </div>
+    <p>
+      <button id="clearscene">Clear scene</button>
+      <button id="samplescene">Sample scene</button>
+    </p>    
 
     <footer>
       <p id="summary"> </p>
+      <p id="fps">fps</p>
       <p id="notes"> </p>
       <p id="details"> </p>
       <p id="position"> </p>

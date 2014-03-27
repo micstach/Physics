@@ -10,5 +10,6 @@ abstract class Renderer
   void drawCircle(Vec2 center, double radius, String color) ;
   void drawPath(List<Vec2> path, bool close, String colorEven, String colorOdd) ;
   drawVector(Vec2 vector, Vec2 origin, String color) ;
+  drawLine(Vec2 a, Vec2 b, String color) ;
   void drawBox(Box2 b, String color) ;
 }

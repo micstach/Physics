@@ -1,3 +1,4 @@
+library canvas.renderer ;
 
 import '../../math/vec2.dart';
 import '../../math/box2.dart';
@@ -78,6 +79,22 @@ class CanvasRenderer extends Renderer
      ..stroke();
   }
 
+  void drawLine(Vec2 a, Vec2 b, String color) 
+  {
+    var s = _convert(a) ;
+    var e = _convert(b) ;
+    
+    _context..beginPath()
+     ..lineWidth = 3
+     ..fillStyle = color
+     ..strokeStyle = color
+     ..lineTo(s.x, s.y)
+     ..lineTo(e.x, e.y)
+     ..fill()
+     ..closePath()
+     ..stroke();
+  }
+  
   void drawBox(Box2 b, String color)
   {
     drawPath(b.Points, true, color, color) ;

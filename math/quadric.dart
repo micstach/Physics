@@ -1,4 +1,4 @@
-library equations;
+library math.quadric ;
 
 import 'dart:math';
 

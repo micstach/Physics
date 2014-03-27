@@ -1,4 +1,4 @@
-library force.gavity ;
+library pxh.force.gavity ;
 
 import '../../math/vec2.dart' ;
 

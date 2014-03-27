@@ -1,72 +1,91 @@
-library contact;
+library phx.contact;
 
 import '../../math/vec2.dart';
 import '../../math/quadric.dart';
 
 import 'particle.dart';
-import 'collision.pair.dart';
+import 'pair.dart';
 
 class SeparateContact extends Contact
 {
-  SeparateContact(Vec2 cn, double rv_dot_cn) : super(0.0, cn, null, rv_dot_cn) ;
+  SeparateContact(Particle a, Particle b, double collisionTime) : super(a, b, collisionTime) ;
   
   bool get IsResting => true ;
+  
+  void Separate()
+  {
+    Vec2 dp = B.Position - A.Position ;
+    double len = dp.Length ;
+    double diff = (A.Radius + B.Radius - len) ;
+    
+    if (diff <= 0.0) return ;
+
+    Vec2 delta = dp * (diff / len) ;
+    
+    if (!A.IsFixed)
+    {
+      double s = A.MassInv / (A.MassInv + B.MassInv) ;
+
+      A.Position -= delta * s ;
+      A.Velocity -= delta * s ;
+    }
+    
+    if (!B.IsFixed)
+    {
+      double s = B.MassInv / (A.MassInv + B.MassInv) ;
+
+      B.Position += delta * s ;
+      B.Velocity += delta * s ;
+    }    
+  }
+
+  void Resolve(double dt, double e)
+  {
+    return ;
+  }
   
   String get Name => "Separate" ;
-  
-  void Resolve(CollisionPair pair)
-  {
-    return ;
-  }
 }
 
-class RestingContact extends SeparateContact
+class CollidingContact extends SeparateContact
 {
-  RestingContact() : super(null, 0.0) ;
-  
-  bool get IsResting => true ;
-  
-  String get Name => "Resting" ;
-
-  void Resolve(CollisionPair pair)
+  CollidingContact(Particle a, Particle b, double collisionTime) : super(a, b, collisionTime) 
   {
-    return ;
   }
-}
-
-class CollidingContact extends Contact
-{
-  CollidingContact(double dt, Vec2 cn, Vec2 rv, double rv_dot_cn) : super(dt, cn, rv, rv_dot_cn) ;
 
   bool get IsResting => false ;
 
-  void Resolve(CollisionPair pair)
+  double _impulse(double dt, double e, double relVel, double invMassA, double invMassB) 
   {
-    var a = pair.A ;
-    var b = pair.B ;
+    return -((1.0 + e) / (dt * dt * 0.5)) * (relVel / (invMassA + invMassB)) ; 
+  } 
+
+  void Separate()
+  {
+  }
+  
+  void Resolve(double dt, double e)
+  {
+    A.Position += A.Velocity * (-1.0 + _dt) ; 
+    B.Position += B.Velocity * (-1.0 + _dt) ;
+
+    Vec2 cn = (B.Position - A.Position).Normalize() ;
     
-    a.Position += a.Velocity * (-1.0 + super.Dt) ; 
-    b.Position += b.Velocity * (-1.0 + super.Dt) ;
+    double j = _impulse(dt, e, (cn | (B.Velocity - A.Velocity)), A.MassInv, B.MassInv) ;
     
-    double j = Contact.Impulse(0.1, 0.25, super._rv_dot_cn, a.MassInv, b.MassInv) ;
+    A.AddForce(cn * (-j)) ;
+    B.AddForce(cn * ( j)) ;
     
-    a.AddForce(super._cn * ( j)) ;
-    b.AddForce(super._cn * (-j)) ;
-    
-    a.Integrate(0.1) ;
-    b.Integrate(0.1) ;
+    A.Integrate(dt) ;
+    B.Integrate(dt) ;
   }
 }
 
-abstract class Contact
+abstract class Contact extends Pair
 {
-  double _dt ;
-  double _rv_dot_cn = 0.0 ;
-
-  Vec2 _cn = null;
-  Vec2 _rv = null;
+  double _dt = 0.0 ;
   
-  Contact(this._dt, this._cn, this._rv, this._rv_dot_cn) 
+  Contact(Particle a, Particle b, this._dt) : super(a, b) 
   {
   }
 
@@ -76,37 +95,9 @@ abstract class Contact
   
   String get Name => "Contact" ;
   
-  void Resolve(CollisionPair pair) ; 
-  
-  void Separate(CollisionPair pair)
-  {
-    var a = pair.A ;
-    var b = pair.B ;
-    
-    Vec2 dp = b.Position - a.Position ;
-    double len = dp.Length ;
-    double diff = (a.Radius + b.Radius - len) ;
-    
-    if (diff < 0.0) return ;
+  void Resolve(double dt, double e) ;
 
-    Vec2 delta = dp * (diff / len) ;
-    
-    if (!a.IsFixed)
-    {
-      double s = a.MassInv / (a.MassInv + b.MassInv) ;
-
-      a.Position -= delta * s ;
-      a.Velocity -= delta * s ;
-    }
-    
-    if (!b.IsFixed)
-    {
-      double s = b.MassInv / (a.MassInv + b.MassInv) ;
-
-      b.Position += delta * s ;
-      b.Velocity += delta * s ;
-    }    
-  }
+  void Separate() ;
   
   static Contact Find(Particle a, Particle b)
   {
@@ -115,6 +106,8 @@ abstract class Contact
 
     var ap = a.Position;
     var bp = b.Position;
+    
+    double dp_final_len = (a.Position - b.Position).Length ;
 
     var av = a.Velocity ;
     var bv = b.Velocity ;
@@ -136,7 +129,7 @@ abstract class Contact
     // relative movement
     double rv_dot_cn = rv | cn ;
     
-    const double THRESHOLD = 0.000000001 ;
+    const double THRESHOLD = 0.5 ;
     
     if (rv_dot_cn < -THRESHOLD)
     {
@@ -151,28 +144,16 @@ abstract class Contact
       {
         if (0.0 <= eq.x && eq.x <= 1.0)
         {
-          return new CollidingContact(eq.x, cn, rv, rv_dot_cn) ;
+          return new CollidingContact(a, b, eq.x) ;
         }
       }
     }
-    else if (rv_dot_cn <= THRESHOLD)
-    {
-      if (dp_len <= (a.Radius + b.Radius))
-      {
-        return new RestingContact() ;
-      }      
-    }
     
-    if (dp_len <= (a.Radius + b.Radius))
+    if (dp_final_len <= (a.Radius + b.Radius))
     {
-      return new SeparateContact(cn, rv_dot_cn) ;
+      return new SeparateContact(a, b, 0.0) ;
     }
     
     return null ;
   }
-
-  static double Impulse(double dt, double e, double relVel, double invMassA, double invMassB) 
-  {
-    return ((1.0 + e) / (dt * dt * 0.5)) * (relVel / (invMassA + invMassB)) ; 
-  } 
 }

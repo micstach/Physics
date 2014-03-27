@@ -1,20 +1,15 @@
-library phx_constraint;
+library phx.constraint;
 
 import "../../renderer/renderer.dart" ;
+
+import 'pair.dart';
 import 'particle.dart' ; 
 
-abstract class Constraint
+abstract class Constraint extends Pair
 {
-  double order = 0.0 ;
-  Particle _a, _b ;
-  
-  Constraint(this._a, this._b) ;
-  
-  Particle get A => _a ;
-  
-  Particle get B => _b ;
-  
-  void Resolve(int nsteps) ;
+  Constraint(Particle a, Particle b) : super(a, b) ;
+
+  void Resolve() ;
   
   void Render(Renderer renderer) ;
 }

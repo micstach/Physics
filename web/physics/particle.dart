@@ -1,4 +1,4 @@
-library particle ;
+library phx.particle ;
 
 import '../../math/vec2.dart';
 import '../../math/box2.dart';
@@ -14,7 +14,6 @@ class Particle
   
   Box2 _largeBox = null ;
   
-  double _damping = 0.99 ;
   double _radius = 10.0 ;
   double _mass = double.INFINITY ;
   bool _resting = false ;
@@ -84,18 +83,28 @@ class Particle
   {
     if (IsFixed) return ;
     
-    // _force += _velocity * ((-(1.0 - _damping) * Mass) / (dt * dt * 0.5)) ;
+    _acceleration = (_force * MassInv) * (dt * dt * 0.5) ;
     
-    _acceleration = _force * MassInv ;
-    
-    Vec2 oldPosition = _position ;
-    
-    _position += (_velocity) + _acceleration * (dt * dt * 0.5) ;
-    
-    _velocity = (_position - oldPosition) ;
+    _position += _acceleration + _velocity;
+
+    _velocity += _acceleration ;
     
     _initializeBox() ;
     
     _force.Zero();
+    
+    //if (IsResting) return ;
+        
+//    _acceleration = _force * MassInv ;
+//    
+//    Vec2 oldPosition = _position ;
+//    
+//    _position += (_velocity) + _acceleration * (dt * dt * 0.5) ;
+//    
+//    _velocity = (_position - oldPosition) ;
+//    
+//    _initializeBox() ;
+//    
+//    _force.Zero();    
   }
 }

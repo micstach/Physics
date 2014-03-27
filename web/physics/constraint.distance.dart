@@ -1,4 +1,4 @@
-library phx_constraint_distance;
+library phx.constraint.distance;
 
 import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart' ;
@@ -17,7 +17,7 @@ class Distance extends Constraint
     _distance = (A.Position - B.Position).Length ;
   }
   
-  void Resolve(int nsteps)
+  void Resolve()
   {
     Vec2 dp = B.Position - A.Position ;
     double len = dp.Length ;

@@ -1,20 +1,21 @@
 library physicsdemo;
 
+import 'sample.scenes.dart' ;
 import 'renderer/canvasrenderer.dart' ;
 
 import 'physics/particle.dart';
 import 'physics/simulation.dart';
-import 'physics/collisionmap.dart' ;
 import 'physics/constraint.dart' ;
 import 'physics/constraint.distance.dart' ;
 
-import 'tools/tool.dart';
-import 'tools/particle.create.dart';
-import 'tools/particle.delete.dart';
-import 'tools/particle.select.dart';
+import 'ui-tools/tool.dart';
+import 'ui-tools/particle.create.dart';
+import 'ui-tools/constraint.create.dart';
+import 'ui-tools/particle.draw.dart';
+import 'ui-tools/particle.delete.dart';
+import 'ui-tools/particle.select.dart';
 
 import 'dart:html';
-import 'dart:math';
 import 'package:json/json.dart' as JSON;
 
 final InputElement slider = querySelector("#slider");
@@ -22,8 +23,7 @@ final Element notes = querySelector("#notes");
 final Element details = querySelector("#details");
 final Element position = querySelector("#position");
 final Element collisions = querySelector("#collisions");
-
-final num PHI = (sqrt(5) + 1) / 2;
+final Element fps = querySelector("#fps");
 
 CanvasElement canvas = null ;
 
@@ -36,23 +36,32 @@ Tool tool = null ;
 Simulation simulation = null ;
 
 final Element buttonTrigger = querySelector('button#trigger') ;
+final Element buttonDrawFixed = querySelector('button#draw') ;
 final Element buttonCreate = querySelector('button#create') ;
+final Element buttonCreateConstraint = querySelector('button#create-constraint') ;
 final Element buttonDelete = querySelector('button#delete') ;
 final Element buttonSelect = querySelector('button#select') ;
+final Element buttonSampleScene = querySelector('button#samplescene') ;
+final Element buttonClearScene = querySelector('button#clearscene') ;
 
 CanvasRenderer renderer = null ;
 
 void main() {
-//  var scores = [{'score': 40}, {'score': 50}] ;
-//  var jsonText = JSON.stringify(scores) ;
+  var scores = [{'score': 40}, {'score': 50}] ;
+  var jsonText = JSON.stringify(scores) ;
   
   canvas = querySelector("#canvas") ;
   
   buttonCreate.onClick.listen((e) => onCreateClicked(e)) ;
+  buttonCreateConstraint.onClick.listen((e) => onCreateConstraintClicked(e)) ;
+  buttonDrawFixed.onClick.listen((e) => onDrawFixedClicked(e)) ;
   buttonDelete.onClick.listen((e) => onDeleteClicked(e)) ;
   buttonSelect.onClick.listen((e) => onSelectClicked(e)) ;
   
   buttonTrigger.onClick.listen((e) => onTriggerClicked(e)) ;
+  
+  buttonSampleScene.onClick.listen((e) => onSampleSceneClicked(e)) ;
+  buttonClearScene.onClick.listen((e) => onClearSceneClicked(e)) ;
   
   // create particle toolset
   tool = new CreateParticle(canvas, particles, 0.1) ;
@@ -64,71 +73,16 @@ void main() {
   
   renderer = new CanvasRenderer(canvas) ;
 
-  double s = 15.0 ;
-  double x = 400.0 ; 
-  double y = 500.0 ; 
-  int count = 25 ;
-
-  Particle p1 = new Particle(x, y) ;
-  p1.Mass = double.INFINITY ;
-  p1.Velocity.Zero();
-  particles.add(p1) ;
-  
-  Particle p0 = p1 ;
-  
-  for (int i=1; i<=count; i++)
-  {
-    Particle p2 = new Particle(x + i * s, y, 5.0 + (i*2.0)/count) ;
-    p2.Mass = i * 1.0 ; //(i==count) ? 100.0 : 1.0 ;
-    p2.Velocity.Zero();
-    particles.add(p2) ;
-  
-    constraints.add(new Distance(p1, p2)) ;
-    p1 = p2 ;
-
-//    Particle p3 = new Particle(x - i * s, y, 5.0 + (i*2.0)/count) ;
-//    p3.Mass = i * 1.0 ; //(i==count) ? 100.0 : 1.0 ;
-//    p3.Velocity.Zero();
-//    particles.add(p3) ;
-//  
-//    constraints.add(new Distance(p0, p3)) ;
-//    p0 = p3 ;
-  }
-  
-  p1 = new Particle(30.0, 30.0, 15.0) ;
-  p1.Mass = 5.0 ;
-  p1.Velocity.Zero();
-  particles.add(p1) ;
-  
-  var p2 = new Particle(70.0, 30.0, 15.0) ;
-  p2.Mass = 5.0 ;
-  p2.Velocity.Zero();
-  particles.add(p2) ;
-  
-  var p3 = new Particle(70.0, 70.0) ;
-  p3.Mass = 5.0 ;
-  p3.Velocity.Zero();
-  particles.add(p3) ;
-
-  var p4 = new Particle(30.0, 70.0) ;
-  p4.Mass = 5.0 ;
-  p4.Velocity.Zero();
-  particles.add(p4) ;
-  
-  constraints.add(new Distance(p1, p2)) ;
-  constraints.add(new Distance(p2, p3)) ;
-  constraints.add(new Distance(p3, p4)) ;
-  constraints.add(new Distance(p4, p1)) ;
-  constraints.add(new Distance(p1, p3)) ;
-  constraints.add(new Distance(p2, p4)) ;
-  
- 
-  window.animationFrame.then(appLoop) ;
+  window.animationFrame.then(frameDraw) ;
 }
 
+
+num last = 0.0 ;
+double _lastFps = 0.0 ;
+
 /// Draw the complete figure for the current number of seeds.
-void appLoop(num delta) {
-  
+void frameDraw(num delta) {
+
   renderer.clear() ;
   
   notes.text = "${particles.length} particle(s)";
@@ -139,11 +93,13 @@ void appLoop(num delta) {
     tool.Draw(renderer) ;
   
   // simulate
-  simulation.Simulate(particles, constraints) ;
+  simulation.Run(particles, constraints) ;
   
   // draw
   simulation.Draw(particles, constraints, renderer) ;
   
+  
+  // html
   querySelector("span#toolname").text = tool.Name ;
   
   if (simulation.Collisions != null)
@@ -154,7 +110,31 @@ void appLoop(num delta) {
     position.text = "Position (${tool.Position.x}, ${tool.Position.y})" ;  
   }
   
-  window.animationFrame.then(appLoop) ;
+  if (last > 0.0)
+  {
+    double one_frame_time = (delta - last) / 20.0 ;
+    double fps_counter = ((60.0 / (one_frame_time)) * 0.05) + (_lastFps * 0.95) ;
+    
+    fps.text = "${fps_counter.toStringAsFixed(2)} fps" ;
+  
+    last = delta ;
+    _lastFps = fps_counter ;
+  }
+  else
+    last = delta ;
+
+  window.animationFrame.then(frameDraw) ;
+}
+
+void onSampleSceneClicked(MouseEvent e)
+{
+  scene1(particles, constraints) ;
+}
+
+void onClearSceneClicked(MouseEvent e)
+{
+  particles.clear() ;
+  constraints.clear() ;
 }
 
 void onTriggerClicked(MouseEvent e)
@@ -185,6 +165,20 @@ void onCreateClicked(MouseEvent e)
 {
   tool.Deactivate() ;
   tool = new CreateParticle(canvas, particles, 0.1) ;
+  tool.Activate() ;
+}
+
+void onCreateConstraintClicked(MouseEvent e)
+{
+  tool.Deactivate() ;
+  tool = new CreateConstraint(canvas, particles, constraints) ;
+  tool.Activate() ;
+}
+
+void onDrawFixedClicked(MouseEvent e)
+{
+  tool.Deactivate() ;
+  tool = new DrawParticles(canvas, particles, 0.1) ;
   tool.Activate() ;
 }
 

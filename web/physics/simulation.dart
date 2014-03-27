@@ -1,9 +1,10 @@
-library simulation ;
+library pxh.simulation ;
 
 import "../../renderer/renderer.dart" ;
 import "../../math/vec2.dart" ;
+
 import "particle.dart" ;
-import 'collisionmap.dart';
+import 'collision.map.dart';
 import 'collision.pair.dart';
 import 'contact.dart';
 
@@ -12,13 +13,16 @@ import 'force.gravity.dart' ;
 import 'force.damping.dart' ;
 
 import 'constraint.dart' ;
+import 'constraint.world.dart' ;
 
 class Simulation
 {
+  bool _breakOnCollision = false ;
   int _worldWidth ;
   int _worldHeight ;
   
   double _dt = 0.0 ;
+  double _e = 0.25 ;
 
   List<Force> _forces = new List<Force>() ;
   
@@ -30,7 +34,7 @@ class Simulation
   {
     _forces.add(new Gravity(gravityForce)) ;
     
-    _forces.add(new Damping(0.999)) ;
+    _forces.add(new Damping(0.9999)) ;
   }
 
   set WorldWidth(int value) => _worldWidth = value ;
@@ -59,7 +63,7 @@ class Simulation
     particle.Integrate(_dt) ;
   }
   
-  void Simulate(List<Particle> particles, List<Constraint> constraints)
+  void Run(List<Particle> particles, List<Constraint> constraints)
   {
     if (!IsRunning) return ;
     
@@ -69,50 +73,21 @@ class Simulation
     }
 
     // detect collisions
-    List<CollisionPair> pairs = _detectCollisions(particles, constraints) ;
+    Set<CollisionPair> pairs = _detectCollisions(particles, constraints) ;
     
     // resolve collisions
     _resolveCollisions(particles, constraints, pairs) ;
 
     for (var particle in particles)
     {
-      _worldCollisionDetection(particle) ;
+      ResolveWorldConstraints(_e, particle, _worldWidth, _worldHeight) ;
     }
+    
+    if (_breakOnCollision)
+      if (pairs.length > 0) Stop();
   }
   
-  void _worldCollisionDetection(Particle particle)
-  {
-    if (particle.IsFixed) return ;
-    
-    // world box collisions detection
-    int PARTICLE_RADIUS = particle.Radius.toInt() ;
-    
-    if (particle.Position.x > _worldWidth - PARTICLE_RADIUS)
-    {
-      particle.Velocity = Vec2.Reflect(particle.Velocity, new Vec2(-1.0, 0.0)).Neg();
-      particle.Position = (new Vec2((_worldWidth - PARTICLE_RADIUS).toDouble(), particle.Position.y)) ;
-    }
-    
-    if (particle.Position.x < 0.0 + PARTICLE_RADIUS)
-    {
-      particle.Velocity = Vec2.Reflect(particle.Velocity, new Vec2(1.0, 0.0)).Neg();
-      particle.Position = (new Vec2((PARTICLE_RADIUS).toDouble(), particle.Position.y)) ;
-    }
-    
-    if (particle.Position.y <= 0.0 + PARTICLE_RADIUS)
-    {
-      particle.Velocity = Vec2.Reflect(particle.Velocity, new Vec2(0.0, 1.0)).Neg();
-      particle.Position = (new Vec2(particle.Position.x, 0.0 + PARTICLE_RADIUS)) ;
-    }
-    
-    if (particle.Position.y > _worldHeight - PARTICLE_RADIUS)
-    {
-      particle.Velocity = Vec2.Reflect(particle.Velocity, new Vec2(0.0, -1.0)).Neg();
-      particle.Position = (new Vec2(particle.Position.x, (_worldHeight - PARTICLE_RADIUS).toDouble())) ;
-    }
-  }
-
-  List<CollisionPair> _detectCollisions(List<Particle> particles, List<Constraint> constraints)
+  Set<CollisionPair> _detectCollisions(List<Particle> particles, List<Constraint> constraints)
   {
     // refresh collision map
     if (_collisionMap == null)
@@ -122,75 +97,104 @@ class Simulation
     
     _collisionMap.Reset() ;
     
-    List<CollisionPair> pairs = new List<CollisionPair>() ;
+    Set<CollisionPair> pairs = new Set<CollisionPair>() ;
+    
+    Map<Particle, List<CollisionPair>> particle_pairs = new Map<Particle, List<CollisionPair>>();
     
     for (CollisionPair pair in _collisionMap.Pairs)
     {
       Contact contact = Contact.Find(pair.A, pair.B) ;
+      
       if (contact != null)
       {
         pair.SetContact(contact) ;
         pairs.add(pair) ;
+        
+        if (!contact.IsResting)
+        {
+          if (!particle_pairs.containsKey(pair.A))
+            particle_pairs[pair.A] = new List<CollisionPair>() ;
+          
+          if (!particle_pairs.containsKey(pair.B))
+            particle_pairs[pair.B] = new List<CollisionPair>() ;
+
+          particle_pairs[pair.A].add(pair) ;
+          particle_pairs[pair.B].add(pair) ;
+        }
+        else
+        {
+          pairs.add(pair) ;
+        }
       }
     }
-    
+
+    for (Particle p in particle_pairs.keys)
+    {
+      if (p.IsFixed) continue ;
+      
+      List<CollisionPair> p_pairs = particle_pairs[p] ;
+      
+      CollisionPair min = null ;
+      
+      for (CollisionPair pair in p_pairs)
+      {
+        if (min == null)
+        {
+          if (pair.GetContact() != null)
+            min = pair ;
+        }
+        else
+        {
+          if (pair.GetContact() != null)
+          {
+            if (min.GetContact().Dt > pair.GetContact().Dt)
+            {
+              min.Discard() ;
+              min = pair ;
+            }
+            else
+            {
+              pair.Discard() ;
+            }
+          }
+        }
+      }
+      
+      if (min != null)
+        if (min.GetContact() != null)
+          pairs.add(min) ;
+    }
+
     return pairs ;
   }
 
-  void _resolveCollisions(List<Particle> particles, List<Constraint> constraints, List<CollisionPair> pairs)
+  void _resolveCollisions(List<Particle> particles, List<Constraint> constraints, Set<CollisionPair> contact_pairs)
   {
-    // find "first-in-time" contacts
-//    for (Particle p in particles)
-//    {
-//      CollisionPair min = null ;
-//      List<CollisionPair> pairs = collisionMap.GetPairs(p) ;
-//      
-//      for (CollisionPair pair in pairs)
-//      {
-//        if (pair.GetContact() != null)
-//        {
-//          if (!pair.GetContact().IsResting)
-//          {
-//            if (min == null)
-//            {
-//              if (0.0 <= pair.GetContact().Dt && pair.GetContact().Dt < 1.0)
-//              {
-//                min = pair ;
-//              }
-//            }
-//            else
-//            {
-//              if (pair.GetContact().Dt < min.GetContact().Dt)
-//              {
-//                min.Discard() ;
-//                min = pair ;
-//              }
-//            }
-//          }
-//        }
-//      }
-//    }
-    
     // resolve
     // - contact separation
     // - constaints
     for (int i=0; i<25; i++)
     {
-      for (CollisionPair pair in pairs)
+      for (CollisionPair pair in contact_pairs)
       {
-        pair.GetContact().Separate(pair);
+        if (pair.GetContact() != null)
+          pair.GetContact().Separate();
       }
 
       for (var constraint in constraints)
       {
-        constraint.Resolve(i) ;
+        constraint.Resolve() ;
       }
     }
 
     // resolve contact forces
-    for (CollisionPair pair in pairs)
+    if (contact_pairs.length > 0)
     {
-      pair.GetContact().Resolve(pair) ;
+      for (CollisionPair pair in contact_pairs)
+      {
+        if (pair.GetContact() != null)
+          pair.GetContact().Resolve(_dt, _e) ;
+      }
     }
   }
   

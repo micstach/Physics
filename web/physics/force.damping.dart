@@ -1,4 +1,4 @@
-library force.damping ;
+library pxh.force.damping ;
 
 import 'particle.dart' ;
 import 'force.dart' ;
