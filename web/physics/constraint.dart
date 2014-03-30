@@ -12,4 +12,6 @@ abstract class Constraint extends Pair
   void Resolve() ;
   
   void Render(Renderer renderer) ;
+  
+  toJSON() ;
 }

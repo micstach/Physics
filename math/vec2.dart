@@ -14,6 +14,12 @@ class Vec2 {
     this.y = p.y ;
   }
 
+  Vec2.fromJSON(var json) 
+  {
+    this.x = json['x'];
+    this.y = json['y'] ;
+  }
+
   Vec2.fromVec2(Vec2 v) 
   {
     this.x = v.x;

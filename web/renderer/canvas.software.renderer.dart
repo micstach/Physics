@@ -1,4 +1,4 @@
-library canvas.renderer ;
+library canvas.software.renderer ;
 
 import '../../math/vec2.dart';
 import '../../math/box2.dart';
@@ -7,14 +7,14 @@ import '../../renderer/renderer.dart' ;
 import 'dart:html';
 import 'dart:math';
 
-class CanvasRenderer extends Renderer
+class CanvasSoftwareRenderer extends Renderer
 {
   final num TAU = PI * 2;
   
   CanvasElement _canvas = null ;
   CanvasRenderingContext2D _context = null ;
   
-  CanvasRenderer(this._canvas)
+  CanvasSoftwareRenderer(this._canvas)
   {
     _context = _canvas.context2D ;
   }

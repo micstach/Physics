@@ -7,21 +7,23 @@ $(window).resize(function(){
 }); 
 
 function setupControls(){
-	var container = $('#container') ;
 	var canvas = $('#canvas') ;
 	
-	//canvas.css({"width": container.width(), "height":"600px"});
+	$("canvas").attr('width', $('#container').width());
+	$("canvas").attr('height', $('#container').height());
 	
-	var fps = $('#fps') ;
+	var details = $('#details') ;
 	var position = $('#position') ;
 	
-	var left = canvas.offset().left + canvas.width() - fps.width() - 5 + "px" ;
+	var left = canvas.offset().left + 5 + "px" ;
 	var top = canvas.offset().top + "px" ;
 	
-	fps.css({"left": left, "top": top});
-
+	details.css({
+		"left": left, "top": top
+	});
+	
 	position.css({
-		"left": canvas.offset().left + 5 + "px", 
+		"left": canvas.offset().left + canvas.width() - position.width() - 5 + "px", 
 		"top": canvas.offset().top + "px"
 	});
 }

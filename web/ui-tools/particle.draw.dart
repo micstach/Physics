@@ -3,6 +3,8 @@ library particle.drawfixed;
 import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart';
 import '../physics/particle.dart';
+import '../physics/constraint.dart';
+import '../physics/constraint.distance.dart';
 
 import 'tool.dart' ;
 
@@ -13,14 +15,18 @@ class DrawParticles implements Tool
   double _alpha = 1.0 ;
   List _path = null ;
   final List _particles ;
+  
   Particle _particle = null ;
+  Particle _currentParticle = null ;
+  Particle _previousParticle = null ;
+  
   final CanvasElement _canvas ;
-  final _velocityFactor ;
+  final List<Constraint> _constraints ;
   MouseEvent _mouseEvent = null ;
   
-  DrawParticles(CanvasElement canvas, particles, velocityFactor)
+  DrawParticles(CanvasElement canvas, particles, constraints)
       : _canvas = canvas
-      , _velocityFactor = velocityFactor
+      , _constraints = constraints
       , _particles = particles 
   {
   }
@@ -50,25 +56,15 @@ class DrawParticles implements Tool
     _particle.Velocity.Zero() ;
   }
   
-//  void changeVelocity(Vec2 point, double mass)
-//  {
-//    if (_particle != null)
-//    {
-//      _particle.Mass = mass ;
-//      
-//      if (mass != double.INFINITY)
-//        _particle.Velocity = (point - _particle.Position) * (_velocityFactor) ;
-//      else
-//        _particle.Velocity.Zero() ;
-//    }
-//  }
-  
   void addParticle(double mass)
   {
     if (_particle != null)
     {
       _particle.Mass = mass ;
       _particles.add(_particle) ;
+      
+      _previousParticle = _currentParticle ;
+      _currentParticle = _particle ;
     }
     
     _particle = null ;
@@ -122,6 +118,12 @@ class DrawParticles implements Tool
         _last = point ;
         createParticle(point.x, point.y, (e.ctrlKey) ? double.INFINITY : 1.0) ;
         addParticle((e.ctrlKey) ? double.INFINITY : 1.0) ;
+        
+        if (e.shiftKey)
+        {
+          if (_previousParticle != null && _currentParticle != null)
+            _constraints.add(new Distance(_previousParticle, _currentParticle)) ;
+        }
       }
     }
   }

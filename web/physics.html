@@ -9,16 +9,20 @@
     <script type="text/javascript" src="physics.js"></script>
   </head>
   <body>
-    
+    <script type="application/dart" src="physics.dart"></script>
+    <script src="packages/browser/dart.js"></script>
+        
     <button id="create">Create particle</button>
     <button id="draw">Draw particles</button>
     <button id="delete">Delete particle</button>
     <button id="select">Select particle</button>
     <button id="create-constraint">Create constraint</button>
+    <input type="checkbox" id="break-on-collision" bind-checked="breakOnCollision">Break on collsion</checkbox>    
     <br/>
-    <span id='active-tool-label'>Active tool:</span>
-    <span id='active-tool-description'>toolname</span>
-
+    <p>
+      <span id='active-tool-label'>Active tool:</span>
+      <span id='active-tool-description'>toolname</span>
+    </p>
     <div id="container">
       <canvas tabindex='1' id="canvas" width="800" height="600" class="center"></canvas>
     </div>
@@ -26,20 +30,12 @@
     <p>
       <button id="trigger">Play</button>
       <button id="clearscene">Clear scene</button>
+      <button id="savescene">Save scene</button>
+      <button id="loadscene">Load scene</button>
       <button id="samplescene">Sample scene</button>
     </p>    
 
     <span id="position"></span>
-    <span id="fps"></span>
-
-    <footer>
-      <p id="summary"> </p>
-      <p id="notes"> </p>
-      <p id="details"> </p>
-      <p id="collisions"> </p>
-    </footer>
-
-    <script type="application/dart" src="physics.dart"></script>
-    <script src="packages/browser/dart.js"></script>
+    <span id="details"></span>
   </body>
 </html>

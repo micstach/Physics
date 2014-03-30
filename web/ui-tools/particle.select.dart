@@ -4,39 +4,34 @@ import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart' ;
 
 import '../physics/particle.dart' ;
-import 'tool.dart' ;
+import 'canvas.tool.dart' ;
 
 import 'dart:html';
 
-class SelectParticle extends Tool
+class SelectParticle extends CanvasTool
 {
-  final CanvasElement _canvas ;
   final Element _output ; 
   List<Particle> _highlighted = null ;
   List<Particle> _particles = null ;
   List<Particle> _tracked = new List<Particle>() ;
   
-  MouseEvent _mouseEvent = null ;
-  
-  SelectParticle(this._canvas, this._output, this._particles) 
+  SelectParticle(CanvasElement canvas, this._output, this._particles) : super(canvas)
   {
   }
   
   void _onMouseMove(MouseEvent e) 
   {
-    _mouseEvent = e ;
+    super.onMouseMove(e) ;
   }
-  
-  Vec2 get Position => _mouseEvent == null ? null : new Vec2(_mouseEvent.layer.x.toDouble(), _canvas.clientHeight - _mouseEvent.layer.y.toDouble()) ;
   
   void _onClick(MouseEvent e)
   {
-    double x = e.layer.x.toDouble();
-    double y = _canvas.clientHeight - e.layer.y.toDouble() ;
-    
-    Vec2 mouse = new Vec2(x, y) ;
+    Vec2 mouse = ConvertToWorldCoords(e);
   
-    _tracked.clear() ;
+    if (!e.ctrlKey)
+    {
+      _tracked.clear() ;
+    }
     
     for (Particle p in _particles)
     {
@@ -47,12 +42,12 @@ class SelectParticle extends Tool
     }
   }
   
-  var _onMouseMoveStream = null ; 
   var _onClickStream = null ;
   
   void Deactivate()
   {
-    _onMouseMoveStream.cancel() ;
+    super.Deactivate() ;
+    
     _onClickStream.cancel() ;
     
     _highlighted = new List<Particle>() ;
@@ -60,8 +55,9 @@ class SelectParticle extends Tool
 
   void Activate()
   {
-    _onMouseMoveStream = _canvas.onMouseMove.listen((e) => _onMouseMove(e)) ;
-    _onClickStream = _canvas.onClick.listen((e) => _onClick(e)) ;
+    super.Activate() ;
+    
+    _onClickStream = Canvas.onClick.listen((e) => _onClick(e)) ;
     
     _highlighted = new List<Particle>() ;
   }
@@ -72,20 +68,27 @@ class SelectParticle extends Tool
   
   void Draw(Renderer renderer) 
   {
-    String info = "" ;
     for (var p in _tracked)
     {
       renderer.drawBox(p.Box, "rgba(255, 0, 0, 1.0)") ;
-      info += "Velocity: (${p.Velocity.x.toStringAsFixed(4)}, ${p.Velocity.y.toStringAsFixed(4)}), length=${p.Velocity.Length.toStringAsFixed(4)}" ;
-      if (p.IsFixed)
-        info += ", Mass: ${p.Mass}" ;
-      else
-        info += ", Mass: ${p.Mass.toStringAsFixed(2)}" ;
-          
     }
     
     if (_output != null)
-      _output.text = info ;    
+    {
+      String info = "" ;
+      
+      for (var p in _tracked)
+      {
+        info += "Velocity: (${p.Velocity.x.toStringAsFixed(4)}, ${p.Velocity.y.toStringAsFixed(4)}) [${p.Velocity.Length.toStringAsFixed(4)}]" ;
+        if (p.IsFixed)
+          info += ", Mass: infinite" ;
+        else
+          info += ", Mass: ${p.Mass.toStringAsFixed(2)}" ;
+        info += "<br/>" ;
+      }
+      
+      _output.innerHtml += info ;    
+    }
   }
   
   String get Name => "click particle to select" ;

@@ -9,9 +9,6 @@ class Distance extends Constraint
 {
   double _distance = 0.0 ;
   
-  Vec2 _ia = null ;
-  Vec2 _ib = null ;
-  
   Distance(Particle a, Particle b) : super(a, b)
   {
     _distance = (A.Position - B.Position).Length ;
@@ -45,8 +42,8 @@ class Distance extends Constraint
     renderer.drawPath([A.Position, B.Position], false, "rgb(128, 128, 128)", "rgb(128, 128, 128)") ;
   }
   
-  static double Impulse(double dt, double e, double relVel, double invMassA, double invMassB) 
+  toJSON()
   {
-    return ((1.0 + e) / (dt * dt * 0.5)) * (relVel / (invMassA + invMassB)) ; 
-  }   
+    return {"type": "distance", "a": A.hashCode, "b" : B.hashCode} ;
+  }
 }

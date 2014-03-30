@@ -34,6 +34,19 @@ class Particle
     _initializeBox();
   }
   
+  Particle.fromJSON(json)
+  {
+    Position = new Vec2.fromJSON(json['position']) ;
+    Velocity = new Vec2.fromJSON(json['velocity']) ;
+
+    _radius = json['radius'] ;
+
+    double massInv = json['mass-inv'] ;
+    Mass = massInv == 0.0 ? double.INFINITY : 1.0 / massInv ;
+    
+    _initializeBox();
+  }
+  
   Particle.fromVec2(Vec2 position, [double r])
   {
     _radius = r ;
@@ -92,19 +105,16 @@ class Particle
     _initializeBox() ;
     
     _force.Zero();
-    
-    //if (IsResting) return ;
-        
-//    _acceleration = _force * MassInv ;
-//    
-//    Vec2 oldPosition = _position ;
-//    
-//    _position += (_velocity) + _acceleration * (dt * dt * 0.5) ;
-//    
-//    _velocity = (_position - oldPosition) ;
-//    
-//    _initializeBox() ;
-//    
-//    _force.Zero();    
+  }
+  
+  toJSON()
+  {
+    return {
+      'position': {'x': Position.x, 'y': Position.y},
+      'velocity' : {'x' : Velocity.x, 'y': Velocity.y},
+      'radius': Radius,
+      'mass-inv': MassInv,
+      'hash-code': hashCode
+    };
   }
 }

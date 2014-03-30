@@ -86,10 +86,17 @@ class CreateConstraint extends CanvasTool
       }
     }
     
-    if (distance < (closest.Radius * closest.Radius))
-      return closest ;
+    if (closest != null)
+    {
+      if (distance < (closest.Radius * closest.Radius))
+        return closest ;
+      else
+        return null ;
+    }
     else
+    {
       return null ;
+    }
   }
 
   void onKeyDown(KeyboardEvent e)

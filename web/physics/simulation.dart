@@ -18,6 +18,10 @@ import 'constraint.world.dart' ;
 class Simulation
 {
   bool _breakOnCollision = false ;
+  
+  get BreakOnCollision => _breakOnCollision ;
+  set BreakOnCollision(bool value) => _breakOnCollision = value ;
+  
   int _worldWidth ;
   int _worldHeight ;
   
