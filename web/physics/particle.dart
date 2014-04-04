@@ -2,8 +2,11 @@ library phx.particle ;
 
 import '../../math/vec2.dart';
 import '../../math/box2.dart';
+import '../../renderer/renderer.dart' ;
 
-class Particle 
+import 'Body.dart' ;
+
+class Particle extends Body
 {
   Vec2 _position ;
   Vec2 _velocity = new Vec2(0.0, 0.0);
@@ -97,9 +100,9 @@ class Particle
     if (IsFixed) return ;
     
     _acceleration = (_force * MassInv) * (dt * dt * 0.5) ;
-    
-    _position += _acceleration + _velocity;
 
+    _position += _acceleration + _velocity;
+    
     _velocity += _acceleration ;
     
     _initializeBox() ;
@@ -116,5 +119,22 @@ class Particle
       'mass-inv': MassInv,
       'hash-code': hashCode
     };
+  }
+  
+  void Render(Renderer renderer)
+  {
+    String color ;
+    
+    if (IsFixed)
+    {
+      color = "rgba(0, 0, 0, 0.5)" ;
+    }
+    else
+    {
+      int massColor = (255.0 * MassInv).toInt() ;
+      color = "rgba(${massColor}, 0, 0, 0.75)" ;
+    }
+    
+    renderer.drawCircle(Position, Radius, color);
   }
 }

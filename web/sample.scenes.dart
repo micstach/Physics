@@ -3,7 +3,39 @@ library scene.samples ;
 import 'physics/constraint.dart' ;
 import 'physics/constraint.distance.dart' ;
 
+import 'physics/Body.dart' ;
 import 'physics/particle.dart' ;
+import 'physics/super.particle.dart' ;
+
+
+void scene4(List<Particle> particles, List<Constraint> constraints, List<Body> bodies)
+{
+  particles.clear() ;
+  constraints.clear() ;
+  bodies.clear();
+  
+  double x = 400.0 ; 
+  double y = 500.0 ; 
+
+  Particle p1 = new Particle(x, y) ;
+  p1.Mass = double.INFINITY ;
+  p1.Velocity.Zero();
+  particles.add(p1) ;
+  
+  Particle p2 = new Particle(x+200, y) ;
+  p2.Mass = 1.0 ;
+  p2.Velocity.Zero();
+  particles.add(p2) ;
+  
+  constraints.add(new Distance(p1, p2)) ;
+  Body body = new SuperParticle(p1, 0.25, p2, 0.75) ;
+  bodies.add(body) ;
+
+  p1 = new Particle(x, y - 150) ;
+  p1.Mass = double.INFINITY ;
+  p1.Velocity.Zero();
+  particles.add(p1) ;
+}
 
 void scene3(List<Particle> particles, List<Constraint> constraints)
 {

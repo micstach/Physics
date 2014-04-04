@@ -11,33 +11,78 @@ abstract class CanvasTool extends Tool
   
   MouseEvent _mouseEvent = null ;
   
+  var _onMouseUpStream = null ;
+  var _onMouseDownStream = null ;
   var _onMouseMoveStream = null ;
   var _onMouseLeaveStream = null ;
+  var _onClickStream = null ;
   
   CanvasTool(this._canvas) ;
   
   void Activate()
   {
-    _onMouseMoveStream = _canvas.onMouseMove.listen((e) => onMouseMove(e)) ;
-    _onMouseLeaveStream = _canvas.onMouseLeave.listen((e) => onMouseLeave(e)) ;
+    _onMouseUpStream = Canvas.onMouseUp.listen((e) => _onMouseUp(e)) ;
+    _onMouseDownStream = Canvas.onMouseDown.listen((e) => _onMouseDown(e)) ;
+    _onMouseMoveStream = _canvas.onMouseMove.listen((e) => _onMouseMove(e)) ;
+    _onMouseLeaveStream = _canvas.onMouseLeave.listen((e) => _onMouseLeave(e)) ;
+    _onClickStream = Canvas.onClick.listen((e) => _onClick(e)) ;
+    
+    OnActivate() ;
   }
   
   void Deactivate()
   {
     _onMouseMoveStream.cancel() ;
     _onMouseLeaveStream.cancel() ;
+    _onMouseDownStream.cancel() ;
+    _onMouseUpStream.cancel() ;
+    _onClickStream.cancel() ;
+    
+    OnDeactivate() ;
   }
   
-  void onMouseMove(MouseEvent e)
+  void OnActivate() {} 
+  void OnDeactivate() {} 
+  
+  void _onClick(MouseEvent e)
+  {
+    OnClick(e) ;
+  }
+  
+  void _onMouseUp(MouseEvent e)
+  {
+    OnMouseUp(e) ;
+  }
+  
+  void _onMouseMove(MouseEvent e)
   {
     _mouseEvent = e ;
+    
+    OnMouseMove(e) ;
   }
   
-  void onMouseLeave(MouseEvent e)
+  void _onMouseDown(MouseEvent e)
+  {
+    OnMouseDown(e) ;
+  }
+  
+  void _onMouseLeave(MouseEvent e)
   {
     _mouseEvent = null ;
+    
+    OnMouseLeave() ;
   }
   
+  void OnClick(MouseEvent e) {}
+  
+  void OnMouseMove(MouseEvent e) {}
+  
+  void OnMouseLeave() {}
+  
+  void OnMouseDown(MouseEvent e) {}
+  
+  void OnMouseUp(MouseEvent e) {}
+
   void Draw(Renderer renderer)
   {
     // render cursor

@@ -1,6 +1,19 @@
 $(document).ready(function(){
-	setupControls() ;
+    setupControls() ;
+	setTimeout(hideBanner, 10) ;
 });
+
+function hideBanner()
+{
+  if ($('div[id*="divadv"]').css("display") == "block")
+  {
+    $('div[id*="divadv"]').css({"display":"none"}) ;
+  }
+  else
+  {
+    setTimeout(hideBanner, 10) ;
+  }
+}
 
 $(window).resize(function(){
 	setupControls() ;

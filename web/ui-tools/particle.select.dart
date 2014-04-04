@@ -19,12 +19,7 @@ class SelectParticle extends CanvasTool
   {
   }
   
-  void _onMouseMove(MouseEvent e) 
-  {
-    super.onMouseMove(e) ;
-  }
-  
-  void _onClick(MouseEvent e)
+  void OnClick(MouseEvent e)
   {
     Vec2 mouse = ConvertToWorldCoords(e);
   
@@ -42,23 +37,13 @@ class SelectParticle extends CanvasTool
     }
   }
   
-  var _onClickStream = null ;
-  
-  void Deactivate()
+  void OnDeactivate()
   {
-    super.Deactivate() ;
-    
-    _onClickStream.cancel() ;
-    
     _highlighted = new List<Particle>() ;
   }
 
-  void Activate()
+  void OnActivate()
   {
-    super.Activate() ;
-    
-    _onClickStream = Canvas.onClick.listen((e) => _onClick(e)) ;
-    
     _highlighted = new List<Particle>() ;
   }
   

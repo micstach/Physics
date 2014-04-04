@@ -27,36 +27,8 @@ class CreateConstraint extends CanvasTool
   CreateConstraint(CanvasElement canvas, this._particles, this._constraints) : super(canvas)
   {
   }
-  
-  var _onMouseDownStream = null ;
-  var _onMouseUpStream = null ;
-  
-  void Activate()
-  {
-    super.Activate() ;
-    
-    _onMouseDownStream = Canvas.onMouseDown.listen((e) => onMouseDown(e)) ;
-    _onMouseUpStream = Canvas.onMouseUp.listen((e) => onMouseUp(e)) ;
-  }
 
-  void Deactivate()
-  {
-    super.Deactivate() ;
-    
-    _onMouseDownStream.cancel() ;
-    _onMouseUpStream.cancel() ;
-  }
-
-  void addConstraint()
-  {
-    if (_a != null && _b != null && _a != _b)
-    {
-      _constraints.add(new Distance(_a,  _b)) ;
-      _a = _b = null ;
-    }
-  }
-  
-  void onMouseDown(MouseEvent e)
+  void OnMouseDown(MouseEvent e)
   {
     Vec2 point = ConvertToWorldCoords(e)  ;
 
@@ -71,6 +43,40 @@ class CreateConstraint extends CanvasTool
     }
   }
   
+  void OnMouseMove(MouseEvent e)
+  {
+    Vec2 point = ConvertToWorldCoords(e) ;
+    
+    _selected = _findClosest(point) ;
+  }
+
+  void OnMouseUp(MouseEvent e)
+  {
+    addConstraint() ;
+  }
+  
+  bool get IsActive => true ; 
+  
+  void Draw(Renderer renderer)
+  {
+    super.Draw(renderer) ;
+
+    if (IsActive)
+    {
+      if (_selected != null)
+      {
+        renderer.drawBox(_selected.Box, "rgba(255, 0, 0, 0.75)") ;
+      }
+      
+      if (_a != null && _selected != null && _a != _selected)
+      {
+        renderer.drawLine(_a.Position, _selected.Position, "rgba(128, 128, 128, 0.5)") ;
+      }
+    }
+  }
+  
+  String get Name => "select two particles to create distance constraint" ;
+
   Particle _findClosest(Vec2 point)
   {
     Particle closest = null ;
@@ -98,48 +104,13 @@ class CreateConstraint extends CanvasTool
       return null ;
     }
   }
-
-  void onKeyDown(KeyboardEvent e)
-  {
-  }
   
-  void onKeyUp(KeyboardEvent e)
+  void addConstraint()
   {
-  }
-  
-  void onMouseMove(MouseEvent e)
-  {
-    super.onMouseMove(e) ;
-    
-    Vec2 point = ConvertToWorldCoords(e) ;
-    
-    _selected = _findClosest(point) ;
-  }
-
-  void onMouseUp(MouseEvent e)
-  {
-    addConstraint() ;
-  }
-  
-  bool get IsActive => true ; 
-  
-  void Draw(Renderer renderer)
-  {
-    super.Draw(renderer) ;
-
-    if (IsActive)
+    if (_a != null && _b != null && _a != _b)
     {
-      if (_selected != null)
-      {
-        renderer.drawBox(_selected.Box, "rgba(255, 0, 0, 0.75)") ;
-      }
-      
-      if (_a != null && _selected != null && _a != _selected)
-      {
-        renderer.drawLine(_a.Position, _selected.Position, "rgba(128, 128, 128, 0.5)") ;
-      }
+      _constraints.add(new Distance(_a,  _b)) ;
+      _a = _b = null ;
     }
-  }
-  
-  String get Name => "select two particles to create distance constraint" ;
+  }  
 }

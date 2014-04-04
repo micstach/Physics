@@ -206,24 +206,10 @@ class Simulation
   {
     for (var particle in particles)
     {
-      String color ;
-      
-      if (particle.IsFixed)
-      {
-        color = "rgba(0, 0, 0, 0.5)" ;
-      }
-      else
-      {
-        int massColor = (255.0 * particle.MassInv).toInt() ;
-        color = "rgba(${massColor}, 0, 0, 0.75)" ;
-      }
-      
-      renderer.drawCircle(particle.Position, particle.Radius, color);
-      
-      // renderer.drawBox(particle.Box, "rgba(64, 64, 64, 1.0)") ;
+      particle.Render(renderer) ;
       
       if (!IsRunning)
-        renderer.drawVector(particle.Velocity * 10.0, particle.Position, "rgba(255, 128, 0, 0.5)") ;
+        renderer.drawVector(particle.Velocity * 10.0, particle.Position, "rgba(255, 128, 0, 0.5)") ;    
     }
     
     for (var constraint in constraints)

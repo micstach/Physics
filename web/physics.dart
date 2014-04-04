@@ -6,6 +6,7 @@ import '../renderer/renderer.dart' ;
 import 'renderer/canvas.software.renderer.dart' ;
 import 'renderer/canvas.webgl.renderer.dart' ;
 
+import 'physics/Body.dart';
 import 'physics/particle.dart';
 import 'physics/simulation.dart';
 import 'physics/constraint.dart' ;
@@ -18,8 +19,6 @@ import 'ui-tools/particle.draw.dart';
 import 'ui-tools/particle.delete.dart';
 import 'ui-tools/particle.select.dart';
 
-import '../math/vec2.dart' ;
-
 import 'dart:html';
 import 'package:json/json.dart' as JSON;
 
@@ -29,8 +28,9 @@ final Element position = querySelector("#position");
 
 CanvasElement canvas = null ;
 
-var particles = new List<Particle>() ;
+List<Particle> particles = new List<Particle>() ;
 List<Constraint> constraints = new List<Constraint>() ;
+List<Body> bodies = new List<Body>() ;
 
 var colliding = new Set<Particle>() ;
 
@@ -120,6 +120,12 @@ void frameDraw(num delta) {
   // draw
   simulation.Draw(particles, constraints, renderer) ;
   
+  // bodies
+  for (Body body in bodies)
+  {
+    body.Render(renderer) ;
+  }
+  
   querySelector("span#active-tool-description").text = tool.Name ;
   
   position.text = (tool.Position != null) ? "[${tool.Position.x}, ${tool.Position.y}]" : "" ;  
@@ -151,7 +157,7 @@ double calculateFps(num delta)
 
 void onSampleSceneClicked(MouseEvent e)
 {
-  scene1(particles, constraints) ;
+  scene4(particles, constraints, bodies) ;
   
   simulation.Stop();
   buttonTrigger.text = "Play" ;

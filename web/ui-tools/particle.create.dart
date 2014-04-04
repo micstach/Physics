@@ -24,92 +24,21 @@ class CreateParticle extends CanvasTool
   {
   }
   
-  var _onMouseDownStream = null ;
-  var _onMouseUpStream = null ;
-  
-  void Activate()
-  {
-    super.Activate() ;
-
-    _onMouseDownStream = Canvas.onMouseDown.listen((e) => onMouseDown(e)) ;
-    _onMouseUpStream = Canvas.onMouseUp.listen((e) => onMouseUp(e)) ;
-  }
-
-  void Deactivate()
-  {
-    super.Deactivate() ;
-    
-    _onMouseDownStream.cancel() ;
-    _onMouseUpStream.cancel() ;
-  }
-
-  void createParticle(double x, double y, double mass)
-  {
-    _particle = new Particle(x, y) ;
-    _particle.Mass = mass ;
-    _particle.Velocity.Zero() ;
-  }
-  
-  void changeVelocity(Vec2 point, double mass)
-  {
-    if (_particle != null)
-    {
-      _particle.Mass = mass ;
-      
-      if (mass != double.INFINITY)
-        _particle.Velocity = (point - _particle.Position) * (_velocityFactor) ;
-      else
-        _particle.Velocity.Zero() ;
-    }
-  }
-  
-  void addParticle(double mass)
-  {
-    if (_particle != null)
-    {
-      _particle.Mass = mass ;
-      _particles.add(_particle) ;
-    }
-    
-    _particle = null ;
-  }
-  
-  void onMouseDown(MouseEvent e)
+  void OnMouseDown(MouseEvent e)
   {
     Vec2 point = ConvertToWorldCoords(e) ;
     
     createParticle(point.x, point.y, (e.ctrlKey) ? double.INFINITY : 1.0) ;
   }
 
-  void onKeyDown(KeyboardEvent e)
+  void OnMouseMove(MouseEvent e)
   {
-    if (e.ctrlKey)
-    {
-      if (_particle != null)
-      {
-        _particle.Mass = (e.ctrlKey) ? double.INFINITY : 1.0 ;
-      }
-    }
-  }
-  
-  void onKeyUp(KeyboardEvent e)
-  {
-    if (_particle != null)
-    {
-      _particle.Mass = 5.0 ;
-    }
-  }
-  
-  void onMouseMove(MouseEvent e)
-  {
-    super.onMouseMove(e) ;
-    
     Vec2 point = ConvertToWorldCoords(e) ;
     
     changeVelocity(point, (e.ctrlKey) ? double.INFINITY : 1.0) ;
   }
 
-  void onMouseUp(MouseEvent e)
+  void OnMouseUp(MouseEvent e)
   {
     addParticle((e.ctrlKey) ? double.INFINITY : 1.0) ;
   }
@@ -175,4 +104,35 @@ class CreateParticle extends CanvasTool
   }
   
   String get Name => "click and hold mouse button to create particle and set its velocity, user CTRL + click to create fixed particle " ;
+
+  void createParticle(double x, double y, double mass)
+  {
+    _particle = new Particle(x, y) ;
+    _particle.Mass = mass ;
+    _particle.Velocity.Zero() ;
+  }
+  
+  void changeVelocity(Vec2 point, double mass)
+  {
+    if (_particle != null)
+    {
+      _particle.Mass = mass ;
+      
+      if (mass != double.INFINITY)
+        _particle.Velocity = (point - _particle.Position) * (_velocityFactor) ;
+      else
+        _particle.Velocity.Zero() ;
+    }
+  }
+  
+  void addParticle(double mass)
+  {
+    if (_particle != null)
+    {
+      _particle.Mass = mass ;
+      _particles.add(_particle) ;
+    }
+    
+    _particle = null ;
+  }
 }
