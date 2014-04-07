@@ -142,9 +142,10 @@ abstract class Contact extends Pair
       
       if (eq.IsSolvable)
       {
-        if (0.0 <= eq.x && eq.x <= 1.0)
+        double x = eq.x ;
+        if (0.0 <= x && x <= 1.0)
         {
-          return new CollidingContact(a, b, eq.x) ;
+          return new CollidingContact(a, b, x) ;
         }
       }
     }

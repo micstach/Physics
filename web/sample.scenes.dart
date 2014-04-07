@@ -28,8 +28,10 @@ void scene4(List<Particle> particles, List<Constraint> constraints, List<Body> b
   particles.add(p2) ;
   
   constraints.add(new Distance(p1, p2)) ;
-  Body body = new SuperParticle(p1, 0.25, p2, 0.75) ;
-  bodies.add(body) ;
+  
+  bodies.add(new SuperParticle(p1, 0.25, p2, 0.75)) ;
+  bodies.add(new SuperParticle(p1, 0.5, p2, 0.5)) ;
+  bodies.add(new SuperParticle(p1, 0.75, p2, 0.25)) ;
 
   p1 = new Particle(x, y - 150) ;
   p1.Mass = double.INFINITY ;

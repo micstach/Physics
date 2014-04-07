@@ -5,7 +5,6 @@ import '../../math/box2.dart';
 import '../../renderer/renderer.dart' ;
 
 import 'dart:html';
-import 'dart:math';
 
 class CanvasWebGLRenderer extends Renderer
 {

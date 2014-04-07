@@ -4,7 +4,7 @@ import 'sample.scenes.dart' ;
 
 import '../renderer/renderer.dart' ;
 import 'renderer/canvas.software.renderer.dart' ;
-import 'renderer/canvas.webgl.renderer.dart' ;
+// import 'renderer/canvas.webgl.renderer.dart' ;
 
 import 'physics/Body.dart';
 import 'physics/particle.dart';
@@ -118,7 +118,7 @@ void frameDraw(num delta) {
   simulation.Run(particles, constraints) ;
   
   // draw
-  simulation.Draw(particles, constraints, renderer) ;
+  simulation.Draw(particles, constraints, bodies, renderer) ;
   
   // bodies
   for (Body body in bodies)

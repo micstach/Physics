@@ -3,6 +3,7 @@ library pxh.simulation ;
 import "../../renderer/renderer.dart" ;
 import "../../math/vec2.dart" ;
 
+import "Body.dart" ;
 import "particle.dart" ;
 import 'collision.map.dart';
 import 'collision.pair.dart';
@@ -202,7 +203,7 @@ class Simulation
     }
   }
   
-  void Draw(List<Particle> particles, List<Constraint> constraints, Renderer renderer)
+  void Draw(List<Particle> particles, List<Constraint> constraints, List<Body> bodies, Renderer renderer)
   {
     for (var particle in particles)
     {
@@ -212,6 +213,17 @@ class Simulation
         renderer.drawVector(particle.Velocity * 10.0, particle.Position, "rgba(255, 128, 0, 0.5)") ;    
     }
     
+    if (bodies != null)
+    {
+      for (var body in bodies)
+      {
+        body.Render(renderer) ;
+        
+        if (!IsRunning)
+          renderer.drawVector(body.Velocity * 10.0, body.Position, "rgba(255, 128, 0, 0.5)") ;
+      }
+    }
+
     for (var constraint in constraints)
     {
       constraint.Render(renderer) ;
