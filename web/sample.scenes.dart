@@ -3,16 +3,13 @@ library scene.samples ;
 import 'physics/constraint.dart' ;
 import 'physics/constraint.distance.dart' ;
 
-import 'physics/Body.dart' ;
 import 'physics/particle.dart' ;
 import 'physics/super.particle.dart' ;
+import 'physics/scene.dart' ;
 
-
-void scene4(List<Particle> particles, List<Constraint> constraints, List<Body> bodies)
+void scene4(Scene scene)
 {
-  particles.clear() ;
-  constraints.clear() ;
-  bodies.clear();
+  scene.Clear() ;
   
   double x = 400.0 ; 
   double y = 500.0 ; 
@@ -20,23 +17,28 @@ void scene4(List<Particle> particles, List<Constraint> constraints, List<Body> b
   Particle p1 = new Particle(x, y) ;
   p1.Mass = double.INFINITY ;
   p1.Velocity.Zero();
-  particles.add(p1) ;
+  scene.bodies.add(p1) ;
   
   Particle p2 = new Particle(x+200, y) ;
   p2.Mass = 1.0 ;
   p2.Velocity.Zero();
-  particles.add(p2) ;
+  scene.bodies.add(p2) ;
   
-  constraints.add(new Distance(p1, p2)) ;
-  
-  bodies.add(new SuperParticle(p1, 0.25, p2, 0.75)) ;
-  bodies.add(new SuperParticle(p1, 0.5, p2, 0.5)) ;
-  bodies.add(new SuperParticle(p1, 0.75, p2, 0.25)) ;
+  var m1 = new SuperParticle(p1, 0.25, p2, 0.75) ;
+  scene.bodies.add(m1) ;
 
-  p1 = new Particle(x, y - 150) ;
-  p1.Mass = double.INFINITY ;
+  var m2 = new SuperParticle(p1, 0.75, p2, 0.25) ;
+  scene.bodies.add(m2) ;
+
+  scene.constraints.add(new ConstraintDistance(p1, p2)) ;
+
+  p1 = new Particle(x + 200, y + 50) ;
+  p1.Mass = 1.0 ;
   p1.Velocity.Zero();
-  particles.add(p1) ;
+  scene.bodies.add(p1) ;
+  
+  scene.constraints.add(new ConstraintDistance(p1, m1)) ;
+  scene.constraints.add(new ConstraintDistance(p1, m2)) ;
 }
 
 void scene3(List<Particle> particles, List<Constraint> constraints)
@@ -179,7 +181,7 @@ void scene1(List<Particle> particles, List<Constraint> constraints)
     p2.Velocity.Zero();
     particles.add(p2) ;
   
-    constraints.add(new Distance(p1, p2)) ;
+    constraints.add(new ConstraintDistance(p1, p2)) ;
     p1 = p2 ;
   }
   
@@ -203,10 +205,10 @@ void scene1(List<Particle> particles, List<Constraint> constraints)
   p4.Velocity.Zero();
   particles.add(p4) ;
   
-  constraints.add(new Distance(p1, p2)) ;
-  constraints.add(new Distance(p2, p3)) ;
-  constraints.add(new Distance(p3, p4)) ;
-  constraints.add(new Distance(p4, p1)) ;
-  constraints.add(new Distance(p1, p3)) ;
-  constraints.add(new Distance(p2, p4)) ;
+  constraints.add(new ConstraintDistance(p1, p2)) ;
+  constraints.add(new ConstraintDistance(p2, p3)) ;
+  constraints.add(new ConstraintDistance(p3, p4)) ;
+  constraints.add(new ConstraintDistance(p4, p1)) ;
+  constraints.add(new ConstraintDistance(p1, p3)) ;
+  constraints.add(new ConstraintDistance(p2, p4)) ;
 }

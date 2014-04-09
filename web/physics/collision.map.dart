@@ -1,115 +1,64 @@
-library phx.collision.map ;
+library collision.map ;
 
+import 'scene.dart';
 import 'constraint.dart';
-import 'particle.dart';
+import 'body.dart';
 import 'collision.pair.dart' ;
 
 class CollisionMap
 {
-  List<Particle> Particles = null ;
+  Scene _scene = null ;
   
-  List<Constraint> _constraints = null ;
+  List<CollisionPair> _pairs = null ;
   
-  int _particlesCount = 0 ;
-  
-  Map<Particle, int> _index = null ;
-  Map<int, CollisionPair> _pairs = null ;
-  Map<Particle, List<CollisionPair>> _particlePairs = null ;
-  
-  CollisionMap(List<Particle> particles, List<Constraint> constraints)
+  CollisionMap(this._scene)
   {
-    Particles = particles ;
-    _constraints = constraints ;
-    
-    _initialize() ;
+    _pairs = new List<CollisionPair>() ;
   }
-  
-  void Update(List<Particle> particles, List<Constraint> constraints)
+
+  void AddBody(Body body)
   {
-    if (particles.length != _particlesCount)
+    for (Body b in _scene.bodies)
     {
-      Particles = particles ;
+      if (b.hashCode == body.hashCode) continue ;
+      if (b.IsFixed && body.IsFixed) continue ;
+      if (body.IsRelatedTo(b)) continue ;
       
-      _constraints = constraints ;
-      
-      _initialize() ;
+      _pairs.add(new CollisionPair(b, body)) ;
     }
   }
   
-  void _initialize()
+  void RemoveBody(Body body)
   {
-    _particlesCount = Particles.length ;
-
-    _index = new Map<Particle, int>() ;
     
-    _pairs = new Map<int, CollisionPair>() ;
-    
-    _particlePairs = new Map<Particle, List<CollisionPair>>() ;
-    
-    // initialize collision pairs
-    for (int i=0; i<Particles.length; i++)
+  }
+  
+  void AddConstraint(Constraint constraint)
+  {
+    for (CollisionPair pair in _pairs)
     {
-      Particle a = Particles[i] ;
-      
-      for (int j=i+1; j<Particles.length; j++)
+      if ((pair.A == constraint.A && pair.B == constraint.B) || (pair.A == constraint.B && pair.B == constraint.A))
       {
-        Particle b = Particles[j] ;
-        
-        if (a.IsFixed && b.IsFixed) continue ;
-        
-        int index = _getPairIndex(a, b);
-        
-        if (!_pairs.containsKey(index))
-          _pairs[index] = new CollisionPair(a, b) ;
+        _pairs.remove(pair) ;
+        break ;
       }
     }
-
-    // remove constraint pairs
-    for (Constraint constraint in _constraints)
-    {
-      int index = _getPairIndex(constraint.A, constraint.B);
-      
-      _pairs.remove(index) ;
-    }
   }
-  
-  int _getParticleIndex(Particle p)
+
+  void RemoveConstraint(Constraint body)
   {
-    if (!_index.containsKey(p))
-      _index[p] = _index.values.length ;
     
-    return _index[p] ;
   }
   
   void Reset()
   {
-    for (CollisionPair pair in _pairs.values)
+    for (CollisionPair pair in _pairs)
     {
       pair.Discard() ;
     }
   }
 
-  int _getPairIndex(Particle a, Particle b)
-  {
-    var idxA = _getParticleIndex(a) ;
-    var idxB = _getParticleIndex(b) ;
-    
-    if (idxB > idxA)
-    {
-      var tmp = idxB ;
-      idxB = idxA ;
-      idxA = tmp ;
-      
-      var c = b ;
-      b = a ;
-      a = c ;
-    }
-
-    // unique index
-    return (idxB * Particles.length + idxA) ;    
-  }
-  
-  List<CollisionPair> get Pairs => _pairs.values.toList(growable: false) ;
+  List<CollisionPair> get Pairs => _pairs ;
   
   int get DynamicCollisionsCount 
   {

@@ -3,7 +3,8 @@ library pxh.simulation ;
 import "../../renderer/renderer.dart" ;
 import "../../math/vec2.dart" ;
 
-import "Body.dart" ;
+import "scene.dart" ;
+import "body.dart" ;
 import "particle.dart" ;
 import 'collision.map.dart';
 import 'collision.pair.dart';
@@ -57,56 +58,48 @@ class Simulation
     _dt = 0.0 ;
   }
        
-  void _simulateParticle(Particle particle)
+  void _simulateParticle(Body body)
   {
     // action
     for (var force in _forces)
     {
-      force.Apply(particle) ;
+      force.Apply(body) ;
     }
     
-    particle.Integrate(_dt) ;
+    body.Integrate(_dt) ;
   }
   
-  void Run(List<Particle> particles, List<Constraint> constraints)
+  void Run(Scene scene)
   {
     if (!IsRunning) return ;
     
-    for (var particle in particles)
+    for (var body in scene.bodies)
     {
-      _simulateParticle(particle);
+      _simulateParticle(body);
     }
 
-    // detect collisions
-    Set<CollisionPair> pairs = _detectCollisions(particles, constraints) ;
-    
+//    // detect collisions
+//    Set<CollisionPair> pairs = _detectCollisions(particles, constraints) ;
+//    
     // resolve collisions
-    _resolveCollisions(particles, constraints, pairs) ;
-
-    for (var particle in particles)
-    {
-      ResolveWorldConstraints(_e, particle, _worldWidth, _worldHeight) ;
-    }
-    
-    if (_breakOnCollision)
-      if (pairs.length > 0) Stop();
+    _resolveCollisions(scene, new Set<CollisionPair>()) ;
+//
+//    for (var particle in particles)
+//    {
+//      ResolveWorldConstraints(_e, particle, _worldWidth, _worldHeight) ;
+//    }
+//    
+//    if (_breakOnCollision)
+//      if (pairs.length > 0) Stop();
   }
   
-  Set<CollisionPair> _detectCollisions(List<Particle> particles, List<Constraint> constraints)
+  Set<CollisionPair> _detectCollisions(Scene scene)
   {
-    // refresh collision map
-    if (_collisionMap == null)
-      _collisionMap = new CollisionMap(particles, constraints) ;
-    else 
-      _collisionMap.Update(particles, constraints) ;
-    
-    _collisionMap.Reset() ;
-    
     Set<CollisionPair> pairs = new Set<CollisionPair>() ;
     
     Map<Particle, List<CollisionPair>> particle_pairs = new Map<Particle, List<CollisionPair>>();
     
-    for (CollisionPair pair in _collisionMap.Pairs)
+    for (CollisionPair pair in scene.Collisions.Pairs)
     {
       Contact contact = Contact.Find(pair.A, pair.B) ;
       
@@ -173,12 +166,12 @@ class Simulation
     return pairs ;
   }
 
-  void _resolveCollisions(List<Particle> particles, List<Constraint> constraints, Set<CollisionPair> contact_pairs)
+  void _resolveCollisions(Scene scene, Set<CollisionPair> contact_pairs)
   {
     // resolve
     // - contact separation
     // - constaints
-    for (int i=0; i<25; i++)
+    for (int i=0; i<1; i++)
     {
       for (CollisionPair pair in contact_pairs)
       {
@@ -186,7 +179,7 @@ class Simulation
           pair.GetContact().Separate();
       }
 
-      for (var constraint in constraints)
+      for (var constraint in scene.constraints)
       {
         constraint.Resolve() ;
       }
@@ -203,32 +196,32 @@ class Simulation
     }
   }
   
-  void Draw(List<Particle> particles, List<Constraint> constraints, List<Body> bodies, Renderer renderer)
-  {
-    for (var particle in particles)
-    {
-      particle.Render(renderer) ;
-      
-      if (!IsRunning)
-        renderer.drawVector(particle.Velocity * 10.0, particle.Position, "rgba(255, 128, 0, 0.5)") ;    
-    }
-    
-    if (bodies != null)
-    {
-      for (var body in bodies)
-      {
-        body.Render(renderer) ;
-        
-        if (!IsRunning)
-          renderer.drawVector(body.Velocity * 10.0, body.Position, "rgba(255, 128, 0, 0.5)") ;
-      }
-    }
-
-    for (var constraint in constraints)
-    {
-      constraint.Render(renderer) ;
-    }
-  }
+//  void Draw(List<Particle> particles, List<Constraint> constraints, List<Body> bodies, Renderer renderer)
+//  {
+//    for (var particle in particles)
+//    {
+//      particle.Render(renderer) ;
+//      
+//      if (!IsRunning)
+//        renderer.drawVector(particle.Velocity * 10.0, particle.Position, "rgba(255, 128, 0, 0.5)") ;    
+//    }
+//    
+//    if (bodies != null)
+//    {
+//      for (var body in bodies)
+//      {
+//        body.Render(renderer) ;
+//        
+//        if (!IsRunning)
+//          renderer.drawVector(body.Velocity * 10.0, body.Position, "rgba(255, 128, 0, 0.5)") ;
+//      }
+//    }
+//
+//    for (var constraint in constraints)
+//    {
+//      constraint.Render(renderer) ;
+//    }
+//  }
   
   CollisionMap get Collisions => _collisionMap ;
 }

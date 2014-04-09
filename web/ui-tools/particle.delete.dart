@@ -4,6 +4,7 @@ import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart' ;
 
 import '../physics/constraint.dart' ;
+import '../physics/scene.dart' ;
 import '../physics/particle.dart' ;
 import 'canvas.tool.dart' ;
 
@@ -12,10 +13,10 @@ import 'dart:html';
 class DeleteParticle extends CanvasTool
 {
   List<Particle> _highlighted = null ;
-  List<Particle> _particles = null ;
-  List<Constraint> _constraints = null ;
   
-  DeleteParticle(CanvasElement canvas, this._particles, this._constraints) : super(canvas) 
+  final Scene _scene ;
+  
+  DeleteParticle(CanvasElement canvas, this._scene) : super(canvas) 
   {
   }
   
@@ -25,7 +26,7 @@ class DeleteParticle extends CanvasTool
     
     var delete_particles = new List<Particle>() ;
     
-    for (Particle p in _particles)
+    for (Particle p in _scene.bodies)
     {
       if ((p.Position - mouse).SqLength < (p.Radius * p.Radius))
       {
@@ -37,7 +38,7 @@ class DeleteParticle extends CanvasTool
     
     for (Particle p in delete_particles)
     {
-      for (Constraint c in _constraints)
+      for (Constraint c in _scene.constraints)
       {
         if (c.A == p || c.B == p)
         {
@@ -48,12 +49,12 @@ class DeleteParticle extends CanvasTool
     
     for (Constraint c in delete_constraints)
     {
-      _constraints.remove(c) ;
+      _scene.constraints.remove(c) ;
     }
     
     for (Particle p in delete_particles)
     {
-      _particles.remove(p) ;
+      _scene.bodies.remove(p) ;
     }
   }
   
@@ -73,7 +74,7 @@ class DeleteParticle extends CanvasTool
     
     Vec2 mouse = ConvertToWorldCoords(e) ;
     
-    for (Particle p in _particles)
+    for (Particle p in _scene.bodies)
     {
       if ((p.Position - mouse).SqLength < (p.Radius * p.Radius))
       {

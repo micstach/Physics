@@ -1,8 +1,8 @@
-library phx.force ;
+library force ;
 
-import 'particle.dart' ;
+import 'body.dart' ;
 
 abstract class Force
 {
-  void Apply(Particle particle) ;
+  void Apply(Body body) ;
 }

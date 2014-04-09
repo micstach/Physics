@@ -3,6 +3,8 @@ library particle.select ;
 import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart' ;
 
+import '../physics/scene.dart' ;
+import '../physics/body.dart' ;
 import '../physics/particle.dart' ;
 import 'canvas.tool.dart' ;
 
@@ -11,12 +13,13 @@ import 'dart:html';
 class SelectParticle extends CanvasTool
 {
   final Element _output ; 
-  List<Particle> _highlighted = null ;
-  List<Particle> _particles = null ;
-  List<Particle> _tracked = new List<Particle>() ;
+  List _highlighted = null ;
+  Scene _scene ;
+  List _tracked = new List() ;
   
-  SelectParticle(CanvasElement canvas, this._output, this._particles) : super(canvas)
+  SelectParticle(CanvasElement canvas, Scene scene, this._output) : super(canvas)
   {
+    _scene = scene ;
   }
   
   void OnClick(MouseEvent e)
@@ -28,28 +31,28 @@ class SelectParticle extends CanvasTool
       _tracked.clear() ;
     }
     
-    for (Particle p in _particles)
+    for (var body in _scene.bodies)
     {
-      if ((p.Position - mouse).SqLength < (p.Radius * p.Radius))
+      if ((body.Position - mouse).SqLength < (body.Radius * body.Radius))
       {
-        _tracked.add(p) ;
+        _tracked.add(body) ;
       }
     }
   }
   
   void OnDeactivate()
   {
-    _highlighted = new List<Particle>() ;
+    _highlighted = new List() ;
   }
 
   void OnActivate()
   {
-    _highlighted = new List<Particle>() ;
+    _highlighted = new List() ;
   }
   
   bool get IsActive => false ;
   
-  List<Particle> get Highlighted => _highlighted ;
+  List<Body> get Highlighted => _highlighted ;
   
   void Draw(Renderer renderer) 
   {

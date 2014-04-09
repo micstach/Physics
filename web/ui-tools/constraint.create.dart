@@ -4,6 +4,8 @@ import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart';
 import '../physics/particle.dart';
 
+import '../physics/body.dart';
+import '../physics/scene.dart';
 import '../physics/constraint.dart';
 import '../physics/constraint.distance.dart';
 
@@ -15,16 +17,15 @@ class CreateConstraint extends CanvasTool
 {
   double _alpha = 1.0 ;
   
-  final List<Particle> _particles ;
-  final List<Constraint> _constraints ;
+  final Scene _scene ;
   
-  Particle _a = null ;
-  Particle _b = null ;
-  Particle _selected = null ;
+  Body _a = null ;
+  Body _b = null ;
+  Body _selected = null ;
 
   MouseEvent _mouseEvent = null ;
   
-  CreateConstraint(CanvasElement canvas, this._particles, this._constraints) : super(canvas)
+  CreateConstraint(CanvasElement canvas, this._scene) : super(canvas)
   {
   }
 
@@ -82,7 +83,7 @@ class CreateConstraint extends CanvasTool
     Particle closest = null ;
     double distance = double.INFINITY ;
        
-    for (Particle p in _particles)
+    for (Body p in _scene.bodies)
     {
       double d = (p.Position - point).SqLength ;
       if (d < distance)
@@ -109,7 +110,7 @@ class CreateConstraint extends CanvasTool
   {
     if (_a != null && _b != null && _a != _b)
     {
-      _constraints.add(new Distance(_a,  _b)) ;
+      _scene.constraints.add(new ConstraintDistance(_a,  _b)) ;
       _a = _b = null ;
     }
   }  

@@ -4,7 +4,7 @@ import '../../math/vec2.dart';
 import '../../math/box2.dart';
 import '../../renderer/renderer.dart' ;
 
-import 'Body.dart' ;
+import 'body.dart' ;
 
 class Particle extends Body
 {
@@ -132,5 +132,20 @@ class Particle extends Body
     }
     
     renderer.drawCircle(Position, Radius, color);
+  }
+
+  @override
+  bool IsRelatedTo(Body body) {
+    return false ;
+  }
+
+  @override
+  void PositionMove(Vec2 delta) {
+    Position += delta ;
+  }
+
+  @override
+  void VelocityMove(Vec2 delta) {
+    Velocity += delta ;
   }
 }

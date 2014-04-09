@@ -1,13 +1,13 @@
-library phx.constraint;
+library constraint;
 
 import "../../renderer/renderer.dart" ;
 
-import 'pair.dart';
-import 'particle.dart' ; 
+import "body.dart";
+import "pair.dart";
 
 abstract class Constraint extends Pair
 {
-  Constraint(Particle a, Particle b) : super(a, b) ;
+  Constraint(Body a, Body b) : super(a, b) ;
 
   void Resolve() ;
   

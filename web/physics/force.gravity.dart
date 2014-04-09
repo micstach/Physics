@@ -3,7 +3,7 @@ library pxh.force.gavity ;
 import '../../math/vec2.dart' ;
 
 import 'force.dart' ;
-import 'particle.dart' ;
+import 'body.dart' ;
 
 class Gravity extends Force
 {
@@ -11,9 +11,10 @@ class Gravity extends Force
 
   Gravity(this._force) ;
   
-  void Apply(Particle particle) 
+  void Apply(Body body) 
   {
     double dt = 0.1;
-    particle.AddForce(_force * particle.Mass * (1.0 / (dt * dt))) ;
+    
+    body.AddForce(_force * body.Mass * (1.0 / (dt * dt))) ;
   }
 }

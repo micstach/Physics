@@ -1,6 +1,6 @@
-library pxh.force.damping ;
+library force.damping ;
 
-import 'particle.dart' ;
+import 'body.dart' ;
 import 'force.dart' ;
 
 class Damping extends Force
@@ -15,8 +15,8 @@ class Damping extends Force
     if (_factor < 0.0) _factor = 0.0 ;
   }
   
-  void Apply(Particle particle) 
+  void Apply(Body body) 
   {
-    particle.AddForce(particle.Velocity * (-_factor)) ;
+    body.AddForce(body.Velocity * (-_factor)) ;
   }
 }
