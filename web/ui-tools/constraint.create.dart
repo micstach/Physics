@@ -2,7 +2,7 @@ library constraint.create;
 
 import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart';
-import '../physics/particle.dart';
+import '../physics/super.particle.dart';
 
 import '../physics/body.dart';
 import '../physics/scene.dart';
@@ -33,7 +33,7 @@ class CreateConstraint extends CanvasTool
   {
     Vec2 point = ConvertToWorldCoords(e)  ;
 
-    Particle p = _findClosest(point) ;
+    Body p = _findClosest(point) ;
     
     if (p != null)
     {
@@ -53,7 +53,7 @@ class CreateConstraint extends CanvasTool
 
   void OnMouseUp(MouseEvent e)
   {
-    addConstraint() ;
+    addConstraint(e.ctrlKey) ;
   }
   
   bool get IsActive => true ; 
@@ -78,9 +78,9 @@ class CreateConstraint extends CanvasTool
   
   String get Name => "select two particles to create distance constraint" ;
 
-  Particle _findClosest(Vec2 point)
+  Body _findClosest(Vec2 point)
   {
-    Particle closest = null ;
+    Body closest = null ;
     double distance = double.INFINITY ;
        
     for (Body p in _scene.bodies)
@@ -106,11 +106,31 @@ class CreateConstraint extends CanvasTool
     }
   }
   
-  void addConstraint()
+  void addConstraint(bool filled)
   {
     if (_a != null && _b != null && _a != _b)
     {
       _scene.constraints.add(new ConstraintDistance(_a,  _b)) ;
+      
+      if (filled)
+      {
+        double td = (_b.Position - _a.Position).Length ;
+        double id = td - _a.Radius - _b.Radius ;
+        
+        int items = (id / (_a.Radius * 2.0)).toInt() ;
+        
+        double step = id / items ;
+        
+        double start = _a.Radius;
+        for (int i=0; i<items; i++)
+        {
+          double f = (start + step/2.0)/td;
+          _scene.bodies.add(new SuperParticle(_a, f, _b, 1.0-f)) ;
+          
+          start += step ;
+        }
+      }
+      
       _a = _b = null ;
     }
   }  

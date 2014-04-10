@@ -15,7 +15,7 @@ void scene4(Scene scene)
   double y = 500.0 ; 
 
   Particle p1 = new Particle(x, y) ;
-  p1.Mass = double.INFINITY ;
+  p1.Mass = 1.0 ;
   p1.Velocity.Zero();
   scene.bodies.add(p1) ;
   
@@ -23,22 +23,18 @@ void scene4(Scene scene)
   p2.Mass = 1.0 ;
   p2.Velocity.Zero();
   scene.bodies.add(p2) ;
-  
-  var m1 = new SuperParticle(p1, 0.25, p2, 0.75) ;
-  scene.bodies.add(m1) ;
 
-  var m2 = new SuperParticle(p1, 0.75, p2, 0.25) ;
-  scene.bodies.add(m2) ;
+  for (double d=0.10; d<0.95; d+=0.10)
+  {
+    scene.bodies.add(new SuperParticle(p1, d, p2, 1.0 - d)) ;
+  }
 
   scene.constraints.add(new ConstraintDistance(p1, p2)) ;
 
-  p1 = new Particle(x + 200, y + 50) ;
-  p1.Mass = 1.0 ;
+  p1 = new Particle(x, y - 150) ;
+  p1.Mass = double.INFINITY ;
   p1.Velocity.Zero();
   scene.bodies.add(p1) ;
-  
-  scene.constraints.add(new ConstraintDistance(p1, m1)) ;
-  scene.constraints.add(new ConstraintDistance(p1, m2)) ;
 }
 
 void scene3(List<Particle> particles, List<Constraint> constraints)

@@ -85,13 +85,13 @@ class Particle extends Body
   
   Box2 get Box => _velocityBox ; 
   
-  void AddForce(Vec2 force)
+  void AddForce(Vec2 force, [bool propagate = false])
   {
     if (!IsFixed)
       _force += force ;
   }
   
-  void Integrate(double dt)
+  void Integrate(double dt, [bool propagate = false])
   {
     if (IsFixed) return ;
     

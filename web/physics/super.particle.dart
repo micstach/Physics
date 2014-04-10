@@ -1,18 +1,17 @@
-library phxsuperparticle ;
+library phxmetabody ;
 
 import '../../renderer/renderer.dart' ;
 import '../../math/vec2.dart' ;
 import '../../math/box2.dart';
 
-import 'particle.dart' ;
 import 'body.dart' ;
 
 class SuperParticle extends Body
 {
-  Particle _a = null ;
+  Body _a = null ;
   double _af = 0.0 ;
  
-  Particle _b = null ;
+  Body _b = null ;
   double _bf = 0.0 ;
   
   SuperParticle(this._a, this._af, this._b, this._bf) : super() 
@@ -21,11 +20,8 @@ class SuperParticle extends Body
   
   void Render(Renderer renderer)
   {
-    renderer.drawCircle(Position, Radius, "rgba(0,0,128, 0.5)") ;
+    renderer.drawCircle(Position, Radius, "rgba(0, 0, 128, 0.5)") ;
   }
-  
-  @override 
-  void AddForce(Vec2 force) {} 
   
   @override
   double get Mass => 1.0 ; 
@@ -43,7 +39,24 @@ class SuperParticle extends Body
   double get Radius => (_a.Radius * _af + _b.Radius * _bf ) ;
   
   @override
-  void Integrate(double dt) { } 
+  void Integrate(double dt, [bool propagate = false]) 
+  { 
+    if (propagate)
+    {
+      _a.Integrate(dt, propagate) ;
+      _b.Integrate(dt, propagate) ;
+    }
+  }
+  
+  @override 
+  void AddForce(Vec2 force, [bool propagate = false]) 
+  {
+    if (propagate)
+    {
+      _a.AddForce(force * _af, propagate) ;
+      _b.AddForce(force * _bf, propagate) ;
+    }
+  }  
   
   @override
   Box2 get Box => new Box2(Position - Velocity, Velocity).Extend(Radius) ; 
@@ -60,7 +73,17 @@ class SuperParticle extends Body
 
   @override
   bool IsRelatedTo(Body body) {
-    return (body == _a || body == _b) ;
+  
+    if (body is SuperParticle)
+    {
+      // (?) same parents
+      return (((body._a == _a) && (body._b == _b))  || ((body._b == _a) && (body._a == _b)));
+    }
+    else
+    {
+      // (?) this is child of body
+      return (body == _a || body == _b) ;
+    }
   }
 
   @override
@@ -85,16 +108,16 @@ class SuperParticle extends Body
   @override
   void PositionMove(Vec2 delta) {
     if (!_a.IsFixed)
-      _a.Position += delta * _af ;
+      _a.PositionMove(delta * _af) ;
     if (!_b.IsFixed)
-      _b.Position += delta * _bf ;
+      _b.PositionMove(delta * _bf) ;
   }
 
   @override
   void VelocityMove(Vec2 delta) {
     if (!_a.IsFixed)
-      _a.Velocity += delta * _af ;
+      _a.VelocityMove(delta * _af) ;
     if (!_b.IsFixed)
-      _b.Velocity += delta * _bf ;
+      _b.VelocityMove(delta * _bf) ;
   }
 }

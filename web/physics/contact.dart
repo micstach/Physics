@@ -3,13 +3,12 @@ library phx.contact;
 import '../../math/vec2.dart';
 import '../../math/quadric.dart';
 
-
-import 'particle.dart';
+import 'body.dart';
 import 'pair.dart';
 
 class SeparateContact extends Contact
 {
-  SeparateContact(Particle a, Particle b, double collisionTime) : super(a, b, collisionTime) ;
+  SeparateContact(Body a, Body b, double collisionTime) : super(a, b, collisionTime) ;
   
   bool get IsResting => true ;
   
@@ -27,16 +26,16 @@ class SeparateContact extends Contact
     {
       double s = A.MassInv / (A.MassInv + B.MassInv) ;
 
-      A.Position -= delta * s ;
-      A.Velocity -= delta * s ;
+      A.PositionMove(delta * (-s)) ;
+      A.VelocityMove(delta * (-s)) ;
     }
     
     if (!B.IsFixed)
     {
       double s = B.MassInv / (A.MassInv + B.MassInv) ;
 
-      B.Position += delta * s ;
-      B.Velocity += delta * s ;
+      B.PositionMove(delta * s) ;
+      B.VelocityMove(delta * s) ;
     }    
   }
 
@@ -50,7 +49,7 @@ class SeparateContact extends Contact
 
 class CollidingContact extends SeparateContact
 {
-  CollidingContact(Particle a, Particle b, double collisionTime) : super(a, b, collisionTime) 
+  CollidingContact(Body a, Body b, double collisionTime) : super(a, b, collisionTime) 
   {
   }
 
@@ -67,18 +66,18 @@ class CollidingContact extends SeparateContact
   
   void Resolve(double dt, double e)
   {
-    A.Position += A.Velocity * (-1.0 + _dt) ; 
-    B.Position += B.Velocity * (-1.0 + _dt) ;
+    A.PositionMove(A.Velocity * (-1.0 + _dt)) ;
+    B.PositionMove(B.Velocity * (-1.0 + _dt)) ;
 
     Vec2 cn = (B.Position - A.Position).Normalize() ;
     
     double j = _impulse(dt, e, (cn | (B.Velocity - A.Velocity)), A.MassInv, B.MassInv) ;
     
-    A.AddForce(cn * (-j)) ;
-    B.AddForce(cn * ( j)) ;
+    A.AddForce(cn * (-j), true) ;
+    B.AddForce(cn * ( j), true) ;
     
-    A.Integrate(dt) ;
-    B.Integrate(dt) ;
+    A.Integrate(dt, true) ;
+    B.Integrate(dt, true) ;
   }
 }
 
@@ -86,7 +85,7 @@ abstract class Contact extends Pair
 {
   double _dt = 0.0 ;
   
-  Contact(Particle a, Particle b, this._dt) : super(a, b) 
+  Contact(Body a, Body b, this._dt) : super(a, b) 
   {
   }
 
@@ -100,7 +99,7 @@ abstract class Contact extends Pair
 
   void Separate() ;
   
-  static Contact Find(Particle a, Particle b)
+  static Contact Find(Body a, Body b)
   {
     if (!(a.Box * b.Box))
       return null ;

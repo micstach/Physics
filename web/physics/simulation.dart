@@ -79,25 +79,25 @@ class Simulation
     }
 
 //    // detect collisions
-//    Set<CollisionPair> pairs = _detectCollisions(particles, constraints) ;
+    Set<CollisionPair> pairs = _detectCollisions(scene) ;
 //    
     // resolve collisions
-    _resolveCollisions(scene, new Set<CollisionPair>()) ;
+    _resolveCollisions(scene, pairs) ;
 //
-//    for (var particle in particles)
-//    {
-//      ResolveWorldConstraints(_e, particle, _worldWidth, _worldHeight) ;
-//    }
-//    
-//    if (_breakOnCollision)
-//      if (pairs.length > 0) Stop();
+    for (var body in scene.bodies)
+    {
+      ResolveWorldConstraints(_e, body, _worldWidth, _worldHeight) ;
+    }
+
+    if (_breakOnCollision)
+      if (pairs.length > 0) Stop();
   }
   
   Set<CollisionPair> _detectCollisions(Scene scene)
   {
     Set<CollisionPair> pairs = new Set<CollisionPair>() ;
     
-    Map<Particle, List<CollisionPair>> particle_pairs = new Map<Particle, List<CollisionPair>>();
+    Map<Body, List<CollisionPair>> particle_pairs = new Map<Body, List<CollisionPair>>();
     
     for (CollisionPair pair in scene.Collisions.Pairs)
     {
@@ -126,7 +126,7 @@ class Simulation
       }
     }
 
-    for (Particle p in particle_pairs.keys)
+    for (Body p in particle_pairs.keys)
     {
       if (p.IsFixed) continue ;
       
@@ -195,33 +195,4 @@ class Simulation
       }
     }
   }
-  
-//  void Draw(List<Particle> particles, List<Constraint> constraints, List<Body> bodies, Renderer renderer)
-//  {
-//    for (var particle in particles)
-//    {
-//      particle.Render(renderer) ;
-//      
-//      if (!IsRunning)
-//        renderer.drawVector(particle.Velocity * 10.0, particle.Position, "rgba(255, 128, 0, 0.5)") ;    
-//    }
-//    
-//    if (bodies != null)
-//    {
-//      for (var body in bodies)
-//      {
-//        body.Render(renderer) ;
-//        
-//        if (!IsRunning)
-//          renderer.drawVector(body.Velocity * 10.0, body.Position, "rgba(255, 128, 0, 0.5)") ;
-//      }
-//    }
-//
-//    for (var constraint in constraints)
-//    {
-//      constraint.Render(renderer) ;
-//    }
-//  }
-  
-  CollisionMap get Collisions => _collisionMap ;
 }

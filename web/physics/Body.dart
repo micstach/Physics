@@ -12,7 +12,7 @@ abstract class Body
   set Velocity(Vec2 value) ;
   
   void Render(Renderer renderer) ;
-  void Integrate(double dt) ;
+  void Integrate(double dt, [bool propagate = false]) ;
   
   Box2 get Box ;
   
@@ -21,7 +21,7 @@ abstract class Body
   double get Mass ;
   double get MassInv ;
   
-  void AddForce(Vec2 force) ;
+  void AddForce(Vec2 force, [bool propagate = false]) ;
   
   bool IsRelatedTo(Body body) ;
   

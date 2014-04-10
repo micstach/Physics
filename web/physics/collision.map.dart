@@ -21,7 +21,9 @@ class CollisionMap
     for (Body b in _scene.bodies)
     {
       if (b.hashCode == body.hashCode) continue ;
+      
       if (b.IsFixed && body.IsFixed) continue ;
+      
       if (body.IsRelatedTo(b)) continue ;
       
       _pairs.add(new CollisionPair(b, body)) ;
@@ -30,14 +32,21 @@ class CollisionMap
   
   void RemoveBody(Body body)
   {
-    
+    for (CollisionPair pair in _pairs)
+    {
+      if (pair.A == body || pair.B == body)
+      {
+        _pairs.remove(pair) ;
+        break ;
+      }
+    }
   }
   
   void AddConstraint(Constraint constraint)
   {
     for (CollisionPair pair in _pairs)
     {
-      if ((pair.A == constraint.A && pair.B == constraint.B) || (pair.A == constraint.B && pair.B == constraint.A))
+      if (pair.IsEqual(constraint))
       {
         _pairs.remove(pair) ;
         break ;
