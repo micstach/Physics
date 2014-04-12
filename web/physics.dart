@@ -7,7 +7,7 @@ import 'renderer/canvas.software.renderer.dart' ;
 // import 'renderer/canvas.webgl.renderer.dart' ;
 
 import 'physics/scene.dart';
-import 'physics/Body.dart';
+import 'physics/body.dart';
 import 'physics/particle.dart';
 import 'physics/simulation.dart';
 import 'physics/constraint.dart' ;
@@ -29,9 +29,6 @@ final Element position = querySelector("#position");
 
 CanvasElement canvas = null ;
 
-// List<Particle> particles = new List<Particle>() ;
-// List<Constraint> constraints = new List<Constraint>() ;
-// List<Body> bodies = new List<Body>() ;
 Scene scene = new Scene() ;
 
 var colliding = new Set<Particle>() ;
@@ -120,6 +117,7 @@ void frameDraw(num delta) {
   simulation.Run(scene) ;
   
   // draw
+  scene.IsRunning = simulation.IsRunning ;
   scene.Render(renderer) ;
   
   querySelector("span#active-tool-description").text = tool.Name ;
@@ -231,63 +229,15 @@ void onDeleteClicked(MouseEvent e)
 
 void save()
 {
-//  var jsonParticles = [] ;
-//  
-//  for (Body p in scene.bodies)
-//  {
-//    jsonParticles.add(p.toJSON()) ;
-//  }
-//
-//  var jsonConstraints = [] ;
-//  for (Constraint constraint in scene.constraints)
-//  {
-//    jsonConstraints.add(constraint.toJSON()) ;
-//  }
-//  
-//  var jsonScene = {'bodies': jsonParticles, 'constraints': jsonConstraints} ;
-//  
-//  var jsonSceneString = JSON.stringify(jsonScene) ;
-//  
-//  window.localStorage['scene'] =  jsonSceneString ;
+  var jsonSceneString = JSON.stringify(scene.toJSON()) ;
+  
+  window.localStorage['scene'] =  jsonSceneString ;
 }
 
 void load()
 {
-//  var storageParticles = window.localStorage['scene'] ;
-//  
-//  if (storageParticles != null)
-//  {
-//    var jsonScene = JSON.parse(storageParticles) ;
-//    
-//    scene.Clear() ;
-//    
-//    var jsonParticles = jsonScene['bodies'] ;
-//    
-//    Map<int, Particle> hashCodeMap = new Map<int, Particle>() ;
-//    
-//    for (var jsonParticle in jsonParticles)
-//    {
-//      Particle particle = new Particle.fromJSON(jsonParticle) ;
-//      
-//      hashCodeMap[jsonParticle['hash-code']] = particle ;
-//      
-//      scene.bodies.add(particle) ;
-//    }
-//    
-//    var jsonConstraints = jsonScene['constraints'] ;
-//    
-//    for (var jsonConstraint in jsonConstraints)
-//    {
-//      var type = jsonConstraint['type'] ;
-//      
-//      if (type == "distance")
-//      {
-//        int hashA = jsonConstraint['a'] ;
-//        int hashB = jsonConstraint['b'] ;
-//        
-//        constraints.add(new Distance(hashCodeMap[hashA], hashCodeMap[hashB])) ;
-//      }
-//    }
-//  }
+  var jsonSceneString = window.localStorage['scene'] ;
+
+  scene.readJSON(JSON.parse(jsonSceneString)) ;
 }
 

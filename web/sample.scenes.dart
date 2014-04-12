@@ -4,7 +4,7 @@ import 'physics/constraint.dart' ;
 import 'physics/constraint.distance.dart' ;
 
 import 'physics/particle.dart' ;
-import 'physics/super.particle.dart' ;
+import 'physics/metabody1d.dart' ;
 import 'physics/scene.dart' ;
 
 void scene4(Scene scene)
@@ -26,15 +26,15 @@ void scene4(Scene scene)
 
   for (double d=0.10; d<0.95; d+=0.10)
   {
-    scene.bodies.add(new SuperParticle(p1, d, p2, 1.0 - d)) ;
+    scene.bodies.add(new MetaBody1D(p1, p2, d)) ;
   }
 
   scene.constraints.add(new ConstraintDistance(p1, p2)) ;
 
-  p1 = new Particle(x, y - 150) ;
-  p1.Mass = double.INFINITY ;
-  p1.Velocity.Zero();
-  scene.bodies.add(p1) ;
+//  p1 = new Particle(x, y - 150) ;
+//  p1.Mass = double.INFINITY ;
+//  p1.Velocity.Zero();
+//  scene.bodies.add(p1) ;
 }
 
 void scene3(List<Particle> particles, List<Constraint> constraints)

@@ -14,6 +14,6 @@ abstract class Pair
   
   bool IsEqual(Pair pair)
   {
-    return (_a == pair._a && _b == pair._a) || (_a == pair._b && _b == pair._a) ; 
+    return (_a == pair._a && _b == pair._b) || (_a == pair._b && _b == pair._a) ; 
   }
 }

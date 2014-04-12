@@ -2,7 +2,7 @@ library constraint.create;
 
 import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart';
-import '../physics/super.particle.dart';
+import '../physics/metabody1d.dart';
 
 import '../physics/body.dart';
 import '../physics/scene.dart';
@@ -117,7 +117,7 @@ class CreateConstraint extends CanvasTool
         double td = (_b.Position - _a.Position).Length ;
         double id = td - _a.Radius - _b.Radius ;
         
-        int items = (id / (_a.Radius * 2.0)).toInt() ;
+        int items = (1 + (id ~/ (_a.Radius * 2.0)).toInt()) ;
         
         double step = id / items ;
         
@@ -125,7 +125,7 @@ class CreateConstraint extends CanvasTool
         for (int i=0; i<items; i++)
         {
           double f = (start + step/2.0)/td;
-          _scene.bodies.add(new SuperParticle(_a, f, _b, 1.0-f)) ;
+          _scene.bodies.add(new MetaBody1D(_a, _b, f)) ;
           
           start += step ;
         }

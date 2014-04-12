@@ -40,7 +40,12 @@ class ConstraintDistance extends Constraint
   
   void Render(Renderer renderer)
   {
-    renderer.drawPath([A.Position, B.Position], false, "rgb(128, 128, 128)", "rgb(128, 128, 128)") ;
+    renderer.drawPath([A.Position, B.Position], false, "rgba(128, 128, 128, 0.1)", "rgba(128, 128, 128, 0.1)") ;
+  }
+  
+  void RenderStopped(Renderer renderer)
+  {
+    renderer.drawPath([A.Position, B.Position], false, "rgba(128, 128, 128, 0.75)", "rgba(128, 128, 128, 0.75)") ;
   }
   
   toJSON()

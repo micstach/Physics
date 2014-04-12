@@ -109,6 +109,7 @@ class Particle extends Body
   toJSON()
   {
     return {
+      'type' : 'particle',
       'position': {'x': Position.x, 'y': Position.y},
       'velocity' : {'x' : Velocity.x, 'y': Velocity.y},
       'radius': Radius,

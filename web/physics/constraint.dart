@@ -13,5 +13,7 @@ abstract class Constraint extends Pair
   
   void Render(Renderer renderer) ;
   
+  void RenderStopped(Renderer renderer) ;
+  
   toJSON() ;
 }

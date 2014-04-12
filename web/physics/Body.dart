@@ -6,12 +6,18 @@ import '../../math/box2.dart';
 
 abstract class Body
 {
+  bool _isCollidable ;
+  bool get IsCollidable => _isCollidable ;
+  set IsCollidable(bool value) => _isCollidable = value ;
+  
   Vec2 get Velocity ;
+  set Velocity(Vec2 value) ;
+
   Vec2 get Position ;
   set Position(Vec2 value) ;
-  set Velocity(Vec2 value) ;
   
   void Render(Renderer renderer) ;
+  
   void Integrate(double dt, [bool propagate = false]) ;
   
   Box2 get Box ;

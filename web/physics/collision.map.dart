@@ -3,6 +3,8 @@ library collision.map ;
 import 'scene.dart';
 import 'constraint.dart';
 import 'body.dart';
+import 'particle.dart';
+import 'metabody1d.dart';
 import 'collision.pair.dart' ;
 
 class CollisionMap
@@ -32,24 +34,29 @@ class CollisionMap
   
   void RemoveBody(Body body)
   {
-    for (CollisionPair pair in _pairs)
+    for (int i=_pairs.length-1; i >= 0; i--)
     {
-      if (pair.A == body || pair.B == body)
+      if (_pairs[i].A == body || _pairs[i].B == body)
       {
-        _pairs.remove(pair) ;
-        break ;
+        _pairs.removeAt(i) ;
+      }
+      else if (body is Particle)
+      {
+        if (_pairs[i].A.IsRelatedTo(body) || _pairs[i].B.IsRelatedTo(body))
+        {
+          _pairs.removeAt(i) ;
+        }          
       }
     }
   }
   
   void AddConstraint(Constraint constraint)
   {
-    for (CollisionPair pair in _pairs)
+    for (int i=_pairs.length-1; i >= 0; i--)
     {
-      if (pair.IsEqual(constraint))
+      if (_pairs[i].IsEqual(constraint))
       {
-        _pairs.remove(pair) ;
-        break ;
+        _pairs.removeAt(i);
       }
     }
   }

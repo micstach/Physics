@@ -2,14 +2,14 @@ library phx.constraint.world ;
 
 import '../../math/vec2.dart' ;
 import 'body.dart' ;
-import 'super.particle.dart';
+import 'metabody1d.dart';
 import 'contact.dart' ;
 
 Contact ResolveWorldConstraints(double e, Body body, int width, int height)
 {
   if (body.IsFixed) return null ;
   
-  if (body is SuperParticle) return null ;
+  if (body is MetaBody1D) return null ;
   
   // bottom plane
 //  Vec2 n = new Vec2(0.0, 1.0) ;

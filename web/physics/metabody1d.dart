@@ -6,15 +6,13 @@ import '../../math/box2.dart';
 
 import 'body.dart' ;
 
-class SuperParticle extends Body
+class MetaBody1D extends Body
 {
-  Body _a = null ;
-  double _af = 0.0 ;
- 
-  Body _b = null ;
-  double _bf = 0.0 ;
+  Body _a = null, _b = null;
+
+  double _f = 0.0 ;
   
-  SuperParticle(this._a, this._af, this._b, this._bf) : super() 
+  MetaBody1D(this._a, this._b, this._f) : super() 
   {
   }
   
@@ -30,13 +28,13 @@ class SuperParticle extends Body
   bool get IsFixed => false ;
 
   @override
-  Vec2 get Velocity => (_a.Velocity * _af + _b.Velocity * _bf) ;
+  Vec2 get Velocity => (_a.Velocity * _f + _b.Velocity * (1.0 - _f)) ;
 
   @override
-  Vec2 get Position => (_a.Position * _af + _b.Position * _bf) ;
+  Vec2 get Position => (_a.Position * _f + _b.Position * (1.0 - _f)) ;
   
   @override
-  double get Radius => (_a.Radius * _af + _b.Radius * _bf ) ;
+  double get Radius => (_a.Radius * _f + _b.Radius * (1.0 - _f)) ;
   
   @override
   void Integrate(double dt, [bool propagate = false]) 
@@ -53,8 +51,8 @@ class SuperParticle extends Body
   {
     if (propagate)
     {
-      _a.AddForce(force * _af, propagate) ;
-      _b.AddForce(force * _bf, propagate) ;
+      _a.AddForce(force * _f, propagate) ;
+      _b.AddForce(force * (1.0 - _f), propagate) ;
     }
   }  
   
@@ -64,17 +62,18 @@ class SuperParticle extends Body
   toJSON()
   {
     return {
+      'type': 'metabody1d',
       'a': _a.hashCode,
-      'b' : _b.hashCode,
-      'af' : _af,
-      'bf' : _bf
+      'b': _b.hashCode,
+      'f': _f,
+      'hash-code': hashCode 
     };
   }
 
   @override
   bool IsRelatedTo(Body body) {
   
-    if (body is SuperParticle)
+    if (body is MetaBody1D)
     {
       // (?) same parents
       return (((body._a == _a) && (body._b == _b))  || ((body._b == _a) && (body._a == _b)));
@@ -87,37 +86,37 @@ class SuperParticle extends Body
   }
 
   @override
-  double get MassInv => (_a.MassInv * _af + _b.MassInv * _bf);
+  double get MassInv => (_a.MassInv * _f + _b.MassInv * (1.0 - _f));
 
   @override
   set Position(Vec2 value) {
     if (!_a.IsFixed)
-      _a.Position = value * _af ;
+      _a.Position = value * _f ;
     if (!_b.IsFixed)
-      _b.Position = value * _bf ;
+      _b.Position = value * (1.0 - _f) ;
   }
 
   @override
   set Velocity(Vec2 value) {
     if (!_a.IsFixed)
-      _a.Velocity = value * _af ;
+      _a.Velocity = value * _f ;
     if (!_b.IsFixed)
-      _b.Velocity = value * _bf ;
+      _b.Velocity = value * (1.0 - _f) ;
   }
 
   @override
   void PositionMove(Vec2 delta) {
     if (!_a.IsFixed)
-      _a.PositionMove(delta * _af) ;
+      _a.PositionMove(delta * _f) ;
     if (!_b.IsFixed)
-      _b.PositionMove(delta * _bf) ;
+      _b.PositionMove(delta * (1.0 - _f)) ;
   }
 
   @override
   void VelocityMove(Vec2 delta) {
     if (!_a.IsFixed)
-      _a.VelocityMove(delta * _af) ;
+      _a.VelocityMove(delta * _f) ;
     if (!_b.IsFixed)
-      _b.VelocityMove(delta * _bf) ;
+      _b.VelocityMove(delta * (1.0 - _f)) ;
   }
 }
