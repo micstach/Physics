@@ -32,8 +32,11 @@ abstract class Body
   bool IsRelatedTo(Body body) ;
   
   double get Radius ;
-  
+    
   void PositionMove(Vec2 delta) ;
+  
+  void ResetToCollisionTimePosition(double dt) ;
+  
   void VelocityMove(Vec2 delta) ;
   
   toJSON() ;

@@ -17,6 +17,7 @@ class CanvasSoftwareRenderer extends Renderer
   CanvasSoftwareRenderer(this._canvas)
   {
     _context = _canvas.context2D ;
+    //_context.scale(0.5,  0.5) ;
   }
 
   Vec2 _convert(Vec2 p)

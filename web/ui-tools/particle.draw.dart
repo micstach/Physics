@@ -46,7 +46,9 @@ class DrawParticles extends CanvasTool
   {
     if (_particle != null)
     {
+      
       _particle.Mass = mass ;
+      
       _scene.bodies.add(_particle) ;
       
       _previousParticle = _currentParticle ;
@@ -64,7 +66,7 @@ class DrawParticles extends CanvasTool
   
   void OnMouseDown(MouseEvent e)
   {
-    Vec2 mouse = ConvertToWorldCoords(e) ;
+    Vec2 mouse = Position ;
     
     createParticle(mouse.x, mouse.y, (e.ctrlKey) ? double.INFINITY : 1.0) ;
     addParticle((e.ctrlKey) ? double.INFINITY : 1.0) ;
@@ -92,7 +94,7 @@ class DrawParticles extends CanvasTool
   
   void OnMouseMove(MouseEvent e)
   {
-    Vec2 point = ConvertToWorldCoords(e) ;
+    Vec2 point = Position ;
     
     if (_last != null)
     {
@@ -119,6 +121,7 @@ class DrawParticles extends CanvasTool
   
   void Draw(Renderer renderer)
   {
+    super.Draw(renderer) ;
   }
   
   String get Name => "draw particles, press CTRL to draw fixed particles" ;

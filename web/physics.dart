@@ -7,13 +7,11 @@ import 'renderer/canvas.software.renderer.dart' ;
 // import 'renderer/canvas.webgl.renderer.dart' ;
 
 import 'physics/scene.dart';
-import 'physics/body.dart';
 import 'physics/particle.dart';
 import 'physics/simulation.dart';
-import 'physics/constraint.dart' ;
-import 'physics/constraint.distance.dart' ;
 
 import 'ui-tools/tool.dart';
+import 'ui-tools/box.create.dart';
 import 'ui-tools/particle.create.dart';
 import 'ui-tools/constraint.create.dart';
 import 'ui-tools/particle.draw.dart';
@@ -39,6 +37,7 @@ Simulation simulation = null ;
 final Element buttonTrigger = querySelector('button#trigger') ;
 final Element buttonDrawFixed = querySelector('button#draw') ;
 final Element buttonCreate = querySelector('button#create') ;
+final Element buttonCreateBox = querySelector('button#createbox') ;
 final Element buttonCreateConstraint = querySelector('button#create-constraint') ;
 final Element buttonDelete = querySelector('button#delete') ;
 final Element buttonSelect = querySelector('button#select') ;
@@ -54,6 +53,7 @@ void main() {
   canvas = querySelector("#canvas") ;
   
   buttonCreate.onClick.listen((e) => onCreateClicked(e)) ;
+  buttonCreateBox.onClick.listen((e) => onCreateBoxClicked(e)) ;
   buttonCreateConstraint.onClick.listen((e) => onCreateConstraintClicked(e)) ;
   buttonDrawFixed.onClick.listen((e) => onDrawFixedClicked(e)) ;
   buttonDelete.onClick.listen((e) => onDeleteClicked(e)) ;
@@ -203,6 +203,13 @@ void onCreateClicked(MouseEvent e)
 {
   tool.Deactivate() ;
   tool = new CreateParticle(canvas, scene, 0.1) ;
+  tool.Activate() ;
+}
+
+void onCreateBoxClicked(MouseEvent e)
+{
+  tool.Deactivate() ;
+  tool = new CreateBox(canvas, scene) ;
   tool.Activate() ;
 }
 

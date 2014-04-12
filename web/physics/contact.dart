@@ -4,6 +4,7 @@ import '../../math/vec2.dart';
 import '../../math/quadric.dart';
 
 import 'body.dart';
+import 'metabody1d.dart' ;
 import 'pair.dart';
 
 class SeparateContact extends Contact
@@ -66,8 +67,8 @@ class CollidingContact extends SeparateContact
   
   void Resolve(double dt, double e)
   {
-    A.PositionMove(A.Velocity * (-1.0 + _dt)) ;
-    B.PositionMove(B.Velocity * (-1.0 + _dt)) ;
+    A.ResetToCollisionTimePosition(dt) ;
+    B.ResetToCollisionTimePosition(dt) ;
 
     Vec2 cn = (B.Position - A.Position).Normalize() ;
     

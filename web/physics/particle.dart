@@ -49,7 +49,7 @@ class Particle extends Body
     _initializeBox();
   }
   
-  Particle.fromVec2(Vec2 position, [double r])
+  Particle.fromVec2(Vec2 position, [double r = 10.0])
   {
     _radius = r ;
     Position = position ;
@@ -57,7 +57,7 @@ class Particle extends Body
     _initializeBox();
   }
 
-  Particle(double x, double y, [double r])
+  Particle(double x, double y, [double r = 10.0])
   { 
     if (r != null)
       _radius = r ;
@@ -148,5 +148,11 @@ class Particle extends Body
   @override
   void VelocityMove(Vec2 delta) {
     Velocity += delta ;
+  }
+  
+  @override
+  void ResetToCollisionTimePosition(double dt)
+  {
+    Position += Velocity * (-1.0 + dt) ;
   }
 }

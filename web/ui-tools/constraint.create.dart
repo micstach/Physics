@@ -6,7 +6,6 @@ import '../physics/metabody1d.dart';
 
 import '../physics/body.dart';
 import '../physics/scene.dart';
-import '../physics/constraint.dart';
 import '../physics/constraint.distance.dart';
 
 import 'canvas.tool.dart' ;
@@ -114,17 +113,17 @@ class CreateConstraint extends CanvasTool
       
       if (filled)
       {
-        double td = (_b.Position - _a.Position).Length ;
-        double id = td - _a.Radius - _b.Radius ;
+        double distance = (_b.Position - _a.Position).Length ;
+        double distributableDistance = distance - _a.Radius - _b.Radius ;
         
-        int items = (1 + (id ~/ (_a.Radius * 2.0)).toInt()) ;
+        int items = (1 + (distributableDistance ~/ (_a.Radius  + _b.Radius)).toInt()) ;
         
-        double step = id / items ;
+        double step = distributableDistance / items ;
         
         double start = _a.Radius;
         for (int i=0; i<items; i++)
         {
-          double f = (start + step/2.0)/td;
+          double f = (start + step / 2.0) / distance;
           _scene.bodies.add(new MetaBody1D(_a, _b, f)) ;
           
           start += step ;
