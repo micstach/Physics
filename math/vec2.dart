@@ -89,4 +89,8 @@ class Vec2 {
     return new Vec2((v.x * b.y - b.x * v.y) * ood, (a.x * v.y - v.x * a.y) * ood ) ;
   }
   
+  static Vec2 Rot270(Vec2 v)
+  {
+    return new Vec2(-v.y, v.x) ;
+  }
 }
