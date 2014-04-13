@@ -28,6 +28,8 @@ class CollisionMap
       
       if (body.IsRelatedTo(b)) continue ;
       
+      if (body.GroupName != null && b.GroupName != null && body.GroupName == b.GroupName) continue ;
+      
       _pairs.add(new CollisionPair(b, body)) ;
     }
   }

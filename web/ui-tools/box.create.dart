@@ -5,11 +5,13 @@ import '../../math/vec2.dart';
 
 import '../physics/metabody1d.dart';
 import '../physics/scene.dart';
+import '../physics/body.dart';
 import '../physics/particle.dart';
 import '../physics/constraint.distance.dart';
 
 import 'canvas.tool.dart' ;
 
+import 'package:uuid/uuid_client.dart' ;
 import 'dart:html';
 
 class CreateBox extends CanvasTool
@@ -20,6 +22,7 @@ class CreateBox extends CanvasTool
   Vec2 _end = null ;
   
   String _state = null ;
+  String _guid = null ;
   
   CreateBox(CanvasElement canvas, this._scene) : super(canvas) 
   {
@@ -32,6 +35,7 @@ class CreateBox extends CanvasTool
     if (_start == null)
     {
       _start = point ;
+      _guid = (new Uuid()).v1().toString() ;
     }
   }
   
@@ -56,7 +60,7 @@ class CreateBox extends CanvasTool
     {
       renderer.drawLine(_start, Position, "rgba(0, 0, 255, 0.5)") ;
 
-      List<Particle> p = _generateParticles(_start, Position) ;
+      List<Body> p = _generateParticles(_start, Position) ;
             
       p[0].Render(renderer) ;
       p[1].Render(renderer) ;
@@ -72,20 +76,27 @@ class CreateBox extends CanvasTool
     
   void _createBox()
   {
-    List<Particle> p = _generateParticles(_start, _end) ;
-    
-    _scene.bodies.add(p[0]) ;
-    _scene.bodies.add(p[1]) ;
-    _scene.bodies.add(p[2]) ;
-    _scene.bodies.add(p[3]) ;
+    // box corners
+    List<Body> p = _generateParticles(_start, _end) ;
     
     // box edges
-    _createConstraint(p[0], p[1]) ;
-    _createConstraint(p[1], p[2]) ;
-    _createConstraint(p[2], p[3]) ;
-    _createConstraint(p[3], p[0]) ;
+    p.addAll(_createConstraintParticles(p[0], p[1])) ;
+    p.addAll(_createConstraintParticles(p[1], p[2])) ;
+    p.addAll(_createConstraintParticles(p[2], p[3])) ;
+    p.addAll(_createConstraintParticles(p[3], p[0])) ;
+    
+    for (var i in p) 
+      i.GroupName = _guid;
+    
+    _scene.bodies.addAll(p) ; 
 
-    // box diagonals
+    // box constraints - edges
+    _scene.constraints.add(new ConstraintDistance(p[0],  p[1])) ;
+    _scene.constraints.add(new ConstraintDistance(p[1],  p[2])) ;
+    _scene.constraints.add(new ConstraintDistance(p[2],  p[3])) ;
+    _scene.constraints.add(new ConstraintDistance(p[3],  p[0])) ;
+   
+    // box constraints - diagonals
     _scene.constraints.add(new ConstraintDistance(p[0], p[2])) ;
     _scene.constraints.add(new ConstraintDistance(p[1], p[3])) ;
     
@@ -93,7 +104,7 @@ class CreateBox extends CanvasTool
     _end = null ;
   }
   
-  List<Particle> _generateParticles(Vec2 start, Vec2 end)
+  List<Body> _generateParticles(Vec2 start, Vec2 end)
   {
     Vec2 d = end - start ;
     
@@ -118,9 +129,9 @@ class CreateBox extends CanvasTool
     return [p1, p2, p3, p4] ;
   }  
   
-  void _createConstraint(Particle a, Particle b)
+  List<Body> _createConstraintParticles(Particle a, Particle b)
   {
-    _scene.constraints.add(new ConstraintDistance(a,  b)) ;
+    List<Body> bodies = new List<Body>() ;
     
     double distance = (b.Position - a.Position).Length ;
     double distributableDistance = distance - a.Radius - b.Radius ;
@@ -133,10 +144,12 @@ class CreateBox extends CanvasTool
     for (int i=0; i<items; i++)
     {
       double f = (start + step / 2.0) / distance;
-      _scene.bodies.add(new MetaBody1D(a, b, f)) ;
+      bodies.add(new MetaBody1D(a, b, f)) ;
       
       start += step ;
     }
+    
+    return bodies;
   }
   
   bool get IsActive => true ; 

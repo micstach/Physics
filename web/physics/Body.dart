@@ -40,4 +40,8 @@ abstract class Body
   void VelocityMove(Vec2 delta) ;
   
   toJSON() ;
+  
+  String _groupName = null ;
+  String get GroupName => _groupName ;
+  set GroupName(String value) => _groupName = value ;
 }

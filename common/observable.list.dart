@@ -25,6 +25,19 @@ class ObservableList<E>
       observer(value) ;
     }
   }
+
+  void addAll(Iterable<E> iterable)
+  {
+    _items.addAll(iterable) ;
+
+    for (var observer in _addObservers)
+    {
+      for (var value in iterable)
+      {
+        observer(value) ;
+      }
+    }
+  }
   
   void remove(E value)
   {

@@ -1,3 +1,4 @@
+library canvas.tool ;
 
 import "../../renderer/renderer.dart" ;
 import "../../math/vec2.dart" ;

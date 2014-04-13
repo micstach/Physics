@@ -4,3 +4,4 @@ environment:
 dependencies:
   browser: '>=0.9.0 <0.10.0'
   json: any
+  uuid: 0.3.1
