@@ -136,6 +136,7 @@ class CreateBox extends CanvasTool
     p.addAll(_createConstraintParticles(p[2], p[3])) ;
     p.addAll(_createConstraintParticles(p[3], p[0])) ;
     
+    // set particles group
     for (var i in p) 
       i.GroupName = _guid;
     

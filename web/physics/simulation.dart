@@ -171,7 +171,7 @@ class Simulation
     // resolve
     // - contact separation
     // - constaints
-    for (int i=0; i<5; i++)
+    for (int i=0; i<3; i++)
     {
       for (CollisionPair pair in contact_pairs)
       {
