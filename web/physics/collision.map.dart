@@ -7,10 +7,47 @@ import 'particle.dart';
 import 'metabody1d.dart';
 import 'collision.pair.dart' ;
 
+
+import '../../math/vec2.dart' ;
+import '../../math/box2.dart' ;
+
+class Group
+{
+  List<Body> _boxParticles = new List<Body>() ;
+  List<Body> _bodies = new List<Body>() ;
+  Box2 _box = null ;
+  
+  Box2 get Box => _box;
+
+  void initialize() 
+  {
+    if (_boxParticles.length > 0)
+      _box = new Box2(_boxParticles[0].Position, new Vec2(0.0, 0.0)) ;
+    
+    for (int i=1; i<_boxParticles.length; i++)
+    {
+      _box.ExtendWithPoint(_boxParticles[i].Position) ;
+    }
+    
+    _box.Extend(20.0) ;
+  }
+  
+  void addBody(Body body)
+  {
+    _bodies.add(body) ;
+    
+    if (body is Particle)
+      _boxParticles.add(body) ;
+  }
+  
+  List<Body> get Bodies => _bodies ; 
+}
+
 class CollisionMap
 {
   Scene _scene = null ;
   
+  Map<String, Group> _groups = new Map<String, Group>() ;
   List<CollisionPair> _pairs = null ;
   
   CollisionMap(this._scene)
@@ -20,6 +57,20 @@ class CollisionMap
 
   void AddBody(Body body)
   {
+    if (body.GroupName != null)
+    {
+      Group group = null ;
+      if (!_groups.containsKey(body.GroupName))
+      {
+        group = new Group() ;
+        _groups[body.GroupName] = group ;
+      }
+      else
+        group = _groups[body.GroupName] ;
+      
+      group.addBody(body) ;
+    }
+    
     for (Body b in _scene.bodies)
     {
       if (b.hashCode == body.hashCode) continue ;
@@ -78,13 +129,14 @@ class CollisionMap
 
   List<CollisionPair> get Pairs => _pairs ;
   
-  int get DynamicCollisionsCount 
+  void initializeGroups()
   {
-    int result = 0 ;
-    for (CollisionPair pair in Pairs)
+    for (Group group in _groups.values)
     {
-      result += (pair.GetContact() != null) ? 1 : 0 ;
+      group.initialize() ;
     }
-    return result ;
   }
+  
+  Group GetGroup(String name) => _groups[name] ;
+  List<Group> get Groups => _groups.values.toList(growable: false) ;
 }

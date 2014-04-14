@@ -33,6 +33,16 @@ class Box2
     return this ;
   }
   
+  Box2 ExtendWithPoint(Vec2 p)
+  {
+    _min = new Vec2(min(_min.x, p.x), min(_min.y, p.y)) ;
+    _max = new Vec2(max(_max.x, p.x), max(_max.y, p.y)) ;
+    
+    _rebuildPoints() ;
+    
+    return this ;
+  }
+  
   Box2 Translate(Vec2 t)
   {
     _min += t ;

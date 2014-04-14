@@ -44,7 +44,13 @@ class Scene
         constraint.Render(renderer) ;
       else
         constraint.RenderStopped(renderer) ;
-    }    
+    }  
+    
+//    for (Group group in Collisions.Groups)
+//    {
+//      group.initialize() ;
+//      renderer.drawBox(group.Box, "rgba(0, 0, 255, 0.5)") ;
+//    }
   }
   
   void Clear()
@@ -129,6 +135,7 @@ class Scene
           double f = jsonBody['f'] ;
           
           body = new MetaBody1D(hashCodeMap[a], hashCodeMap[b], f) ;
+          body.GroupName = jsonBody['group-name'] ;
         }
 
         hashCodeMap[jsonBody['hash-code']] = body ;

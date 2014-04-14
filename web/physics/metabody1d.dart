@@ -19,7 +19,6 @@ class MetaBody1D extends Body {
   }
 
   void Render(Renderer renderer) {
-//    renderer.drawCircle(Position, Radius, "rgba(0, 0, 128, 0.5)");
     int massColor = (255.0 * MassInv).toInt() ;
     var color = "rgba(${massColor}, 0, 0, 0.5)" ;
     renderer.drawCircle(Position, Radius, color);
@@ -65,7 +64,8 @@ class MetaBody1D extends Body {
       'a': _a.hashCode,
       'b': _b.hashCode,
       'f': _f,
-      'hash-code': hashCode
+      'hash-code': hashCode,
+      'group-name': super.GroupName
     };
   }
 

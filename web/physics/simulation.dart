@@ -17,6 +17,8 @@ import 'force.damping.dart' ;
 import 'constraint.dart' ;
 import 'constraint.world.dart' ;
 
+import 'dart:core';
+
 class Simulation
 {
   bool _breakOnCollision = false ;
@@ -35,12 +37,24 @@ class Simulation
   CollisionMap _collisionMap = null ;
   
   final Vec2 gravityForce = new Vec2(0.0, -0.0981) ;
-
+  
+  Stopwatch _collisionDetectionStopwatch ;
+  Stopwatch _resolveCollisionsStopwatch ;
+  Stopwatch _runStopwatch ;
+  Stopwatch _queryPairsStopwatch ;
+  Stopwatch _queryMinPairsStopwatch ;
+  
   Simulation() 
   {
     _forces.add(new Gravity(gravityForce)) ;
     
     _forces.add(new Damping(0.9999)) ;
+    
+    _collisionDetectionStopwatch = new Stopwatch() ;
+    _resolveCollisionsStopwatch = new Stopwatch() ;
+    _runStopwatch = new Stopwatch() ;
+    _queryPairsStopwatch = new Stopwatch() ;
+    _queryMinPairsStopwatch = new Stopwatch() ;
   }
 
   set WorldWidth(int value) => _worldWidth = value ;
@@ -69,21 +83,32 @@ class Simulation
     body.Integrate(_dt) ;
   }
   
+  int _detectedCollsionsCount = 0;
+  int get DetectedCollisionsCount => _detectedCollsionsCount ; 
+  
   void Run(Scene scene)
   {
-    if (!IsRunning) return ;
+    if (!IsRunning) 
+      return ;
     
+    _runStopwatch..reset()..start();
     for (var body in scene.bodies)
     {
       _simulateParticle(body);
     }
 
-//    // detect collisions
+    // detect collisions
+    _collisionDetectionStopwatch..reset()..start() ;
     Set<CollisionPair> pairs = _detectCollisions(scene) ;
-//    
+    _collisionDetectionStopwatch.stop();
+    
+    _detectedCollsionsCount = pairs.length ;
+    
     // resolve collisions
+    _resolveCollisionsStopwatch..reset()..start() ;
     _resolveCollisions(scene, pairs) ;
-//
+    _resolveCollisionsStopwatch.stop();
+
     for (var body in scene.bodies)
     {
       ResolveWorldConstraints(_e, body, _worldWidth, _worldHeight) ;
@@ -91,15 +116,43 @@ class Simulation
 
     if (_breakOnCollision)
       if (pairs.length > 0) Stop();
+    _runStopwatch..stop();
   }
   
   Set<CollisionPair> _detectCollisions(Scene scene)
   {
+    _queryPairsStopwatch..reset()..start() ;
     Set<CollisionPair> pairs = new Set<CollisionPair>() ;
     
+    // discard collsion pairs based on groups bounding box collisions
+    scene.Collisions.initializeGroups() ;
+    List<CollisionPair> group_pairs = new List<CollisionPair>() ;
+    var groups = scene.Collisions.Groups ;
+    for (int i=0; i<groups.length; i++)
+    {
+      Group gi = groups[i] ; 
+
+      for (int j=i+1; j<groups.length; j++)
+      {
+        Group gj = groups[j] ; 
+
+        if ((gi.Box * gj.Box))
+        {
+          for (int bi=0; bi < gi.Bodies.length; bi++)
+            for (int bj=0; bj < gj.Bodies.length; bj++)
+            {
+              if (gi.Bodies[bi].Box * gj.Bodies[bj].Box)
+              {
+                group_pairs.add(new CollisionPair(gi.Bodies[bi], gj.Bodies[bj])) ;
+              }
+            }
+        }
+      }
+    }
+
     Map<Body, List<CollisionPair>> particle_pairs = new Map<Body, List<CollisionPair>>();
     
-    for (CollisionPair pair in scene.Collisions.Pairs)
+    for (CollisionPair pair in group_pairs/*scene.Collisions.Pairs*/)
     {
       Contact contact = Contact.Find(pair.A, pair.B) ;
       
@@ -125,7 +178,9 @@ class Simulation
         }
       }
     }
-
+    _queryPairsStopwatch.stop();
+    
+    _queryMinPairsStopwatch..reset()..stop();
     for (Body p in particle_pairs.keys)
     {
       if (p.IsFixed) continue ;
@@ -162,6 +217,7 @@ class Simulation
         if (min.GetContact() != null)
           pairs.add(min) ;
     }
+    _queryMinPairsStopwatch.stop();
 
     return pairs ;
   }
@@ -195,4 +251,32 @@ class Simulation
       }
     }
   }
+  
+  int _convertToPercent(Stopwatch eventTime, Stopwatch overall)
+  {
+    if (overall.elapsedMilliseconds > 0)
+      return ((eventTime.elapsedMilliseconds * 100) ~/ overall.elapsedMilliseconds) ;
+    else
+      return 0 ;
+  }
+  
+  int get CollisionDetectionTime
+  {
+    return _convertToPercent(_collisionDetectionStopwatch, _runStopwatch) ;
+  } 
+  
+  int get QueryPairsTime
+  {
+    return _convertToPercent(_queryPairsStopwatch, _collisionDetectionStopwatch) ;
+  }
+
+  int get QueryMinPairsTime
+  {
+    return _convertToPercent(_queryMinPairsStopwatch, _collisionDetectionStopwatch) ;
+  }
+  
+  int get CollisionResolveTime
+  {
+    return _convertToPercent(_resolveCollisionsStopwatch, _runStopwatch) ;
+  } 
 }

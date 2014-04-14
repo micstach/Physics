@@ -26,17 +26,18 @@ class SeparateContact extends Contact
     if (!A.IsFixed)
     {
       double s = A.MassInv / (A.MassInv + B.MassInv) ;
-
-      A.PositionMove(delta * (-s)) ;
-      A.VelocityMove(delta * (-s)) ;
+      var v = delta * (-s) ;
+      A.PositionMove(v) ;
+      A.VelocityMove(v) ;
     }
     
     if (!B.IsFixed)
     {
       double s = B.MassInv / (A.MassInv + B.MassInv) ;
 
-      B.PositionMove(delta * s) ;
-      B.VelocityMove(delta * s) ;
+      var v = delta * s ;
+      B.PositionMove(v) ;
+      B.VelocityMove(v) ;
     }    
   }
 
@@ -102,20 +103,15 @@ abstract class Contact extends Pair
   
   static Contact Find(Body a, Body b)
   {
-    if (!(a.Box * b.Box))
-      return null ;
-
     var ap = a.Position;
     var bp = b.Position;
     
-    double dp_final_len = (a.Position - b.Position).Length ;
-
-    var av = a.Velocity ;
-    var bv = b.Velocity ;
+    double dp_final_sqlength = (a.Position - b.Position).SqLength ;
+    double ab_radius_square = ((a.Radius + b.Radius) * (a.Radius + b.Radius)) ;
 
     // move particle position to previous step's position
-    ap = ap - av;
-    bp = bp - bv;
+    ap -= a.Velocity;
+    bp -= b.Velocity;
     
     // particle distance
     Vec2 dp = (bp - ap) ;
@@ -125,7 +121,7 @@ abstract class Contact extends Pair
     Vec2 cn = dp * (1.0 / dp_len) ;
     
     // relativeVelocity
-    Vec2 rv = (bv - av) ;
+    Vec2 rv = (b.Velocity - a.Velocity) ;
 
     // relative movement
     double rv_dot_cn = rv | cn ;
@@ -134,24 +130,25 @@ abstract class Contact extends Pair
     
     if (rv_dot_cn < -THRESHOLD)
     {
-      // colliding contact
       var ea = rv.SqLength;
-      var eb = 2.0 * ((dp.x * rv.x) + (dp.y * rv.y));
-      var ec = dp.SqLength - ((a.Radius + b.Radius) * (a.Radius + b.Radius)) ;
+      
+      var eb = ((dp.x * rv.x) + (dp.y * rv.y));
+      eb += eb ;
+      
+      var ec = dp.SqLength - ab_radius_square ;
 
       Quadric eq = new Quadric(ea, eb, ec) ;
       
       if (eq.IsSolvable)
       {
-        double x = eq.x ;
-        if (0.0 <= x && x <= 1.0)
+        if (0.0 <= eq.x && eq.x <= 1.0)
         {
-          return new CollidingContact(a, b, x) ;
+          return new CollidingContact(a, b, eq.x) ;
         }
       }
     }
     
-    if (dp_final_len <= (a.Radius + b.Radius))
+    if (dp_final_sqlength <= ab_radius_square)
     {
       return new SeparateContact(a, b, 0.0) ;
     }

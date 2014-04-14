@@ -7,6 +7,7 @@ import '../physics/particle.dart';
 
 import 'canvas.tool.dart' ;
 
+import 'package:uuid/uuid_client.dart' ;
 import 'dart:html';
 
 class CreateParticle extends CanvasTool
@@ -83,6 +84,7 @@ class CreateParticle extends CanvasTool
     if (_particle != null)
     {
       _particle.Mass = mass ;
+      _particle.GroupName = (new Uuid()).v1().toString() ;
       _scene.bodies.add(_particle) ;
     }
     

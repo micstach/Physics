@@ -27,7 +27,8 @@ class CanvasSoftwareRenderer extends Renderer
   
   void clear()
   {
-    _context.clearRect(0, 0, _canvas.clientWidth, _canvas.clientHeight);
+    // _context.clearRect(0, 0, _canvas.clientWidth, _canvas.clientHeight);
+    _canvas.width = _canvas.width ;
   }
   
   void drawCircle(Vec2 p, double radius, String color)

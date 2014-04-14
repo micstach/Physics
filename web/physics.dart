@@ -75,8 +75,8 @@ void main() {
   simulation = new Simulation() ;
 
   renderer = new CanvasSoftwareRenderer(canvas) ;
-
-  window.animationFrame.then(frameDraw) ;
+  
+  frameDraw(1);
 }
 
 void onCheckChanged(Event e)
@@ -90,6 +90,7 @@ double fps = 0.0 ;
 
 /// Draw the complete figure for the current number of seeds.
 void frameDraw(num delta) {
+  window.animationFrame.then(frameDraw) ;
 
   renderer.clear() ;
   
@@ -99,8 +100,15 @@ void frameDraw(num delta) {
   detailsInnerHtml += "Constraints: <b>${scene.constraints.length}</b>" + "<br/>" ;
   if (scene.Collisions != null)
   {
-    detailsInnerHtml += "Collision pairs: <b>${scene.Collisions.DynamicCollisionsCount.toString()}/${scene.Collisions.Pairs.length.toString()}</b>" ;
+    detailsInnerHtml += "Collision pairs: <b>${simulation.DetectedCollisionsCount.toString()}/${scene.Collisions.Pairs.length.toString()}</b>" ;
     detailsInnerHtml += "<br/>" ;
+    detailsInnerHtml += "Collision detection time [%]: <b>${simulation.CollisionDetectionTime}</b>" ;
+    detailsInnerHtml += "<br/>" ;
+    detailsInnerHtml += "&nbsp query pairs [%]: <b>${simulation.QueryPairsTime}</b>" ;
+    detailsInnerHtml += "<br/>" ;
+    detailsInnerHtml += "&nbsp query min pairs [%]: <b>${simulation.QueryMinPairsTime}</b>" ;
+    detailsInnerHtml += "<br/>" ;
+    detailsInnerHtml += "Collision resolve time [%]: <b>${simulation.CollisionResolveTime}</b>" ;
   }
   
   details.innerHtml = detailsInnerHtml;
@@ -125,8 +133,6 @@ void frameDraw(num delta) {
   position.text = (tool.Position != null) ? "[${tool.Position.x}, ${tool.Position.y}]" : "" ;  
 
   fps = calculateFps(delta) ;
-
-  window.animationFrame.then(frameDraw) ;
 }
 
 double calculateFps(num delta)

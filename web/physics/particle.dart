@@ -46,6 +46,8 @@ class Particle extends Body
     double massInv = json['mass-inv'] ;
     Mass = massInv == 0.0 ? double.INFINITY : 1.0 / massInv ;
     
+    super.GroupName = json['group-name'] ;
+    
     _initializeBox();
   }
   
@@ -114,7 +116,8 @@ class Particle extends Body
       'velocity' : {'x' : Velocity.x, 'y': Velocity.y},
       'radius': Radius,
       'mass-inv': MassInv,
-      'hash-code': hashCode
+      'hash-code': hashCode,
+      'group-name': super.GroupName
     };
   }
   
