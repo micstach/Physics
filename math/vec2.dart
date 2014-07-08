@@ -16,8 +16,8 @@ class Vec2 {
 
   Vec2.fromJSON(var json) 
   {
-    this.x = json['x'];
-    this.y = json['y'] ;
+    this.x = double.parse(json['x'].toString());
+    this.y = double.parse(json['y'].toString());
   }
 
   Vec2.fromVec2(Vec2 v) 

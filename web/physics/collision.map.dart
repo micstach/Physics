@@ -7,7 +7,6 @@ import 'particle.dart';
 import 'metabody1d.dart';
 import 'collision.pair.dart' ;
 
-
 import '../../math/vec2.dart' ;
 import '../../math/box2.dart' ;
 
@@ -38,6 +37,21 @@ class Group
     
     if (body is Particle)
       _boxParticles.add(body) ;
+    
+    // workaround - this code is for "filled constraint" collisions
+    if (body is MetaBody1D)
+    {
+      MetaBody1D metabody1d = body ;
+
+      _boxParticles.add(metabody1d.A) ;
+      _boxParticles.add(metabody1d.B) ;
+    }
+  }
+  
+  void removeBody(Body body)
+  {
+    _bodies.remove(body) ;
+    _boxParticles.remove(body);
   }
   
   List<Body> get Bodies => _bodies ; 
@@ -87,6 +101,11 @@ class CollisionMap
   
   void RemoveBody(Body body)
   {
+    if (_groups.containsKey(body.GroupName))
+    {
+      _groups[body.GroupName].removeBody(body);
+    }
+    
     for (int i=_pairs.length-1; i >= 0; i--)
     {
       if (_pairs[i].A == body || _pairs[i].B == body)

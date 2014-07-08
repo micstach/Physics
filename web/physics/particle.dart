@@ -17,7 +17,7 @@ class Particle extends Body
   
   Box2 _largeBox = null ;
   
-  double _radius = 10.0 ;
+  double _radius = 10.toDouble() ;
   double _mass = double.INFINITY ;
   
   void _initializeBox()
@@ -41,9 +41,9 @@ class Particle extends Body
     Position = new Vec2.fromJSON(json['position']) ;
     Velocity = new Vec2.fromJSON(json['velocity']) ;
 
-    _radius = json['radius'] ;
+    _radius = double.parse(json['radius'].toString()) ;
 
-    double massInv = json['mass-inv'] ;
+    double massInv = double.parse(json['mass-inv'].toString()) ;
     Mass = massInv == 0.0 ? double.INFINITY : 1.0 / massInv ;
     
     super.GroupName = json['group-name'] ;

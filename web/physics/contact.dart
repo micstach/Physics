@@ -4,7 +4,6 @@ import '../../math/vec2.dart';
 import '../../math/quadric.dart';
 
 import 'body.dart';
-import 'metabody1d.dart' ;
 import 'pair.dart';
 
 class SeparateContact extends Contact
@@ -126,7 +125,7 @@ abstract class Contact extends Pair
     // relative movement
     double rv_dot_cn = rv | cn ;
     
-    const double THRESHOLD = 0.5 ;
+    const double THRESHOLD = 0.25 ;
     
     if (rv_dot_cn < -THRESHOLD)
     {

@@ -46,11 +46,14 @@ class Scene
         constraint.RenderStopped(renderer) ;
     }  
     
-//    for (Group group in Collisions.Groups)
-//    {
-//      group.initialize() ;
-//      renderer.drawBox(group.Box, "rgba(0, 0, 255, 0.5)") ;
-//    }
+    if (!IsRunning)
+    {
+      for (Group group in Collisions.Groups)
+      {
+        group.initialize() ;
+        renderer.drawBox(group.Box, "rgba(0, 0, 255, 0.5)") ;
+      }
+    }
   }
   
   void Clear()

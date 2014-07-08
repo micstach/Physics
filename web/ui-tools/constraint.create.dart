@@ -10,6 +10,7 @@ import '../physics/constraint.distance.dart';
 
 import 'canvas.tool.dart' ;
 
+import 'package:uuid/uuid_client.dart' ;
 import 'dart:html';
 
 class CreateConstraint extends CanvasTool
@@ -124,7 +125,11 @@ class CreateConstraint extends CanvasTool
         for (int i=0; i<items; i++)
         {
           double f = (start + step / 2.0) / distance;
-          _scene.bodies.add(new MetaBody1D(_a, _b, f)) ;
+          
+          MetaBody1D body = new MetaBody1D(_a, _b, f) ;
+          body.GroupName = (new Uuid()).v1().toString() ;
+          
+          _scene.bodies.add(body) ;
           
           start += step ;
         }

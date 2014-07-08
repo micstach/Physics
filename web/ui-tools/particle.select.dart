@@ -5,7 +5,6 @@ import '../../math/vec2.dart' ;
 
 import '../physics/scene.dart' ;
 import '../physics/body.dart' ;
-import '../physics/particle.dart' ;
 import 'canvas.tool.dart' ;
 
 import 'dart:html';

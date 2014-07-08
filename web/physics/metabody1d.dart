@@ -23,7 +23,11 @@ class MetaBody1D extends Body {
     var color = "rgba(${massColor}, 0, 0, 0.5)" ;
     renderer.drawCircle(Position, Radius, color);
   }
+  
+  Body get A => _a ;
 
+  Body get B => _b ;
+  
   @override
   double get Mass => 1.0;
 

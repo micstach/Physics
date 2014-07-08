@@ -1,11 +1,9 @@
 library pxh.simulation ;
 
-import "../../renderer/renderer.dart" ;
 import "../../math/vec2.dart" ;
 
 import "scene.dart" ;
 import "body.dart" ;
-import "particle.dart" ;
 import 'collision.map.dart';
 import 'collision.pair.dart';
 import 'contact.dart';
@@ -14,7 +12,6 @@ import 'force.dart' ;
 import 'force.gravity.dart' ;
 import 'force.damping.dart' ;
 
-import 'constraint.dart' ;
 import 'constraint.world.dart' ;
 
 import 'dart:core';
@@ -227,7 +224,7 @@ class Simulation
     // resolve
     // - contact separation
     // - constaints
-    for (int i=0; i<3; i++)
+    for (int i=0; i<5; i++)
     {
       for (CollisionPair pair in contact_pairs)
       {

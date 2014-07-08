@@ -4,12 +4,11 @@ import "../../renderer/renderer.dart" ;
 import '../../math/vec2.dart';
 import '../physics/scene.dart';
 import '../physics/particle.dart';
-import '../physics/constraint.dart';
 import '../physics/constraint.distance.dart';
 
 import 'canvas.tool.dart' ;
-import 'tool.dart' ;
 
+import 'package:uuid/uuid_client.dart' ;
 import 'dart:html';
 
 class DrawParticles extends CanvasTool
@@ -48,7 +47,7 @@ class DrawParticles extends CanvasTool
     {
       
       _particle.Mass = mass ;
-      
+      _particle.GroupName = (new Uuid()).v1().toString() ;
       _scene.bodies.add(_particle) ;
       
       _previousParticle = _currentParticle ;
