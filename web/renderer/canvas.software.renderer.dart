@@ -1,8 +1,8 @@
 library canvas.software.renderer ;
 
-import '../../math/vec2.dart';
-import '../../math/box2.dart';
-import '../../renderer/renderer.dart' ;
+import '../math/vec2.dart';
+import '../math/box2.dart';
+import 'renderer.dart' ;
 
 import 'dart:html';
 import 'dart:math';
@@ -57,7 +57,7 @@ class CanvasSoftwareRenderer extends Renderer
       var e = _convert(points[(i+1) % points.length]) ;
 
       _context..beginPath()
-        ..lineWidth = 1.0
+        ..lineWidth = 2.0
         ..strokeStyle = (i % 2 == 0 ? colorEven : colorOdd) 
         ..moveTo(s.x, s.y) 
         ..lineTo(e.x, e.y) 

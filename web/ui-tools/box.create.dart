@@ -1,7 +1,7 @@
 library boxcreate ;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart';
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart';
 
 import '../physics/metabody1d.dart';
 import '../physics/scene.dart';
@@ -205,5 +205,5 @@ class CreateBox extends CanvasTool
   }
   
   bool get IsActive => true ; 
-  String get Name => "create box" ;
+  String get Name => "Click twice to create box edge, move mouse and click again to create a box." ;
 }

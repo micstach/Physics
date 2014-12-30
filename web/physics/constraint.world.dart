@@ -1,6 +1,6 @@
 library phx.constraint.world ;
 
-import '../../math/vec2.dart' ;
+import '../math/vec2.dart' ;
 import 'body.dart' ;
 import 'metabody1d.dart';
 import 'contact.dart' ;

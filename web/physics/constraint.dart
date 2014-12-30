@@ -1,6 +1,6 @@
 library constraint;
 
-import "../../renderer/renderer.dart" ;
+import "../renderer/renderer.dart" ;
 
 import "body.dart";
 import "pair.dart";

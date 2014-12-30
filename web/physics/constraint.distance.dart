@@ -1,7 +1,7 @@
 library constraint.distance;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart' ;
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart' ;
 
 import "body.dart" ; 
 import "constraint.dart" ;
@@ -40,7 +40,7 @@ class ConstraintDistance extends Constraint
   
   void Render(Renderer renderer)
   {
-    renderer.drawPath([A.Position, B.Position], false, "rgba(128, 128, 128, 0.1)", "rgba(128, 128, 128, 0.1)") ;
+    renderer.drawPath([A.Position, B.Position], false, "rgba(128, 128, 128, 0.75)", "rgba(128, 128, 128, 0.75)") ;
   }
   
   void RenderStopped(Renderer renderer)

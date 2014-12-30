@@ -7,8 +7,8 @@ import 'particle.dart';
 import 'metabody1d.dart';
 import 'collision.pair.dart' ;
 
-import '../../math/vec2.dart' ;
-import '../../math/box2.dart' ;
+import '../math/vec2.dart' ;
+import '../math/box2.dart' ;
 
 class Group
 {

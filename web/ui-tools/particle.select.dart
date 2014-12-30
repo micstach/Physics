@@ -1,7 +1,7 @@
 library particle.select ;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart' ;
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart' ;
 
 import '../physics/scene.dart' ;
 import '../physics/body.dart' ;

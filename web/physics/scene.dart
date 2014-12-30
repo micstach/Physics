@@ -1,7 +1,7 @@
 library phxscene ;
 
-import '../../common/observable.list.dart' ;
-import '../../renderer/renderer.dart' ;
+import '../common/observable.list.dart' ;
+import '../renderer/renderer.dart' ;
 
 import "body.dart" ;
 import "particle.dart" ;

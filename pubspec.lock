@@ -12,7 +12,7 @@ packages:
   cipher:
     description: cipher
     source: hosted
-    version: "0.7.0"
+    version: "0.7.1"
   crypto:
     description: crypto
     source: hosted
@@ -24,7 +24,7 @@ packages:
   json:
     description: json
     source: hosted
-    version: "0.9.1"
+    version: "0.10.0"
   uuid:
     description: uuid
     source: hosted

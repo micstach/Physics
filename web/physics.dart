@@ -2,7 +2,7 @@ library physicsdemo;
 
 import 'sample.scenes.dart' ;
 
-import '../renderer/renderer.dart' ;
+import 'renderer/renderer.dart' ;
 import 'renderer/canvas.software.renderer.dart' ;
 // import 'renderer/canvas.webgl.renderer.dart' ;
 

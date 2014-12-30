@@ -1,7 +1,7 @@
 library particle.create;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart';
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart';
 import '../physics/scene.dart';
 import '../physics/particle.dart';
 
@@ -57,7 +57,7 @@ class CreateParticle extends CanvasTool
     }
   }
   
-  String get Name => "click and hold mouse button to create particle and set its velocity, user CTRL + click to create fixed particle " ;
+  String get Name => "click and hold mouse button to create particle and set its velocity, use CTRL + mouse click to create fixed particle " ;
 
   void createParticle(double x, double y, double mass)
   {

@@ -1,8 +1,8 @@
 library phx.particle ;
 
-import '../../math/vec2.dart';
-import '../../math/box2.dart';
-import '../../renderer/renderer.dart' ;
+import '../math/vec2.dart';
+import '../math/box2.dart';
+import '../renderer/renderer.dart' ;
 
 import 'body.dart' ;
 

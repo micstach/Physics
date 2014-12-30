@@ -1,7 +1,7 @@
 library phx.contact;
 
-import '../../math/vec2.dart';
-import '../../math/quadric.dart';
+import '../math/vec2.dart';
+import '../math/quadric.dart';
 
 import 'body.dart';
 import 'pair.dart';

@@ -1,6 +1,6 @@
 library pxh.simulation ;
 
-import "../../math/vec2.dart" ;
+import "../math/vec2.dart" ;
 
 import "scene.dart" ;
 import "body.dart" ;

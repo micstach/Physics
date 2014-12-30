@@ -1,7 +1,7 @@
 library constraint.create;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart';
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart';
 import '../physics/metabody1d.dart';
 
 import '../physics/body.dart';
@@ -76,7 +76,7 @@ class CreateConstraint extends CanvasTool
     }
   }
   
-  String get Name => "select two particles to create distance constraint" ;
+  String get Name => "Select two particles to create distance constraint, hold CTRL key to create particle filled connection." ;
 
   Body _findClosest(Vec2 point)
   {

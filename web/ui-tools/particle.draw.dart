@@ -1,7 +1,7 @@
 library particle.drawfixed;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart';
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart';
 import '../physics/scene.dart';
 import '../physics/particle.dart';
 import '../physics/constraint.distance.dart';
@@ -123,5 +123,5 @@ class DrawParticles extends CanvasTool
     super.Draw(renderer) ;
   }
   
-  String get Name => "draw particles, press CTRL to draw fixed particles" ;
+  String get Name => "Hold left mouse button to draw particles, hold CTRL to draw fixed particles, hold shift to create constraints between drawn particles." ;
 }

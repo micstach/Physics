@@ -1,6 +1,6 @@
 library pxh.force.gavity ;
 
-import '../../math/vec2.dart' ;
+import '../math/vec2.dart' ;
 
 import 'force.dart' ;
 import 'body.dart' ;

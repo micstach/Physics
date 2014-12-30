@@ -1,7 +1,7 @@
 library particle.delete;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart' ;
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart' ;
 
 import '../physics/constraint.dart' ;
 import '../physics/scene.dart' ;
@@ -95,5 +95,5 @@ class DeleteParticle extends CanvasTool
     }
   }
   
-  String get Name => "click particle to delete" ;
+  String get Name => "Click on particle to delete it" ;
 }
