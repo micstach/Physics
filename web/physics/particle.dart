@@ -1,10 +1,10 @@
 library phx.particle ;
 
-import '../../math/vec2.dart';
-import '../../math/box2.dart';
-import '../../renderer/renderer.dart' ;
+import '../math/vec2.dart';
+import '../math/box2.dart';
+import '../renderer/renderer.dart' ;
 
-import 'Body.dart' ;
+import 'body.dart' ;
 
 class Particle extends Body
 {
@@ -17,9 +17,8 @@ class Particle extends Body
   
   Box2 _largeBox = null ;
   
-  double _radius = 10.0 ;
+  double _radius = 10.toDouble() ;
   double _mass = double.INFINITY ;
-  bool _resting = false ;
   
   void _initializeBox()
   {
@@ -42,15 +41,17 @@ class Particle extends Body
     Position = new Vec2.fromJSON(json['position']) ;
     Velocity = new Vec2.fromJSON(json['velocity']) ;
 
-    _radius = json['radius'] ;
+    _radius = double.parse(json['radius'].toString()) ;
 
-    double massInv = json['mass-inv'] ;
+    double massInv = double.parse(json['mass-inv'].toString()) ;
     Mass = massInv == 0.0 ? double.INFINITY : 1.0 / massInv ;
+    
+    super.GroupName = json['group-name'] ;
     
     _initializeBox();
   }
   
-  Particle.fromVec2(Vec2 position, [double r])
+  Particle.fromVec2(Vec2 position, [double r = 10.0])
   {
     _radius = r ;
     Position = position ;
@@ -58,7 +59,7 @@ class Particle extends Body
     _initializeBox();
   }
 
-  Particle(double x, double y, [double r])
+  Particle(double x, double y, [double r = 10.0])
   { 
     if (r != null)
       _radius = r ;
@@ -80,22 +81,19 @@ class Particle extends Body
   
   bool get IsFixed => _mass == double.INFINITY;
   
-  bool get IsResting => _resting ;
-  set IsResting(bool resting) => _resting = resting ;
-  
   double get MassInv { return IsFixed ? 0.0 : 1.0/_mass ; }
   
   double get Radius => _radius ;
   
   Box2 get Box => _velocityBox ; 
   
-  void AddForce(Vec2 force)
+  void AddForce(Vec2 force, [bool propagate = false])
   {
     if (!IsFixed)
       _force += force ;
   }
   
-  void Integrate(double dt)
+  void Integrate(double dt, [bool propagate = false])
   {
     if (IsFixed) return ;
     
@@ -113,11 +111,13 @@ class Particle extends Body
   toJSON()
   {
     return {
+      'type' : 'particle',
       'position': {'x': Position.x, 'y': Position.y},
       'velocity' : {'x' : Velocity.x, 'y': Velocity.y},
       'radius': Radius,
       'mass-inv': MassInv,
-      'hash-code': hashCode
+      'hash-code': hashCode,
+      'group-name': super.GroupName
     };
   }
   
@@ -136,5 +136,26 @@ class Particle extends Body
     }
     
     renderer.drawCircle(Position, Radius, color);
+  }
+
+  @override
+  bool IsRelatedTo(Body body) {
+    return false ;
+  }
+
+  @override
+  void PositionMove(Vec2 delta) {
+    Position += delta ;
+  }
+
+  @override
+  void VelocityMove(Vec2 delta) {
+    Velocity += delta ;
+  }
+  
+  @override
+  void ResetToCollisionTimePosition(double dt)
+  {
+    Position += Velocity * (-1.0 + dt) ;
   }
 }

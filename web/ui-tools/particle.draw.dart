@@ -1,54 +1,39 @@
 library particle.drawfixed;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart';
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart';
+import '../physics/scene.dart';
 import '../physics/particle.dart';
-import '../physics/constraint.dart';
 import '../physics/constraint.distance.dart';
 
-import 'tool.dart' ;
+import 'canvas.tool.dart' ;
 
+import 'package:uuid/uuid_client.dart' ;
 import 'dart:html';
 
-class DrawParticles implements Tool
+class DrawParticles extends CanvasTool
 {
   double _alpha = 1.0 ;
   List _path = null ;
-  final List _particles ;
   
   Particle _particle = null ;
   Particle _currentParticle = null ;
   Particle _previousParticle = null ;
   
-  final CanvasElement _canvas ;
-  final List<Constraint> _constraints ;
-  MouseEvent _mouseEvent = null ;
+  final Scene _scene ; 
   
-  DrawParticles(CanvasElement canvas, particles, constraints)
-      : _canvas = canvas
-      , _constraints = constraints
-      , _particles = particles 
+  DrawParticles(CanvasElement canvas, this._scene) : super(canvas)
   {
   }
   
-  var _onMouseDownStream = null ;
-  var _onMouseMoveStream = null ;
-  var _onMouseUpStream = null ;
+  void OnActivate()
+  {
+  }
   
-  void Activate()
+  void OnDeactivate() 
   {
-    _onMouseDownStream = _canvas.onMouseDown.listen((e) => onMouseDown(e)) ;
-    _onMouseMoveStream = _canvas.onMouseMove.listen((e) => onMouseMove(e)) ;
-    _onMouseUpStream = _canvas.onMouseUp.listen((e) => onMouseUp(e)) ;
   }
-
-  void Deactivate()
-  {
-    _onMouseDownStream.cancel() ;
-    _onMouseMoveStream.cancel() ;
-    _onMouseUpStream.cancel() ;
-  }
-
+  
   void createParticle(double x, double y, double mass)
   {
     _particle = new Particle(x, y, 10.0) ;
@@ -60,8 +45,10 @@ class DrawParticles implements Tool
   {
     if (_particle != null)
     {
+      
       _particle.Mass = mass ;
-      _particles.add(_particle) ;
+      _particle.GroupName = (new Uuid()).v1().toString() ;
+      _scene.bodies.add(_particle) ;
       
       _previousParticle = _currentParticle ;
       _currentParticle = _particle ;
@@ -71,22 +58,21 @@ class DrawParticles implements Tool
   }
   
   Vec2 _last = null ;
-  void onMouseUp(MouseEvent e)
+  void OnMouseUp(MouseEvent e)
   {
     _last = null ;
   }
   
-  void onMouseDown(MouseEvent e)
+  void OnMouseDown(MouseEvent e)
   {
-    double x = e.layer.x.toDouble();
-    double y = _canvas.clientHeight - e.layer.y.toDouble() ;
+    Vec2 mouse = Position ;
     
-    createParticle(x, y, (e.ctrlKey) ? double.INFINITY : 1.0) ;
+    createParticle(mouse.x, mouse.y, (e.ctrlKey) ? double.INFINITY : 1.0) ;
     addParticle((e.ctrlKey) ? double.INFINITY : 1.0) ;
-    _last = new Vec2(x, y) ;    
+    _last = mouse ;    
   }
 
-  void onKeyDown(KeyboardEvent e)
+  void OnKeyDown(KeyboardEvent e)
   {
     if (e.ctrlKey)
     {
@@ -97,7 +83,7 @@ class DrawParticles implements Tool
     }
   }
   
-  void onKeyUp(KeyboardEvent e)
+  void OnKeyUp(KeyboardEvent e)
   {
     if (_particle != null)
     {
@@ -105,11 +91,9 @@ class DrawParticles implements Tool
     }
   }
   
-  void onMouseMove(MouseEvent e)
+  void OnMouseMove(MouseEvent e)
   {
-    _mouseEvent = e ;
-    
-    Vec2 point = new Vec2(e.layer.x.toDouble(), _canvas.clientHeight - e.layer.y.toDouble()) ;
+    Vec2 point = Position ;
     
     if (_last != null)
     {
@@ -122,7 +106,7 @@ class DrawParticles implements Tool
         if (e.shiftKey)
         {
           if (_previousParticle != null && _currentParticle != null)
-            _constraints.add(new Distance(_previousParticle, _currentParticle)) ;
+            _scene.constraints.add(new ConstraintDistance(_previousParticle, _currentParticle)) ;
         }
       }
     }
@@ -136,9 +120,8 @@ class DrawParticles implements Tool
   
   void Draw(Renderer renderer)
   {
+    super.Draw(renderer) ;
   }
   
   String get Name => "draw particles, press CTRL to draw fixed particles" ;
-  
-  Vec2 get Position => _mouseEvent == null ? null : new Vec2(_mouseEvent.layer.x.toDouble(), _canvas.clientHeight - _mouseEvent.layer.y.toDouble()) ;
 }

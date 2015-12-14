@@ -1,11 +1,10 @@
 library canvas.webgl.renderer ;
 
-import '../../math/vec2.dart';
-import '../../math/box2.dart';
-import '../../renderer/renderer.dart' ;
+import '../math/vec2.dart';
+import '../math/box2.dart';
+import 'renderer.dart' ;
 
 import 'dart:html';
-import 'dart:math';
 
 class CanvasWebGLRenderer extends Renderer
 {

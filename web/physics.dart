@@ -2,17 +2,16 @@ library physicsdemo;
 
 import 'sample.scenes.dart' ;
 
-import '../renderer/renderer.dart' ;
+import 'renderer/renderer.dart' ;
 import 'renderer/canvas.software.renderer.dart' ;
-import 'renderer/canvas.webgl.renderer.dart' ;
+// import 'renderer/canvas.webgl.renderer.dart' ;
 
-import 'physics/Body.dart';
+import 'physics/scene.dart';
 import 'physics/particle.dart';
 import 'physics/simulation.dart';
-import 'physics/constraint.dart' ;
-import 'physics/constraint.distance.dart' ;
 
 import 'ui-tools/tool.dart';
+import 'ui-tools/box.create.dart';
 import 'ui-tools/particle.create.dart';
 import 'ui-tools/constraint.create.dart';
 import 'ui-tools/particle.draw.dart';
@@ -28,9 +27,7 @@ final Element position = querySelector("#position");
 
 CanvasElement canvas = null ;
 
-List<Particle> particles = new List<Particle>() ;
-List<Constraint> constraints = new List<Constraint>() ;
-List<Body> bodies = new List<Body>() ;
+Scene scene = new Scene() ;
 
 var colliding = new Set<Particle>() ;
 
@@ -40,6 +37,7 @@ Simulation simulation = null ;
 final Element buttonTrigger = querySelector('button#trigger') ;
 final Element buttonDrawFixed = querySelector('button#draw') ;
 final Element buttonCreate = querySelector('button#create') ;
+final Element buttonCreateBox = querySelector('button#createbox') ;
 final Element buttonCreateConstraint = querySelector('button#create-constraint') ;
 final Element buttonDelete = querySelector('button#delete') ;
 final Element buttonSelect = querySelector('button#select') ;
@@ -55,6 +53,7 @@ void main() {
   canvas = querySelector("#canvas") ;
   
   buttonCreate.onClick.listen((e) => onCreateClicked(e)) ;
+  buttonCreateBox.onClick.listen((e) => onCreateBoxClicked(e)) ;
   buttonCreateConstraint.onClick.listen((e) => onCreateConstraintClicked(e)) ;
   buttonDrawFixed.onClick.listen((e) => onDrawFixedClicked(e)) ;
   buttonDelete.onClick.listen((e) => onDeleteClicked(e)) ;
@@ -70,14 +69,14 @@ void main() {
   querySelector('#break-on-collision').onChange.listen((e) => onCheckChanged(e)) ;
 
   // create particle toolset
-  tool = new CreateParticle(canvas, particles, 0.1) ;
+  tool = new CreateParticle(canvas, scene, 0.1) ;
   tool.Activate() ;
   
   simulation = new Simulation() ;
 
   renderer = new CanvasSoftwareRenderer(canvas) ;
-
-  window.animationFrame.then(frameDraw) ;
+  
+  frameDraw(1);
 }
 
 void onCheckChanged(Event e)
@@ -91,17 +90,25 @@ double fps = 0.0 ;
 
 /// Draw the complete figure for the current number of seeds.
 void frameDraw(num delta) {
+  window.animationFrame.then(frameDraw) ;
 
   renderer.clear() ;
   
   String detailsInnerHtml = "" ;
   detailsInnerHtml += "Fps: <b>${fps.toStringAsFixed(2)}</b>" + "<br/>" ;
-  detailsInnerHtml += "Particles: <b>${particles.length}</b>" + "<br/>" ;
-  detailsInnerHtml += "Constraints: <b>${constraints.length}</b>" + "<br/>" ;
-  if (simulation.Collisions != null)
+  detailsInnerHtml += "Particles: <b>${scene.bodies.length}</b>" + "<br/>" ;
+  detailsInnerHtml += "Constraints: <b>${scene.constraints.length}</b>" + "<br/>" ;
+  if (scene.Collisions != null)
   {
-    detailsInnerHtml += "Collision pairs: <b>${simulation.Collisions.DynamicCollisionsCount.toString()}/${simulation.Collisions.Pairs.length.toString()}</b>" ;
+    detailsInnerHtml += "Collision pairs: <b>${simulation.DetectedCollisionsCount.toString()}/${scene.Collisions.Pairs.length.toString()}</b>" ;
     detailsInnerHtml += "<br/>" ;
+    detailsInnerHtml += "Collision detection time [%]: <b>${simulation.CollisionDetectionTime}</b>" ;
+    detailsInnerHtml += "<br/>" ;
+    detailsInnerHtml += "&nbsp query pairs [%]: <b>${simulation.QueryPairsTime}</b>" ;
+    detailsInnerHtml += "<br/>" ;
+    detailsInnerHtml += "&nbsp query min pairs [%]: <b>${simulation.QueryMinPairsTime}</b>" ;
+    detailsInnerHtml += "<br/>" ;
+    detailsInnerHtml += "Collision resolve time [%]: <b>${simulation.CollisionResolveTime}</b>" ;
   }
   
   details.innerHtml = detailsInnerHtml;
@@ -115,24 +122,17 @@ void frameDraw(num delta) {
   simulation.WorldWidth = canvas.clientWidth ;
   simulation.WorldHeight = canvas.clientHeight ;
  
-  simulation.Run(particles, constraints) ;
+  simulation.Run(scene) ;
   
   // draw
-  simulation.Draw(particles, constraints, renderer) ;
-  
-  // bodies
-  for (Body body in bodies)
-  {
-    body.Render(renderer) ;
-  }
+  scene.IsRunning = simulation.IsRunning ;
+  scene.Render(renderer) ;
   
   querySelector("span#active-tool-description").text = tool.Name ;
   
   position.text = (tool.Position != null) ? "[${tool.Position.x}, ${tool.Position.y}]" : "" ;  
 
   fps = calculateFps(delta) ;
-
-  window.animationFrame.then(frameDraw) ;
 }
 
 double calculateFps(num delta)
@@ -157,7 +157,7 @@ double calculateFps(num delta)
 
 void onSampleSceneClicked(MouseEvent e)
 {
-  scene4(particles, constraints, bodies) ;
+  scene4(scene) ;
   
   simulation.Stop();
   buttonTrigger.text = "Play" ;
@@ -165,8 +165,7 @@ void onSampleSceneClicked(MouseEvent e)
 
 void onClearSceneClicked(MouseEvent e)
 {
-  particles.clear() ;
-  constraints.clear() ;
+  scene.Clear() ;
 }
 
 void onSaveSceneClicked(MouseEvent e)
@@ -202,99 +201,56 @@ void onTriggerClicked(MouseEvent e)
 void onSelectClicked(MouseEvent e)
 {
   tool.Deactivate() ;
-  tool = new SelectParticle(canvas, details, particles) ;
+  tool = new SelectParticle(canvas, scene, details) ;
   tool.Activate() ;
 }
 
 void onCreateClicked(MouseEvent e)
 {
   tool.Deactivate() ;
-  tool = new CreateParticle(canvas, particles, 0.1) ;
+  tool = new CreateParticle(canvas, scene, 0.1) ;
+  tool.Activate() ;
+}
+
+void onCreateBoxClicked(MouseEvent e)
+{
+  tool.Deactivate() ;
+  tool = new CreateBox(canvas, scene) ;
   tool.Activate() ;
 }
 
 void onCreateConstraintClicked(MouseEvent e)
 {
   tool.Deactivate() ;
-  tool = new CreateConstraint(canvas, particles, constraints) ;
+  tool = new CreateConstraint(canvas, scene) ;
   tool.Activate() ;
 }
 
 void onDrawFixedClicked(MouseEvent e)
 {
   tool.Deactivate() ;
-  tool = new DrawParticles(canvas, particles, constraints) ;
+  tool = new DrawParticles(canvas, scene) ;
   tool.Activate() ;
 }
 
 void onDeleteClicked(MouseEvent e)
 {
   tool.Deactivate() ;
-  tool = new DeleteParticle(canvas, particles, constraints) ;
+  tool = new DeleteParticle(canvas, scene) ;
   tool.Activate() ;
 }
 
 void save()
 {
-  var jsonParticles = [] ;
-  
-  for (Particle p in particles)
-  {
-    jsonParticles.add(p.toJSON()) ;
-  }
-
-  var jsonConstraints = [] ;
-  for (Constraint constraint in constraints)
-  {
-    jsonConstraints.add(constraint.toJSON()) ;
-  }
-  
-  var jsonScene = {'particles': jsonParticles, 'constraints': jsonConstraints} ;
-  
-  var jsonSceneString = JSON.stringify(jsonScene) ;
+  var jsonSceneString = JSON.stringify(scene.toJSON()) ;
   
   window.localStorage['scene'] =  jsonSceneString ;
 }
 
 void load()
 {
-  var storageParticles = window.localStorage['scene'] ;
-  
-  if (storageParticles != null)
-  {
-    var jsonScene = JSON.parse(storageParticles) ;
-    
-    particles.clear() ;
-    constraints.clear();
-    simulation.Run(particles, constraints);
-    
-    var jsonParticles = jsonScene['particles'] ;
-    
-    Map<int, Particle> hashCodeMap = new Map<int, Particle>() ;
-    
-    for (var jsonParticle in jsonParticles)
-    {
-      Particle particle = new Particle.fromJSON(jsonParticle) ;
-      
-      hashCodeMap[jsonParticle['hash-code']] = particle ;
-      
-      particles.add(particle) ;
-    }
-    
-    var jsonConstraints = jsonScene['constraints'] ;
-    
-    for (var jsonConstraint in jsonConstraints)
-    {
-      var type = jsonConstraint['type'] ;
-      
-      if (type == "distance")
-      {
-        int hashA = jsonConstraint['a'] ;
-        int hashB = jsonConstraint['b'] ;
-        
-        constraints.add(new Distance(hashCodeMap[hashA], hashCodeMap[hashB])) ;
-      }
-    }
-  }
+  var jsonSceneString = window.localStorage['scene'] ;
+
+  scene.readJSON(JSON.parse(jsonSceneString)) ;
 }
 

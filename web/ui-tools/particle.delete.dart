@@ -1,21 +1,22 @@
 library particle.delete;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart' ;
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart' ;
 
 import '../physics/constraint.dart' ;
-import '../physics/particle.dart' ;
+import '../physics/scene.dart' ;
+import '../physics/body.dart' ;
 import 'canvas.tool.dart' ;
 
 import 'dart:html';
 
 class DeleteParticle extends CanvasTool
 {
-  List<Particle> _highlighted = null ;
-  List<Particle> _particles = null ;
-  List<Constraint> _constraints = null ;
+  List<Body> _highlighted = null ;
   
-  DeleteParticle(CanvasElement canvas, this._particles, this._constraints) : super(canvas) 
+  final Scene _scene ;
+  
+  DeleteParticle(CanvasElement canvas, this._scene) : super(canvas) 
   {
   }
   
@@ -23,9 +24,9 @@ class DeleteParticle extends CanvasTool
   {
     Vec2 mouse = ConvertToWorldCoords(e) ;
     
-    var delete_particles = new List<Particle>() ;
+    var delete_particles = new List<Body>() ;
     
-    for (Particle p in _particles)
+    for (Body p in _scene.bodies)
     {
       if ((p.Position - mouse).SqLength < (p.Radius * p.Radius))
       {
@@ -35,9 +36,9 @@ class DeleteParticle extends CanvasTool
 
     var delete_constraints = new List<Constraint>() ;
     
-    for (Particle p in delete_particles)
+    for (Body p in delete_particles)
     {
-      for (Constraint c in _constraints)
+      for (Constraint c in _scene.constraints)
       {
         if (c.A == p || c.B == p)
         {
@@ -48,12 +49,12 @@ class DeleteParticle extends CanvasTool
     
     for (Constraint c in delete_constraints)
     {
-      _constraints.remove(c) ;
+      _scene.constraints.remove(c) ;
     }
     
-    for (Particle p in delete_particles)
+    for (Body p in delete_particles)
     {
-      _particles.remove(p) ;
+      _scene.bodies.remove(p) ;
     }
   }
   
@@ -64,7 +65,7 @@ class DeleteParticle extends CanvasTool
 
   void OnActivate()
   {
-    _highlighted = new List<Particle>() ;
+    _highlighted = new List<Body>() ;
   }
   
   void OnMouseMove(MouseEvent e)
@@ -73,7 +74,7 @@ class DeleteParticle extends CanvasTool
     
     Vec2 mouse = ConvertToWorldCoords(e) ;
     
-    for (Particle p in _particles)
+    for (Body p in _scene.bodies)
     {
       if ((p.Position - mouse).SqLength < (p.Radius * p.Radius))
       {
@@ -84,7 +85,7 @@ class DeleteParticle extends CanvasTool
   
   bool get IsActive => false ;
   
-  List<Particle> get Highlighted => _highlighted ;
+  List<Body> get Highlighted => _highlighted ;
   
   void Draw(Renderer renderer) 
   {

@@ -1,123 +1,161 @@
-library phx.collision.map ;
+library collision.map ;
 
+import 'scene.dart';
 import 'constraint.dart';
+import 'body.dart';
 import 'particle.dart';
+import 'metabody1d.dart';
 import 'collision.pair.dart' ;
+
+import '../math/vec2.dart' ;
+import '../math/box2.dart' ;
+
+class Group
+{
+  List<Body> _boxParticles = new List<Body>() ;
+  List<Body> _bodies = new List<Body>() ;
+  Box2 _box = null ;
+  
+  Box2 get Box => _box;
+
+  void initialize() 
+  {
+    if (_boxParticles.length > 0)
+      _box = new Box2(_boxParticles[0].Position, new Vec2(0.0, 0.0)) ;
+    
+    for (int i=1; i<_boxParticles.length; i++)
+    {
+      _box.ExtendWithPoint(_boxParticles[i].Position) ;
+    }
+    
+    _box.Extend(20.0) ;
+  }
+  
+  void addBody(Body body)
+  {
+    _bodies.add(body) ;
+    
+    if (body is Particle)
+      _boxParticles.add(body) ;
+    
+    // workaround - this code is for "filled constraint" collisions
+    if (body is MetaBody1D)
+    {
+      MetaBody1D metabody1d = body ;
+
+      _boxParticles.add(metabody1d.A) ;
+      _boxParticles.add(metabody1d.B) ;
+    }
+  }
+  
+  void removeBody(Body body)
+  {
+    _bodies.remove(body) ;
+    _boxParticles.remove(body);
+  }
+  
+  List<Body> get Bodies => _bodies ; 
+}
 
 class CollisionMap
 {
-  List<Particle> Particles = null ;
+  Scene _scene = null ;
   
-  List<Constraint> _constraints = null ;
+  Map<String, Group> _groups = new Map<String, Group>() ;
+  List<CollisionPair> _pairs = null ;
   
-  int _particlesCount = 0 ;
-  
-  Map<Particle, int> _index = null ;
-  Map<int, CollisionPair> _pairs = null ;
-  Map<Particle, List<CollisionPair>> _particlePairs = null ;
-  
-  CollisionMap(List<Particle> particles, List<Constraint> constraints)
+  CollisionMap(this._scene)
   {
-    Particles = particles ;
-    _constraints = constraints ;
-    
-    _initialize() ;
+    _pairs = new List<CollisionPair>() ;
   }
-  
-  void Update(List<Particle> particles, List<Constraint> constraints)
+
+  void AddBody(Body body)
   {
-    if (particles.length != _particlesCount)
+    if (body.GroupName != null)
     {
-      Particles = particles ;
+      Group group = null ;
+      if (!_groups.containsKey(body.GroupName))
+      {
+        group = new Group() ;
+        _groups[body.GroupName] = group ;
+      }
+      else
+        group = _groups[body.GroupName] ;
       
-      _constraints = constraints ;
+      group.addBody(body) ;
+    }
+    
+    for (Body b in _scene.bodies)
+    {
+      if (b.hashCode == body.hashCode) continue ;
       
-      _initialize() ;
+      if (b.IsFixed && body.IsFixed) continue ;
+      
+      if (body.IsRelatedTo(b)) continue ;
+      
+      if (body.GroupName != null && b.GroupName != null && body.GroupName == b.GroupName) continue ;
+      
+      _pairs.add(new CollisionPair(b, body)) ;
     }
   }
   
-  void _initialize()
+  void RemoveBody(Body body)
   {
-    _particlesCount = Particles.length ;
-
-    _index = new Map<Particle, int>() ;
-    
-    _pairs = new Map<int, CollisionPair>() ;
-    
-    _particlePairs = new Map<Particle, List<CollisionPair>>() ;
-    
-    // initialize collision pairs
-    for (int i=0; i<Particles.length; i++)
+    if (_groups.containsKey(body.GroupName))
     {
-      Particle a = Particles[i] ;
-      
-      for (int j=i+1; j<Particles.length; j++)
+      _groups[body.GroupName].removeBody(body);
+    }
+    
+    for (int i=_pairs.length-1; i >= 0; i--)
+    {
+      if (_pairs[i].A == body || _pairs[i].B == body)
       {
-        Particle b = Particles[j] ;
-        
-        if (a.IsFixed && b.IsFixed) continue ;
-        
-        int index = _getPairIndex(a, b);
-        
-        if (!_pairs.containsKey(index))
-          _pairs[index] = new CollisionPair(a, b) ;
+        _pairs.removeAt(i) ;
+      }
+      else if (body is Particle)
+      {
+        if (_pairs[i].A.IsRelatedTo(body) || _pairs[i].B.IsRelatedTo(body))
+        {
+          _pairs.removeAt(i) ;
+        }          
       }
     }
-
-    // remove constraint pairs
-    for (Constraint constraint in _constraints)
-    {
-      int index = _getPairIndex(constraint.A, constraint.B);
-      
-      _pairs.remove(index) ;
-    }
   }
   
-  int _getParticleIndex(Particle p)
+  void AddConstraint(Constraint constraint)
   {
-    if (!_index.containsKey(p))
-      _index[p] = _index.values.length ;
+    for (int i=_pairs.length-1; i >= 0; i--)
+    {
+      if (_pairs[i].IsEqual(constraint))
+      {
+        _pairs.removeAt(i);
+      }
+    }
+  }
+
+  void RemoveConstraint(Constraint body)
+  {
     
-    return _index[p] ;
   }
   
   void Reset()
   {
-    for (CollisionPair pair in _pairs.values)
+    for (CollisionPair pair in _pairs)
     {
       pair.Discard() ;
     }
   }
 
-  int _getPairIndex(Particle a, Particle b)
+  List<CollisionPair> get Pairs => _pairs ;
+  
+  void initializeGroups()
   {
-    var idxA = _getParticleIndex(a) ;
-    var idxB = _getParticleIndex(b) ;
-    
-    if (idxB > idxA)
+    for (Group group in _groups.values)
     {
-      var tmp = idxB ;
-      idxB = idxA ;
-      idxA = tmp ;
-      
-      var c = b ;
-      b = a ;
-      a = c ;
+      group.initialize() ;
     }
-
-    // unique index
-    return (idxB * Particles.length + idxA) ;    
   }
   
-  List<CollisionPair> get Pairs => _pairs.values.toList(growable: false) ;
-  
-  int get DynamicCollisionsCount 
-  {
-    int result = 0 ;
-    for (CollisionPair pair in Pairs)
-    {
-      result += (pair.GetContact() != null) ? 1 : 0 ;
-    }
-    return result ;
-  }
+  Group GetGroup(String name) => _groups[name] ;
+  List<Group> get Groups => _groups.values.toList(growable: false) ;
 }

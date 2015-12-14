@@ -1,17 +1,18 @@
-library phx.constraint.distance;
+library constraint.distance;
 
-import "../../renderer/renderer.dart" ;
-import '../../math/vec2.dart' ;
-import 'particle.dart' ;
-import 'constraint.dart' ;
+import "../renderer/renderer.dart" ;
+import '../math/vec2.dart' ;
 
-class Distance extends Constraint
+import "body.dart" ; 
+import "constraint.dart" ;
+
+class ConstraintDistance extends Constraint
 {
   double _distance = 0.0 ;
   
-  Distance(Particle a, Particle b) : super(a, b)
+  ConstraintDistance(Body a, Body b) : super(a, b)
   {
-    _distance = (A.Position - B.Position).Length ;
+    _distance = (B.Position - A.Position).Length ;
   }
   
   void Resolve()
@@ -25,21 +26,26 @@ class Distance extends Constraint
     if (!A.IsFixed)
     {
       double s = A.MassInv / (A.MassInv + B.MassInv) ;
-      A.Position -= delta * s;
-      A.Velocity -= delta * s;
+      A.PositionMove(delta * (-s));
+      A.VelocityMove(delta * (-s));
     }
     
     if (!B.IsFixed)
     {
       double s = B.MassInv / (A.MassInv + B.MassInv) ;
-      B.Position += delta * s ;
-      B.Velocity += delta * s;
+      B.PositionMove(delta * (s));
+      B.VelocityMove(delta * (s));
     }
   }
   
   void Render(Renderer renderer)
   {
-    renderer.drawPath([A.Position, B.Position], false, "rgb(128, 128, 128)", "rgb(128, 128, 128)") ;
+    renderer.drawPath([A.Position, B.Position], false, "rgba(128, 128, 128, 0.1)", "rgba(128, 128, 128, 0.1)") ;
+  }
+  
+  void RenderStopped(Renderer renderer)
+  {
+    renderer.drawPath([A.Position, B.Position], false, "rgba(128, 128, 128, 0.75)", "rgba(128, 128, 128, 0.75)") ;
   }
   
   toJSON()

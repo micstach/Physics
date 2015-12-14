@@ -1,15 +1,20 @@
+library canvas.tool ;
 
-import "../../renderer/renderer.dart" ;
-import "../../math/vec2.dart" ;
+import "../renderer/renderer.dart" ;
+import "../math/vec2.dart" ;
 
 import 'tool.dart' ;
 import 'dart:html' ;
 
 abstract class CanvasTool extends Tool
 {
+  int _gridX = 25 ;
+  int _gridY = 25 ;
+  
   CanvasElement _canvas ;
   
   MouseEvent _mouseEvent = null ;
+  Vec2 _mousePosition = null ;
   
   var _onMouseUpStream = null ;
   var _onMouseDownStream = null ;
@@ -57,13 +62,15 @@ abstract class CanvasTool extends Tool
   void _onMouseMove(MouseEvent e)
   {
     _mouseEvent = e ;
+
+    _mousePosition = _getMousePosition(_mouseEvent, _gridX, _gridY);
     
-    OnMouseMove(e) ;
+    OnMouseMove(_mouseEvent) ;
   }
   
   void _onMouseDown(MouseEvent e)
   {
-    OnMouseDown(e) ;
+    OnMouseDown(_mouseEvent) ;
   }
   
   void _onMouseLeave(MouseEvent e)
@@ -88,7 +95,7 @@ abstract class CanvasTool extends Tool
     // render cursor
     if (_mouseEvent != null)
     {
-      Vec2 point = ConvertToWorldCoords(_mouseEvent) ;
+      Vec2 point = _mousePosition ;
       
       String color = "rgba(0, 0, 255, 0.05)" ;
       
@@ -104,7 +111,40 @@ abstract class CanvasTool extends Tool
     return new Vec2(e.layer.x.toDouble(), _canvas.clientHeight - e.layer.y.toDouble()) ;
   }
   
+  Vec2 _convertToWorldCoords(int x, int y)
+  {
+    return new Vec2(x.toDouble(), _canvas.clientHeight - y.toDouble()) ;
+  }
+
   CanvasElement get Canvas => _canvas ; 
 
-  Vec2 get Position => _mouseEvent == null ? null : ConvertToWorldCoords(_mouseEvent) ;
+  Vec2 get Position => _mousePosition != null ? _mousePosition : null ;
+  
+  Vec2 _getMousePosition(MouseEvent e, gridX, gridY)
+  {
+    int x, y ;
+    
+    if (e.altKey)
+    {
+      int modx = (e.layer.x % gridX).toInt() ;
+      int mody = (e.layer.y % gridY).toInt() ;
+      
+      if (modx < (gridX / 2))
+        x = ((e.layer.x ~/ gridX) * gridX).toInt() ;
+      else 
+        x = (((e.layer.x ~/ gridX) + 1) * gridX).toInt() ;
+  
+      if (mody < (gridY / 2))
+        y = ((e.layer.y ~/ gridY) * gridY).toInt() ;
+      else 
+        y = (((e.layer.y ~/ gridY) + 1) * gridY).toInt() ;
+    }
+    else
+    {
+      x = e.layer.x ;
+      y = e.layer.y ;
+    }
+
+    return _convertToWorldCoords(x, y) ;
+  }
 }

@@ -16,8 +16,8 @@ class Vec2 {
 
   Vec2.fromJSON(var json) 
   {
-    this.x = json['x'];
-    this.y = json['y'] ;
+    this.x = double.parse(json['x'].toString());
+    this.y = double.parse(json['y'].toString());
   }
 
   Vec2.fromVec2(Vec2 v) 
@@ -80,4 +80,17 @@ class Vec2 {
     return (v - n * (v|n)) ; 
   }
   
+  static Vec2 LocalCoordinates(Vec2 v, Vec2 a, Vec2 b)
+  {
+    // find x and y where
+    // v = x * a + y * b 
+    double ood = 1.0 / (a.x * b.y - b.x * a.y) ;
+
+    return new Vec2((v.x * b.y - b.x * v.y) * ood, (a.x * v.y - v.x * a.y) * ood ) ;
+  }
+  
+  static Vec2 Rot270(Vec2 v)
+  {
+    return new Vec2(-v.y, v.x) ;
+  }
 }

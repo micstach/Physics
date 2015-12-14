@@ -1,8 +1,8 @@
 library canvas.software.renderer ;
 
-import '../../math/vec2.dart';
-import '../../math/box2.dart';
-import '../../renderer/renderer.dart' ;
+import '../math/vec2.dart';
+import '../math/box2.dart';
+import 'renderer.dart' ;
 
 import 'dart:html';
 import 'dart:math';
@@ -17,6 +17,7 @@ class CanvasSoftwareRenderer extends Renderer
   CanvasSoftwareRenderer(this._canvas)
   {
     _context = _canvas.context2D ;
+    //_context.scale(0.5,  0.5) ;
   }
 
   Vec2 _convert(Vec2 p)
@@ -26,7 +27,8 @@ class CanvasSoftwareRenderer extends Renderer
   
   void clear()
   {
-    _context.clearRect(0, 0, _canvas.clientWidth, _canvas.clientHeight);
+    // _context.clearRect(0, 0, _canvas.clientWidth, _canvas.clientHeight);
+    _canvas.width = _canvas.width ;
   }
   
   void drawCircle(Vec2 p, double radius, String color)

@@ -35,16 +35,13 @@ p {
 button{
   font-size: 11px;
   border: 0px;
-  border-radius: 5px;
+  border-radius: 2px;
   padding: 5px;
-  box-shadow: 0px 0px 8px rgba(0,0,0,0.5);
+  box-shadow: 0px 0px 2px rgba(0,0,0,0.5);
 }
 
 button:hover{
-  font-size: 11px;
-  //color: rgb(255,255,255);
-  border: 0px;
-  border-radius: 5px;
+  background-color : rgb(205, 205, 128);
   box-shadow: 0px 0px 8px rgba(0,0,0,1.0);
 }
 
@@ -55,8 +52,8 @@ button:hover{
   text-align: left;
   font-size: 11px;
   font-weight: normal;
-  color: rgb(128,128,128);
-  // text-shadow: 0px 0px 3px rgba(0, 0, 0, 1.0);
+  color: rgb(255, 255, 255);
+  text-shadow: 0px 0px 5px rgba(0, 0, 0, 1.0);
 }
 
 #position {

@@ -1,12 +1,15 @@
 library phx.constraint.world ;
 
-import '../../math/vec2.dart' ;
-import 'particle.dart' ;
+import '../math/vec2.dart' ;
+import 'body.dart' ;
+import 'metabody1d.dart';
 import 'contact.dart' ;
 
-Contact ResolveWorldConstraints(double e, Particle particle, int width, int height)
+Contact ResolveWorldConstraints(double e, Body body, int width, int height)
 {
-  if (particle.IsFixed) return null ;
+  if (body.IsFixed) return null ;
+  
+  if (body is MetaBody1D) return null ;
   
   // bottom plane
 //  Vec2 n = new Vec2(0.0, 1.0) ;
@@ -25,42 +28,42 @@ Contact ResolveWorldConstraints(double e, Particle particle, int width, int heig
 //  }
   
   // world box collisions detection
-  int PARTICLE_RADIUS = particle.Radius.toInt() ;
+  int PARTICLE_RADIUS = body.Radius.toInt() ;
   
-  if (particle.Position.x > width - PARTICLE_RADIUS)
+  if (body.Position.x > width - PARTICLE_RADIUS)
   {
     Vec2 n = new Vec2(-1.0, 0.0) ;
-    double k = particle.Velocity | n ;
+    double k = body.Velocity | n ;
 
-    particle.Velocity = particle.Velocity - n * (k * (1.0 + e)) ;
-    particle.Position = (new Vec2((width - PARTICLE_RADIUS).toDouble(), particle.Position.y)) ;
+    body.Velocity = body.Velocity - n * (k * (1.0 + e)) ;
+    body.Position = (new Vec2((width - PARTICLE_RADIUS).toDouble(), body.Position.y)) ;
   }
   
-  if (particle.Position.x < 0.0 + PARTICLE_RADIUS)
+  if (body.Position.x < 0.0 + PARTICLE_RADIUS)
   {
     Vec2 n = new Vec2(1.0, 0.0) ;
-    double k = particle.Velocity | n ;
+    double k = body.Velocity | n ;
 
-    particle.Velocity = particle.Velocity - n * (k * (1.0 + e)) ;
-    particle.Position = (new Vec2((PARTICLE_RADIUS).toDouble(), particle.Position.y)) ;
+    body.Velocity = body.Velocity - n * (k * (1.0 + e)) ;
+    body.Position = (new Vec2((PARTICLE_RADIUS).toDouble(), body.Position.y)) ;
   }
   
-  if (particle.Position.y <= 0.0 + PARTICLE_RADIUS)
+  if (body.Position.y <= 0.0 + PARTICLE_RADIUS)
   {
     Vec2 n = new Vec2(0.0, 1.0) ;
-    double k = particle.Velocity | n ;
+    double k = body.Velocity | n ;
     
-    particle.Velocity = particle.Velocity - n * (k * (1.0 + e)) ;
-    particle.Position = (new Vec2(particle.Position.x, 0.0 + PARTICLE_RADIUS)) ;
+    body.Velocity = body.Velocity - n * (k * (1.0 + e)) ;
+    body.Position = (new Vec2(body.Position.x, 0.0 + PARTICLE_RADIUS)) ;
   }
   
-  if (particle.Position.y > height - PARTICLE_RADIUS)
+  if (body.Position.y > height - PARTICLE_RADIUS)
   {
     Vec2 n = new Vec2(0.0, -1.0) ;
-    double k = particle.Velocity | n ;
+    double k = body.Velocity | n ;
 
-    particle.Velocity = particle.Velocity - n * (k * (1.0 + e)) ;
-    particle.Position = (new Vec2(particle.Position.x, (height - PARTICLE_RADIUS).toDouble())) ;
+    body.Velocity = body.Velocity - n * (k * (1.0 + e)) ;
+    body.Position = (new Vec2(body.Position.x, (height - PARTICLE_RADIUS).toDouble())) ;
   }
   
   return null ;
